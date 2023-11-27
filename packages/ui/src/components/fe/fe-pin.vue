@@ -188,7 +188,7 @@ function onPaste(event: ClipboardEvent) {
 
 .oo-pin {
     display: flex;
-    justify-content: start;
+    justify-content: flex-start;
 }
 
 .oo-pin .oo-input-like {
