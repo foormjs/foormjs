@@ -1,0 +1,88 @@
+.oo-vars.dark input:-webkit-autofill,
+.oo-vars.dark input:-webkit-autofill:hover,
+.oo-vars.dark input:-webkit-autofill:focus,
+.oo-vars.dark input:-webkit-autofill:active,
+.dark .oo-vars input:-webkit-autofill,
+.dark .oo-vars input:-webkit-autofill:hover,
+.dark .oo-vars input:-webkit-autofill:focus,
+.dark .oo-vars input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px rgba(70, 90, 126, 1) inset !important;
+    background-color: rgba(70, 90, 126, 0.4) !important;
+    color: var(--oo-c-white-2) !important;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: var(--oo-c-white-2) !important;
+}
+
+/* Color classes based on the provided variables */
+
+.oo-vars .oo-text-negative {
+    color: var(--oo-c-negative);
+}
+
+.oo-vars .oo-text-warning {
+    color: var(--oo-c-warning);
+}
+
+.oo-vars .oo-text-neutral {
+    color: var(--oo-c-neutral);
+}
+
+.oo-vars .oo-text-neutral-2 {
+    color: var(--oo-c-neutral-2);
+}
+
+.oo-vars .oo-text-positive {
+    color: var(--oo-c-positive);
+}
+
+.oo-vars .oo-text-white {
+    color: var(--oo-c-white);
+}
+
+.oo-vars .oo-text-white-1 {
+    color: var(--oo-c-white-1);
+}
+
+.oo-vars .oo-text-white-2 {
+    color: var(--oo-c-white-2);
+}
+
+.oo-vars .oo-text-black {
+    color: var(--oo-c-black);
+}
+
+.oo-vars .oo-text-black-1 {
+    color: var(--oo-c-black-1);
+}
+
+.oo-vars .oo-text-black-2 {
+    color: var(--oo-c-black-2);
+}
+
+.oo-vars .oo-text-heading {
+    color: var(--oo-c-heading);
+}
+
+.oo-vars .oo-text {
+    color: var(--oo-c-text);
+}
+
+.oo-vars .oo-text-1 {
+    color: var(--oo-c-text-1);
+}
+
+.oo-vars .oo-text-2 {
+    color: var(--oo-c-text-2);
+}
+
+.oo-vars .oo-text-background {
+    color: var(--oo-c-background);
+}
+
+.oo-vars .oo-text-background-1 {
+    color: var(--oo-c-background-1);
+}
+
+.oo-vars .oo-text-background-2 {
+    color: var(--oo-c-background-2);
+}

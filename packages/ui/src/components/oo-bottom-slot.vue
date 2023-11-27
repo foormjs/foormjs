@@ -25,12 +25,6 @@ function checkOverflow() {
 <template>
     <div class="oo-bottom-slot" :class="{ 'show': !!text, 'oo-text-negative': !!error }">
         <span ref="bottomSpan">{{ text }}</span>
-        <!-- <div class="oo-tooltip oo-bordered oo-text-p oo-text-white-1"
-        :class="{ 'oo-bg-hegative': !!error, 'oo-bg-neutral': !error }"
-        v-if="!disabled && !!text && overflow"
-        >
-            {{ text }}
-        </div> -->
     </div>
 </template>
 

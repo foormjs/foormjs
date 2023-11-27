@@ -117,9 +117,20 @@ function unselect() {
                     :disabled="!!disabledState"
                     v-model="modelValue"
                     @input="check"
-                    @blur.native="_onBlur('input')"
-                    @focus.native="_onFocus('input')"
+                    @blur.native="onBlur"
+                    @focus.native="focused = true"
                 />
+                <textarea
+                    v-else-if="type === 'textarea'"
+                    :placeholder="placeholder"
+                    ref="focusableRef"
+                    v-model="modelValue"
+                    :name="field"
+                    :disabled="!!disabledState"
+                    @input="check"
+                    @blur.native="onBlur"
+                    @focus.native="focused = true"
+                    rows="5" />
                 <template v-else>
                     <div class="oo-input-select">
                         <div class="oo-tokens" v-if="modelValue && type === 'multi-select' && modelValue?.length > 0">

@@ -16,6 +16,8 @@ body {
   color: var(--oo-c-text);
   background: var(--oo-c-background);
   line-height: 1.6;
+  font-family: Inter, sans-serif;
+  font-size: 16px;
   transition: opacity 0.1s ease;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

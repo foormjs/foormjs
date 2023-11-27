@@ -22,10 +22,14 @@
     },
     "./style.css": {
       "default": "./dist/style.css"
+    },
+    "./form-vars.css": {
+      "default": "./src/oo-form-vars.css"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "src/oo-form-vars.css"
   ],
   "repository": {
     "type": "git",

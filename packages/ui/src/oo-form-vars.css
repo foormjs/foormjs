@@ -1,0 +1,87 @@
+.oo-vars {
+    --oo-c-white: #ffffff;
+    --oo-c-white-1: #f8f8f8;
+    --oo-c-white-2: #f2f2f2;
+
+    --oo-c-black: #181818;
+    --oo-c-black-1: #222222;
+    --oo-c-black-2: #282828;
+
+    --oo-c-negative-darker: #d51730;
+    --oo-c-negative-lighter: #ff5e73;
+    --oo-c-negative-hl: #ff5e7350;
+    --oo-c-warning: orange;
+    --oo-c-neutral: #25AFDB;
+    --oo-c-hl: #88888850;
+    --oo-c-neutral-hl: #25AFDB50;
+    --oo-c-neutral-2: #db2592;
+    --oo-c-positive-darker: #04c16c;
+    --oo-c-positive-lighter: #20d584;
+    
+    --oo-c-gray: #888888;
+
+    --oo-c-brand: #25AFDB;
+
+    --oo-border-radius: 4px;
+
+    --oo-transition: 0.2s ease-in-out;
+
+    --oo-token-padding: 2px 4px 2px 8px;
+    --oo-token-border-radius: 4px;
+    --oo-token-font-size: calc(var(--oo-input-font-size) * 0.8);
+
+    --oo-label-font-size: 16px;
+    --oo-label-font-weight: 500;
+
+    --oo-required-content: "*";
+}
+.oo-vars {
+    --oo-space-gap: 5px;
+    --oo-space-s: 8px;
+    --oo-space-m: calc(var(--oo-space-s) * 2);
+    --oo-space-l: calc(var(--oo-space-s) * 4);
+    --oo-space-input: 12px;
+
+    --oo-text-p: 5px var(--oo-space-input);
+    
+    --oo-input-height: 40px;
+    --oo-input-font-size: 16px;
+    --oo-input-border-width: 1px;
+    --oo-input-padding: 6px var(--oo-space-input);
+    --oo-input-icon-size: 16px;
+}
+
+.oo-vars,
+.light .oo-vars,
+.light.oo-vars {
+    --oo-c-background: var(--oo-c-white);
+    --oo-c-background-1: var(--oo-c-white-1);
+    --oo-c-background-2: var(--oo-c-white-2);
+
+    --oo-c-heading: var(--oo-c-brand);
+    --oo-c-text: var(--oo-c-black);
+    --oo-c-text-1: var(--oo-c-black-1);
+    --oo-c-text-2: var(--oo-c-black-2);
+    --oo-c-border: #00000020;
+    --oo-c-border-1: #00000040;
+
+    --oo-c-positive: var(--oo-c-positive-darker);
+    --oo-c-negative: var(--oo-c-negative-darker);
+}
+
+.dark .oo-vars,
+.dark.oo-vars {
+    --oo-c-background: var(--oo-c-black);
+    --oo-c-background-1: var(--oo-c-black-1);
+    --oo-c-background-2: var(--oo-c-black-2);
+
+    --oo-c-heading: var(--oo-c-brand);
+    --oo-c-text: var(--oo-c-white);
+    --oo-c-text-1: var(--oo-c-white-1);
+    --oo-c-text-2: var(--oo-c-white-2);
+    --oo-c-border: #ffffff20;
+    --oo-c-border-1: #ffffff40;
+
+    --oo-c-positive: var(--oo-c-positive-lighter);
+    --oo-c-negative: var(--oo-c-negative-lighter);
+}

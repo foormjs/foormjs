@@ -101,7 +101,7 @@ const entries: TFoormEntry[] = [
 //   nextFocusable: true,
 // }
 ]
-
+const values = {}
 </script>
 
 <template>
@@ -115,7 +115,7 @@ const entries: TFoormEntry[] = [
     <div v-html="renderFlag('RU', 100)" />
     <div v-html="renderFlag('RU', 100)" /> -->
 
-  <oo-form title="Test form" :entries="entries" />
+  <oo-form title="Test form" :entries="entries" :values="values" />
   <dark-mode-btn class="float" />
 </template>
 

@@ -1,4 +1,5 @@
 @import './base.css';
+@import '../../src/oo-form-vars.css';
 
 #app {
   max-width: 1280px;

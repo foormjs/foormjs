@@ -8,13 +8,13 @@ type Props = {
     title?: string
     entries: TFoormEntry[]
     defaultAction?: string
-    values?: Record<string, unknown>
+    values: Record<string, unknown>
 }
 
 const props = defineProps<Props>()
 const uiEntries = ref<TFoormEntryUI[]>()
 const form = new Foorm()
-const formData = ref<Record<string, unknown>>({})
+// const formData = ref<Record<string, unknown>>({})
 
 updateUiEntries()
 watch(() => props.entries, updateUiEntries)
@@ -43,21 +43,19 @@ function validate() {
         :key="entry.id"
         :is="components[entry.component as 'fe-input']"
         v-bind="{ ...entry, ...(entry.bind || {}) }"
-        :inputs="formData"
-        v-model="(formData[entry.field || ''] as string)"
-        :values="values"
-        :errors="errors"
+        :inputs="values"
+        v-model="(values[entry.field || ''] as string)"
+        :error="errors[entry.field || ''] || undefined"
         />
         <div v-else class="oo-text-negative oo-text-small"> Unknown component "{{ entry.component }}"</div>
     </template>
 
     <slot name="actions" :validate="validate" :values="values"></slot>
 </section>
-{{ formData }}
 </template>
 
 <style>
-@import "./css/oo-form-vars.css";
+@import "./css/oo-base.css";
 @import "./css/oo-form.css";
 
 .oo-form {
