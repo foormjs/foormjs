@@ -1,0 +1,36 @@
+{
+  "name": "@foormjs/moost",
+  "version": "0.0.0",
+  "description": "@foormjs/moost",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/foormjs/foormjs.git",
+    "directory": "packages/moost"
+  },
+  "keywords": [
+    "foorm",
+    "foormjs",
+    "forms",
+    "validations"
+  ],
+  "author": "Artem Maltsev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/foormjs/foormjs/issues"
+  },
+  "homepage": "https://github.com/foormjs/foormjs/tree/main/packages/moost#readme"
+}
