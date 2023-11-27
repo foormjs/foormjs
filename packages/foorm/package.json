@@ -1,6 +1,6 @@
 {
   "name": "foorm",
-  "version": "0.0.0",
+  "version": "0.0.1-alpha.1",
   "description": "foorm",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -34,6 +34,6 @@
   },
   "homepage": "https://github.com/foormjs/foormjs/tree/main/packages/foorm#readme",
   "dependencies": {
-    "@prostojs/ftring": ""
+    "@prostojs/ftring": "^0.0.3"
   }
 }
