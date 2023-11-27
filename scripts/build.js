@@ -50,19 +50,27 @@ async function build(target) {
     out.log()
     out.step(`Rollup ${target}...`)
 
-    await execa(
-        'npx',
-        [
-            'rollup',
-            '-c',
-            'rollup.config.js',
-            '--environment',
-            [`NODE_ENV:${env}`, `TARGET:${target}`, `PROJECT:${pkg.name}`]
-                .filter(Boolean)
-                .join(','),
-        ],
-        { stdio: 'inherit' }
-    )
+    if (pkg.customBuild) {
+        await execa(
+            'pnpm',
+            ['run', 'build'],
+            { stdio: 'inherit', cwd: pkgDir },
+        )
+    } else {
+        await execa(
+            'npx',
+            [
+                'rollup',
+                '-c',
+                'rollup.config.js',
+                '--environment',
+                [`NODE_ENV:${env}`, `TARGET:${target}`, `PROJECT:${pkg.name}`]
+                    .filter(Boolean)
+                    .join(','),
+            ],
+            { stdio: 'inherit' }
+        )
+    }
 
     if (pkg.types) {
         out.step(`Rolling up type definitions for ${target}...`)
@@ -77,7 +85,7 @@ async function build(target) {
             const filePath = path.join(
                 pkgDir,
                 'dist',
-                'packages',
+                // 'packages',
                 target,
                 'src',
                 'index.d.ts'
@@ -112,7 +120,9 @@ async function build(target) {
             out.error(e.message)
         }
 
-        await fs.rm(`${pkgDir}/dist/packages`, { recursive: true, force: true })
-        await fs.rm(`${pkgDir}/dist/common`, { recursive: true, force: true })
+        await fs.rm(`${pkgDir}/dist/moost`, { recursive: true, force: true })
+        await fs.rm(`${pkgDir}/dist/foorm`, { recursive: true, force: true })
+        await fs.rm(`${pkgDir}/dist/flags`, { recursive: true, force: true })
+        await fs.rm(`${pkgDir}/dist/ui`, { recursive: true, force: true })
     }
 }

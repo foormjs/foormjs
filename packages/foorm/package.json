@@ -32,5 +32,8 @@
   "bugs": {
     "url": "https://github.com/foormjs/foormjs/issues"
   },
-  "homepage": "https://github.com/foormjs/foormjs/tree/main/packages/foorm#readme"
+  "homepage": "https://github.com/foormjs/foormjs/tree/main/packages/foorm#readme",
+  "dependencies": {
+    "@prostojs/ftring": ""
+  }
 }

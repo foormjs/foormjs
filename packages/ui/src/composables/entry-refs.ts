@@ -1,17 +1,17 @@
 import { computed, ref, watchEffect, watch, onMounted, nextTick } from 'vue'
 import type { Ref } from 'vue'
-import { validate } from 'foorm'
+import { validate, type TFoormEntry } from 'foorm'
 import type { TFeProps } from '../components/fe/types'
 
 export function entryRefs(v: Ref<unknown> | undefined, entry: TFeProps) {
-    const disabledState = computed<boolean>(() => !!entry.disabled && !!entry.disabled({ v: v?.value, entry: entry, inputs: entry.inputs }))
+    const disabledState = computed<boolean>(() => !!entry.disabled && !!entry.disabled({ v: v?.value, entry: entry as unknown as TFoormEntry, inputs: entry.inputs }))
     const classes = computed(() => {
         const o: Record<string, boolean> = {}
         if (typeof entry.classes === 'function') {
-            o[entry.classes({ v: v?.value, entry: entry, inputs: entry.inputs }) as string] = true
+            o[entry.classes({ v: v?.value, entry: entry as unknown as TFoormEntry, inputs: entry.inputs }) as string] = true
         } else if (typeof entry.classes === 'object') {
             for (const [key, value] of Object.entries(entry.classes)) {
-                o[key] = !!value({ v: v?.value, entry: entry, inputs: entry.inputs })
+                o[key] = !!value({ v: v?.value, entry: entry as unknown as TFoormEntry, inputs: entry.inputs })
             }
         }
         return Object.assign({ focused: focused.value, disabled: disabledState.value, error: !validation.value.passed }, o)

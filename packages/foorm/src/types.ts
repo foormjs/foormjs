@@ -13,6 +13,7 @@ export type TFoormEntry<FN = string> = {
     focusable?: boolean
     nextFocusable?: boolean
     action?: string
+    validateOnBlur?: boolean
     validateBeforeAction?: boolean
     bind?: Record<string, unknown>
 }

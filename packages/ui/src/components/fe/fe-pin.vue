@@ -149,7 +149,7 @@ function onPaste(event: ClipboardEvent) {
         <oo-bottom-slot
             :hint="hint"
             :disabled="disabledState"
-            :error="validation.error"
+            :error="(validation.error as string)"
         />
     </div>
 </template>

@@ -19,15 +19,13 @@
         "experimentalDecorators": true,
         "removeComments": false,
         "paths": {
-            "@foormjs/*": ["packages/*/src"],
             "foorm": ["packages/foorm/src"],
-            "common": ["common/index"]
+            "@foormjs/*": ["packages/*/src"]
         }
     },
     "include": [
         "packages/*/src",
         "packages/*/__tests__",
-        "common/*.ts",
         "explorations"
     ]
 }

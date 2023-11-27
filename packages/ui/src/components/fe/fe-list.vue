@@ -10,7 +10,7 @@ type TItem = string | ({ key: string | number, label: string })
 const modelValue = defineModel<(string | number)[] | string | number>({ local: true })
 const props = defineProps<Partial<TFeProps> & { rows?: number, options: TItems, filter?: string }>()
 
-const { classes, disabledState, validation, focused, onBlur, check, focusableRef } = entryRefs(modelValue, props as TFeProps)
+const { classes, disabledState, validation, focused, onBlur, focusableRef } = entryRefs(modelValue, props as TFeProps)
 </script>
 
 <template>
@@ -32,7 +32,7 @@ const { classes, disabledState, validation, focused, onBlur, check, focusableRef
         <oo-bottom-slot
             :hint="hint"
             :disabled="disabledState"
-            :error="validation.error"
+            :error="(validation.error as string)"
         />
     </div>
 </template>

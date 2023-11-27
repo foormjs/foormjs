@@ -3,7 +3,7 @@ import OoBottomSlot from '../oo-bottom-slot.vue'
 import { entryRefs } from '../../composables/entry-refs'
 import type { TFeProps } from './types'
 import OoLabel from '../oo-label.vue'
-import { computed, nextTick, ref, watchEffect, watch, ComponentPublicInstance } from 'vue'
+import { computed, ref, watch, type ComponentPublicInstance } from 'vue'
 import ooListInner from '../oo-list-inner.vue'
 
 type TItems = TItem[]
@@ -11,12 +11,12 @@ type TItem = string | ({ key: string | number, label: string })
 
 const inputTypes = ['text', 'password']
 
-const modelValue = defineModel({ local: true })
+const modelValue = defineModel<string | string[]>({ local: true })
 const selectInput = ref('')
-const props = defineProps<TFeProps & { rows?: number, options: TItems, filter?: string }>()
+const props = defineProps<Partial<TFeProps> & { rows?: number, options?: TItems, filter?: string }>()
 const showPassword = ref(false)
 
-const { classes, disabledState, validation, check, focused, onBlur, focusableRef } = entryRefs(modelValue, props)
+const { classes, disabledState, validation, check, focused, onBlur, focusableRef } = entryRefs(modelValue, props as TFeProps)
 const actualType = computed(() => {
     if (props.type === 'password') {
         return showPassword.value ? 'text' : 'password'
@@ -122,7 +122,7 @@ function unselect() {
                 />
                 <template v-else>
                     <div class="oo-input-select">
-                        <div class="oo-tokens" v-if="modelValue && type === 'multi-select' && modelValue.length > 0">
+                        <div class="oo-tokens" v-if="modelValue && type === 'multi-select' && modelValue?.length > 0">
                             <div v-for="(item, i) of modelValue" class="oo-token" tabindex="0" @keydown.delete="removeItem(i)" @keydown.backspace="removeItem(i)">
                                 <span class="oo-token-value">{{ item }}</span>
                                 <div role="button" class="i-oo-close" title="Remove item" @click="removeItem(i, $event)"></div>
@@ -180,7 +180,7 @@ function unselect() {
         <oo-bottom-slot
             :hint="hint"
             :disabled="disabledState"
-            :error="validation.error"
+            :error="(validation.error as string)"
         />
     </div>
 </template>

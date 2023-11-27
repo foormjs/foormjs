@@ -3,7 +3,7 @@ import DarkModeBtn from '@/components/dark-mode-btn.vue'
 import { onMounted } from 'vue'
 import OoForm from './components/oo-form.vue';
 import type { TFoormEntry } from 'foorm';
-import { renderFlag } from '@foormjs/flags'
+// import { renderFlag } from '@foormjs/flags'
 
 onMounted(() => {
   setTimeout(() => document.body.classList.add('loaded'), 100)

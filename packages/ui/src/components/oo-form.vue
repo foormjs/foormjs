@@ -8,7 +8,7 @@ type Props = {
     title?: string
     entries: TFoormEntry[]
     defaultAction?: string
-    values: Record<string, unknown>
+    values?: Record<string, unknown>
 }
 
 const props = defineProps<Props>()
@@ -27,7 +27,7 @@ function updateUiEntries() {
 const errors = ref<Record<string, string>>({})
 const validator = form.getFormValidator()
 function validate() {
-  const result = validator(props.values)
+  const result = validator(props.values || {})
   errors.value = result.errors || {}
   return result
 }
@@ -44,7 +44,8 @@ function validate() {
         :is="components[entry.component as 'fe-input']"
         v-bind="{ ...entry, ...(entry.bind || {}) }"
         :inputs="formData"
-        v-model="formData[entry.field || '']"
+        v-model="(formData[entry.field || ''] as string)"
+        :values="values"
         />
         <div v-else class="oo-text-negative oo-text-small"> Unknown component "{{ entry.component }}"</div>
     </template>

@@ -1,5 +1,6 @@
 {
   "name": "@foormjs/flags",
+  "private": true,
   "version": "0.0.0",
   "description": "@foormjs/flags",
   "main": "dist/index.cjs",

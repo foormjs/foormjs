@@ -1,6 +1,6 @@
 {
   "extends": "../../api-extractor.json",
-  "mainEntryPointFilePath": "./dist/packages/ui/src/index.d.ts",
+  "mainEntryPointFilePath": "./dist/ui/src/index.d.ts",
   "dtsRollup": {
     "publicTrimmedFilePath": "./dist/index.d.ts"
   },
@@ -8,12 +8,10 @@
     "overrideTsconfig": {
       "compilerOptions": {
         "paths": {
-          "common": ["packages/ui/dist/common"]
         }
       },         
       "include": [
-        "packages/ui/dist/packages",
-        "packages/ui/dist/common"
+        "packages/ui/dist"
       ]
     }
   }

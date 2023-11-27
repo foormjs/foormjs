@@ -27,7 +27,7 @@ function updateValue() {
     modelValue.value = props.type === 'single-select' ? props.value as string : (props.value ? [props.value as string] : [])
 }
 
-const { classes, disabledState, validation, onBlur, check, focusableRef } = entryRefs(modelValue, props as TFeProps)
+const { classes, check, focusableRef } = entryRefs(modelValue, props as TFeProps)
 const listRows = computed(() => Math.min(props.rows || 3, filtered.value.length))
 const listHeight = computed(() => listRows.value * 40)
 const filtered = computed(() => {
