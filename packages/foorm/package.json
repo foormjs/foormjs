@@ -1,6 +1,6 @@
 {
   "name": "foorm",
-  "version": "0.0.1-alpha.4",
+  "version": "0.0.1-alpha.5",
   "description": "foorm",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
