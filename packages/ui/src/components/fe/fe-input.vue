@@ -107,7 +107,7 @@ function unselect() {
     <div class="oo-input oo-form-entry" :class="classes">
         <label :id="labelId" >
             <oo-label :class="{ 'oo-required': !optional }">{{ label }}</oo-label>
-            <div class="oo-input-like oo-focusable" :class="{ disabled: classes.disabled, focused, error: classes.error }">
+            <div class="oo-input-like oo-focusable" :class="{ disabled: classes.disabled, focused, error: classes.error, ['oo-input-type-' + actualType]: true }">
                 <div class="oo-input-prepend"></div>
                 <input
                     v-if="!props.type || inputTypes.includes(props.type)"
@@ -332,6 +332,27 @@ function unselect() {
 
 .oo-input-select input {
     width: auto;
+}
+
+
+.oo-input input,
+.oo-input-like.oo-input-type-textarea textarea {
+    background-color: transparent;
+    height: 100%;
+    width: 100%;
+    border: none;
+    outline: none;
+    color: var(--oo-c-text);
+    font-size: var(--oo-input-font-size);
+    font-family: Inter, sans-serif;
+}
+
+.oo-input-like.oo-input-type-textarea textarea {
+    padding: var(--oo-input-padding) 0;
+}
+
+.oo-input-like.oo-input-type-textarea {
+    height: auto;
 }
 
 </style>

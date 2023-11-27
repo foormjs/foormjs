@@ -33,11 +33,11 @@ function checkOverflow() {
     color: var(--oo-c-text-2);
     position: relative;
     font-weight: normal;
-    height: 0;
+    height: var(--oo-bottom-slot-height);
     opacity: 0;
     margin-top: var(--oo-space-gap);
-    font-size: 14px;
-    line-height: 18px;
+    font-size: var(--oo-bottom-slot-font-size);
+    line-height: var(--oo-bottom-slot-line-height);
     transition: height var(--oo-transition), opacity var(--oo-transition);
 }
 .oo-bottom-slot.show {

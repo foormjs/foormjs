@@ -49,6 +49,10 @@
     --oo-input-border-width: 1px;
     --oo-input-padding: 6px var(--oo-space-input);
     --oo-input-icon-size: 16px;
+
+    --oo-bottom-slot-height: 0;
+    --oo-bottom-slot-font-size: 14px;
+    --oo-bottom-slot-line-height: 18px;
 }
 
 .oo-vars,
