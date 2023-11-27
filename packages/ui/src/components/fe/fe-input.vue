@@ -348,7 +348,7 @@ function unselect() {
 }
 
 .oo-input-like.oo-input-type-textarea textarea {
-    padding: var(--oo-input-padding) 0;
+    padding: var(--oo-input-padding);
 }
 
 .oo-input-like.oo-input-type-textarea {
