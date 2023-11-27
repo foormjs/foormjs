@@ -4,20 +4,15 @@
 <style>
 /* Label styles */
 .oo-label {
-    font-size: 16px;
-    font-weight: 500;
+    font-size: var(--oo-label-font-size);
+    font-weight: var(--oo-label-font-size);
     margin-bottom: var(--oo-space-gap);
     display: block;
     color: var(--oo-c-text-2);
-    opacity: 0.75;
-}
-
-.focused .oo-label {
-    opacity: 1;
 }
 
 .oo-label.oo-required:after {
-    content: "*";
+    content: var(--oo-required-content);
     padding-left: 2px;
     color: var(--oo-c-negative)
 }

@@ -2,12 +2,6 @@
 
 /* Main form styles */
 section.oo-form {
-    padding: var(--oo-space-m);
-    background-color: var(--oo-c-background);
-    border-radius: var(--oo-border-radius);
-    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
-    border: 1px solid var(--oo-c-border);
-    transition: background-color 0.5s ease;
 }
 
 /* Form title */

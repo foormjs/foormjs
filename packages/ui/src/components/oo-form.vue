@@ -46,6 +46,7 @@ function validate() {
         :inputs="formData"
         v-model="(formData[entry.field || ''] as string)"
         :values="values"
+        :errors="errors"
         />
         <div v-else class="oo-text-negative oo-text-small"> Unknown component "{{ entry.component }}"</div>
     </template>
@@ -73,20 +74,5 @@ function validate() {
 
 .oo-form .oo-text-cetner {
   text-align: center;
-}
-.oo-vars .svg-btn {
-  background-color: transparent;
-  width: 48px;
-  height: 48px;
-  border: none;
-  outline: none;
-  color: var(--oo-c-text);
-  cursor: pointer;
-}
-
-.oo-vars .svg-btn:focus {
-  outline: 2px solid var(--oo-c-neutral);
-  outline-offset: -2px;
-  opacity: 1;
 }
 </style>

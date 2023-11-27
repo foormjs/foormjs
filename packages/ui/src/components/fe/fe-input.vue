@@ -208,7 +208,7 @@ function unselect() {
     border: none;
     outline: none;
     color: var(--oo-c-text);
-    font-size: 16px;
+    font-size: var(--oo-input-font-size);
 }
 
 .oo-input-like {
@@ -216,7 +216,7 @@ function unselect() {
     font-size: var(--oo-input-font-size);
     padding: var(--oo-input-padding);
     min-height: var(--oo-input-height);
-    border: 1px solid var(--oo-c-border);
+    border: var(--oo-input-border-width) solid var(--oo-c-border);
     border-radius: var(--oo-border-radius);
     color: var(--oo-c-text);
     background-color: var(--oo-c-background-1);

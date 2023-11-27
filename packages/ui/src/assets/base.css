@@ -17,39 +17,12 @@ body {
   background: var(--oo-c-background);
   line-height: 1.6;
   transition: opacity 0.1s ease;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    'Fira Sans',
-    'Droid Sans',
-    'Helvetica Neue',
-    sans-serif;
-  font-size: 15px;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 input {
-    font-family:
-        Inter,
-        -apple-system,
-        BlinkMacSystemFont,
-        'Segoe UI',
-        Roboto,
-        Oxygen,
-        Ubuntu,
-        Cantarell,
-        'Fira Sans',
-        'Droid Sans',
-        'Helvetica Neue',
-        sans-serif;
 }
 
 body.loaded {
@@ -57,4 +30,20 @@ body.loaded {
   transition:
       color 0.5s,
       background-color 0.5s;
+}
+
+.oo-vars .svg-btn {
+  background-color: transparent;
+  width: 48px;
+  height: 48px;
+  border: none;
+  outline: none;
+  color: var(--oo-c-text);
+  cursor: pointer;
+}
+
+.oo-vars .svg-btn:focus {
+  outline: 2px solid var(--oo-c-neutral);
+  outline-offset: -2px;
+  opacity: 1;
 }

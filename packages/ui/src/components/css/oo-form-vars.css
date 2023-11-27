@@ -29,6 +29,11 @@
     --oo-token-padding: 2px 4px 2px 8px;
     --oo-token-border-radius: 4px;
     --oo-token-font-size: calc(var(--oo-input-font-size) * 0.8);
+
+    --oo-label-font-size: 16px;
+    --oo-label-font-weight: 500;
+
+    --oo-required-content: "*";
 }
 .oo-vars {
     --oo-space-gap: 5px;
@@ -41,6 +46,7 @@
     
     --oo-input-height: 40px;
     --oo-input-font-size: 16px;
+    --oo-input-border-width: 1px;
     --oo-input-padding: 6px var(--oo-space-input);
     --oo-input-icon-size: 16px;
 }
