@@ -1,3 +1,12 @@
+## [0.0.1-alpha.7](https://github.com/foormjs/foormjs/compare/v0.0.1-alpha.6...v0.0.1-alpha.7) (2023-11-28)
+
+
+### Bug Fixes
+
+* watch for external errors ([7c320b7](https://github.com/foormjs/foormjs/commit/7c320b7efff2fcfa77fc67e635e43e7d9007a75d))
+
+
+
 ## [0.0.1-alpha.6](https://github.com/foormjs/foormjs/compare/v0.0.1-alpha.5...v0.0.1-alpha.6) (2023-11-28)
 
 
