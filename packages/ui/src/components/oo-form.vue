@@ -25,7 +25,7 @@ function updateUiEntries() {
     uiEntries.value = form.genUIEntries()
 }
 
-watch([props.errors], () => {
+watch(() => props.errors, () => {
   if (props.errors) {
     innerErrors.value = props.errors
   }
