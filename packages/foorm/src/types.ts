@@ -15,6 +15,9 @@ export type TFoormEntry<FN = string> = {
     action?: string
     validateOnBlur?: boolean
     validateBeforeAction?: boolean
+    placeholder?: string,
+    hint?: string,
+    length?: number    
     bind?: Record<string, unknown>
 }
 
