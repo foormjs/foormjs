@@ -1,3 +1,18 @@
+## [0.0.1-alpha.6](https://github.com/foormjs/foormjs/compare/v0.0.1-alpha.5...v0.0.1-alpha.6) (2023-11-28)
+
+
+### Bug Fixes
+
+* fix css ([693cf87](https://github.com/foormjs/foormjs/commit/693cf878c5ed24a34c3b3b120a418ceda1ec1ab8))
+* fix textarea padding ([cab6bc2](https://github.com/foormjs/foormjs/commit/cab6bc2b686ac223e25fccbef4c60d1acc99ebe5))
+
+
+### Features
+
+* add external errors prop ([8bc6951](https://github.com/foormjs/foormjs/commit/8bc6951cda4df857430f7d0f08e81ef2df3e53ef))
+
+
+
 ## [0.0.1-alpha.5](https://github.com/foormjs/foormjs/compare/v0.0.1-alpha.4...v0.0.1-alpha.5) (2023-11-27)
 
 
