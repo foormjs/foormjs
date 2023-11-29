@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { TFeProps } from './fe/types'
 import { computed, watch, ref, nextTick, onMounted, onUnmounted } from 'vue'
-import { entryRefs } from '../composables/entry-refs'
 import { isElementFullyVisibleInContainer } from './utils';
 
 type TItems = TItem[]
@@ -16,6 +15,10 @@ const props = defineProps<Partial<TFeProps> & {
 }>()
 const modelValue = defineModel<(string | number)[] | string | number>({ local: true })
 
+const emit = defineEmits<{
+    (e: 'change'): void
+}>()
+
 const selectedForADA = computed(() => {
     if (typeof modelValue.value === 'undefined' || (typeof modelValue.value !== 'number' && modelValue.value.length === 0)) return 'None of options is selected'
     if (Array.isArray(modelValue.value)) return `Selected options: ${modelValue.value.join(', ')}`
@@ -27,7 +30,7 @@ function updateValue() {
     modelValue.value = props.type === 'single-select' ? props.value as string : (props.value ? [props.value as string] : [])
 }
 
-const { classes, check, focusableRef } = entryRefs(modelValue, props as TFeProps)
+const focusableRef = ref<HTMLOListElement>()
 const listRows = computed(() => Math.min(props.rows || 3, filtered.value.length))
 const listHeight = computed(() => listRows.value * 40)
 const filtered = computed(() => {
@@ -64,10 +67,10 @@ function onClick(item: TItem, index: number) {
     focusedItem.value = index
     const key = getKey(item) as string
     if (props.type === 'single-select') {
-        check()
+        emit('change')
         modelValue.value = key
     } else if (props.type === 'multi-select') {
-        check()
+        emit('change')
         if (!Array.isArray(modelValue.value)) {
             modelValue.value = [key]
             return
@@ -75,8 +78,6 @@ function onClick(item: TItem, index: number) {
         const selected = isSelected(item)
         if (selected) modelValue.value = modelValue.value.filter(v => v !== key)
         else modelValue.value.push(key)
-    } else if (props.type === 'action') {
-
     }
 }
 function select(offset: number) {
@@ -133,7 +134,6 @@ function onKeydown(event: KeyboardEvent) {
     :class="{
         ['oo-list-' + props.type]: props.type && true || false,
         focused,
-        error: classes.error,
     }"
     :style="{ height: listHeight + 'px' }">
 

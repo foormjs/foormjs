@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import OoBottomSlot from '../oo-bottom-slot.vue'
-import { entryRefs } from '../../composables/entry-refs'
+import { useEntryRefs } from '../../composables/entry-refs'
 import type { TFeProps } from './types'
 import OoLabel from '../oo-label.vue'
 import { computed, ref, watch, type ComponentPublicInstance } from 'vue'
@@ -16,7 +16,7 @@ const selectInput = ref('')
 const props = defineProps<Partial<TFeProps> & { rows?: number, options?: TItems, filter?: string }>()
 const showPassword = ref(false)
 
-const { classes, disabledState, validation, check, focused, onBlur, focusableRef } = entryRefs(modelValue, props as TFeProps)
+const { classes, disabledState, validation, check, focused, onBlur, focusableRef } = useEntryRefs(modelValue, props as TFeProps)
 const actualType = computed(() => {
     if (props.type === 'password') {
         return showPassword.value ? 'text' : 'password'
@@ -67,7 +67,9 @@ const popupPosition = ref(['top', '100%'])
 
 function updatePopupPos() {
     if (showPopupList.value && focusableRef.value && listRef.value) {
-        const rect = (focusableRef.value as HTMLInputElement).parentElement?.parentElement?.getBoundingClientRect()
+        const parent = (focusableRef.value as HTMLInputElement).parentElement?.parentElement
+        const rect = parent?.getBoundingClientRect()
+        console.log(parent, rect)
         const windowHeight = window.innerHeight
         const dist = windowHeight - (rect?.bottom || 0)
         if (dist < listRef.value.$el.getBoundingClientRect().height) {
@@ -79,8 +81,10 @@ function updatePopupPos() {
 }
 
 function showPopup() {
-    showPopupList.value = true
-    updatePopupPos()
+    if (!disabledState.value) {
+        showPopupList.value = true
+        updatePopupPos()
+    }
 }
 
 function removeItem(i: number, event?: MouseEvent) {
@@ -190,13 +194,17 @@ function unselect() {
         </label>
         <oo-bottom-slot
             :hint="hint"
-            :disabled="disabledState"
+            :disabled="!!disabledState"
             :error="(validation.error as string)"
         />
     </div>
 </template>
 
 <style>
+.oo-input.oo-form-entry > label {
+    position: relative;
+}
+
 .oo-list-container.oo-popup {
     position: absolute;
     left: 0;
@@ -223,6 +231,7 @@ function unselect() {
 }
 
 .oo-input-like {
+    position: relative;
     width: 100%;
     font-size: var(--oo-input-font-size);
     padding: var(--oo-input-padding);
@@ -287,6 +296,8 @@ function unselect() {
     flex-wrap: wrap;
     gap: 4px;
     width: 100%;
+    align-items: center;
+    position: relative;
 }
 
 .oo-tokens {
@@ -331,7 +342,7 @@ function unselect() {
 }
 
 .oo-input-select input {
-    width: auto;
+    width: auto!important;
 }
 
 

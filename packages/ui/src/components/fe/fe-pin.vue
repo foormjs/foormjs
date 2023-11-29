@@ -2,7 +2,7 @@
 import OoBottomSlot from '../oo-bottom-slot.vue'
 import { nextTick, watch } from 'vue'
 import type { TFeProps } from './types'
-import { entryRefs } from '../../composables/entry-refs'
+import { useEntryRefs } from '../../composables/entry-refs'
 import OoLabel from '../oo-label.vue'
 
 const modelValue = defineModel<string>({ local: true })
@@ -10,7 +10,7 @@ const props = defineProps<TFeProps>()
 
 function length() { return props.length || 4 }
 
-const { classes, disabledState, validation, focused, onBlur, focusableRef, focus } = entryRefs(modelValue, props)
+const { classes, disabledState, validation, focused, onBlur, focusableRef, focus } = useEntryRefs(modelValue, props)
 const filler = '•'
 modelValue.value = filler.repeat(length())
 function onInput(event: KeyboardEvent) {
@@ -148,7 +148,7 @@ function onPaste(event: ClipboardEvent) {
         </div>
         <oo-bottom-slot
             :hint="hint"
-            :disabled="disabledState"
+            :disabled="!!disabledState"
             :error="(validation.error as string)"
         />
     </div>

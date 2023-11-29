@@ -1,6 +1,13 @@
-import type { TFoormEntryUI } from 'foorm'
+import type { TFoormActionUI, TFoormEntryUI } from 'foorm'
 
-export type TFeProps = Omit<TFoormEntryUI, 'bind' | 'component'> & {
-    inputs: Record<string, unknown>,
+export interface TFeProps extends TFoormEntryUI {
+    inputs: Record<string, unknown>
     error?: string
+    enableValidation?: boolean
+    // bind: never
+    // component: never
+}
+
+export interface TFeActionProps extends TFoormActionUI {
+    inputs: Record<string, unknown>
 }

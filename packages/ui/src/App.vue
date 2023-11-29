@@ -2,7 +2,7 @@
 import DarkModeBtn from '@/components/dark-mode-btn.vue'
 import { onMounted } from 'vue'
 import OoForm from './components/oo-form.vue';
-import type { TFoormEntry } from 'foorm';
+import type { TFoormAction, TFoormEntry } from 'foorm';
 // import { renderFlag } from '@foormjs/flags'
 
 onMounted(() => {
@@ -27,6 +27,7 @@ const entries: TFoormEntry[] = [
     field: 'selection',
     focusable: true,
     nextFocusable: true,
+    hint: 'this is dropdown',
     validators: ['v.length > 5 || "Must be at least 5 characters long, Must be at least 5 sdafbe at least 5 sdafbe at least 5 sdaf"'],
     bind: { rows: 3, options: ['Option one', 'Option two', '3rd option', 'Four', '5TH'] },
   },
@@ -48,6 +49,7 @@ const entries: TFoormEntry[] = [
     focusable: true,
     nextFocusable: true,
     bind: { rows: 5, options: ['Option one', 'Option two', '3rd option', 'Four', '5TH', 'more options', 'one more'] },
+    validators: ['v !== \'Option one\' || "Don\'t pick Option One"']
   },
 // {
 //   label: 'Input two',
@@ -102,6 +104,17 @@ const entries: TFoormEntry[] = [
 // }
 ]
 const values = {}
+const actions: TFoormAction[] = [{
+  type: 'submit',
+  text: 'Submit',
+  classes: {
+    'full-width': 'true',
+    'bg-white':  'true',
+  },
+}]
+function onAction(action: TFoormAction) {
+  console.log(action, values)
+}
 </script>
 
 <template>
@@ -115,7 +128,7 @@ const values = {}
     <div v-html="renderFlag('RU', 100)" />
     <div v-html="renderFlag('RU', 100)" /> -->
 
-  <oo-form title="Test form" :entries="entries" :values="values" />
+  <oo-form title="Test form" :entries="entries" :values="values" :actions="actions" @action="onAction" :validate="'after-action-attempt'" />
   <dark-mode-btn class="float" />
 </template>
 

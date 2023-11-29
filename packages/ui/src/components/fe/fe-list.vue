@@ -2,7 +2,7 @@
 import type { TFeProps } from './types'
 import OoLabel from '../oo-label.vue'
 import OoBottomSlot from '../oo-bottom-slot.vue'
-import { entryRefs } from '../../composables/entry-refs'
+import { useEntryRefs } from '../../composables/entry-refs'
 import ooListInner from '../oo-list-inner.vue'
 
 type TItems = TItem[]
@@ -10,7 +10,7 @@ type TItem = string | ({ key: string | number, label: string })
 const modelValue = defineModel<(string | number)[] | string | number>({ local: true })
 const props = defineProps<Partial<TFeProps> & { rows?: number, options: TItems, filter?: string }>()
 
-const { classes, disabledState, validation, focused, onBlur, focusableRef } = entryRefs(modelValue, props as TFeProps)
+const { classes, disabledState, validation, focused, onBlur, focusableRef } = useEntryRefs(modelValue, props as TFeProps)
 </script>
 
 <template>
@@ -31,7 +31,7 @@ const { classes, disabledState, validation, focused, onBlur, focusableRef } = en
         </label>
         <oo-bottom-slot
             :hint="hint"
-            :disabled="disabledState"
+            :disabled="!!disabledState"
             :error="(validation.error as string)"
         />
     </div>
