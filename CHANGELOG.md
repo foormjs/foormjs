@@ -1,3 +1,12 @@
+## [0.0.1-alpha.8](https://github.com/foormjs/foormjs/compare/v0.0.1-alpha.7...v0.0.1-alpha.8) (2023-11-29)
+
+
+### Features
+
+* add actions and fix validations ([0676395](https://github.com/foormjs/foormjs/commit/0676395fe94ce080d40fcf0d6d922d648389c408))
+
+
+
 ## [0.0.1-alpha.7](https://github.com/foormjs/foormjs/compare/v0.0.1-alpha.6...v0.0.1-alpha.7) (2023-11-28)
 
 
