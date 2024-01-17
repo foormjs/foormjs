@@ -94,8 +94,8 @@ function createConfig(target, type, declaration = false) {
                     declarationMap: declaration,
                     removeComments: !declaration,
                     include: [
-                        'packages/*/src',
-                        'packages/*/__tests__',
+                        'packages/foorm/src',
+                        'packages/foorm/__tests__',
                         'common/*.ts',
                     ],
                     exclude: ['**/__tests__', '*.spec.ts', 'explorations'],
