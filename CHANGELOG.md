@@ -1,3 +1,7 @@
+## [0.0.2-alpha.0](https://github.com/foormjs/foormjs/compare/v0.0.1-alpha.8...v0.0.2-alpha.0) (2024-01-17)
+
+
+
 ## [0.0.1-alpha.8](https://github.com/foormjs/foormjs/compare/v0.0.1-alpha.7...v0.0.1-alpha.8) (2023-11-29)
 
 
