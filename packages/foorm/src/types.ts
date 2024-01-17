@@ -1,41 +1,54 @@
-export type TFeComponentName = 'fe-input' | 'fe-button' | 'fe-checkbox' | 'fe-pin' | 'fe-select'
+export type TFtring = { __is_ftring__: true; v: string, __type__?: 'boolean' | 'string' | 'number' }
+export type StringOrFtring = string | TFtring
+export type ObjSOF = Record<string, StringOrFtring>
 
-export type TFoormEntry<FN = string> = {
-    component: string
-    label?: string
-    type?: string
-    validators?: FN[]
-    disabled?: FN
-    classes?: FN | Record<string, FN>
-    optional?: boolean
-    field?: string
-    value?: unknown
-    focusable?: boolean
-    nextFocusable?: boolean
-    placeholder?: string,
-    hint?: string,
-    length?: number    
-    bind?: Record<string, unknown>
-}
-
-export type TDynamicFnCtx = { v?: unknown, inputs?: Record<string, unknown>, entry?: TFoormEntry | TFoormEntryUI, action?: TFoormAction | TFoormActionUI }
-export type TDynamicFn<R = boolean | string> = ((ctx: TDynamicFnCtx) => R)
-export type TFoormEntryUI = TFoormEntry<TDynamicFn> & { id: string, autoFocus?: boolean, next?: TFoormEntryUI }
-
-export type TFoormAction<FN = string> = {
-    type: 'submit' | 'link'
-    isDefault?: boolean
-    text: string
-    disabled?: FN
-    classes?: FN | Record<string, FN>
+export type TFoormFnCtx<T = string> = {
+    v?: T
+    data: Record<string, unknown>
+    entry?: TFoormEntry<T>
     action?: string
 }
+export type TFoormValidatorFn<T = string> = (ctx: TFoormFnCtx<T>) => string | boolean
+export type TFoormFn<T = string, R = string | boolean> = (
+    ctx: TFoormFnCtx<T>
+) => R
 
-export type TFoormActionUI = TFoormAction<TDynamicFn>
+export interface TFoormEntry<
+    T = string,
+    O = string,
+    SFTR = TFtring,
+    BFTR = TFtring,
+    FNFTR = TFtring
+> {
+    // description
+    label?: string | SFTR
+    description?: string | SFTR
+    hint?: string | SFTR
+    placeholder?: string | SFTR
 
-export type TFoormUiMetadata = {
-    title?: string
-    validate?: 'always' | 'on-action-only' | 'after-action-attempt' | 'never'
-    actions: TFoormActionUI[]
-    entries: TFoormEntryUI[]
+    // appearence
+    classes?: (string | SFTR) | Record<string, boolean | BFTR>
+    styles?: (string | SFTR) | Record<string, string | SFTR>
+
+    // behavior
+    type?: string
+    component?: string
+
+    // field mapping
+    name?: string
+    field: string
+    value?: T
+
+    // data options
+    options?: O[]
+
+    // additional binding attributes
+    attrs?: Record<string, unknown>
+
+    // constraits
+    optional?: boolean | BFTR
+    disabled?: boolean | BFTR
+    hidden?: boolean | BFTR
+    length?: number
+    validators?: (FNFTR | TFoormValidatorFn<T>)[]
 }

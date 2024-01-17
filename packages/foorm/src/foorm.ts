@@ -1,72 +1,167 @@
 import { FtringsPool } from '@prostojs/ftring'
-import { TDynamicFnCtx, TDynamicFn, TFoormEntry, TFoormEntryUI, TFoormAction, TFoormUiMetadata, TFoormActionUI } from './types'
+import { StringOrFtring, TFoormEntry, TFoormValidatorFn, TFoormFnCtx, TFoormFn, TFtring } from './types'
+import { isFtring } from './utils'
+
+export interface TFoormSubmit<S = TFtring, B = TFtring> {
+    text: string | S
+    disabled?: boolean | B
+}
+
+export interface TFoormOptions {
+    title?: StringOrFtring
+    entries: TFoormEntry[]
+    submit?: TFoormSubmit
+}
 
 export class Foorm {
-    public title: string
-
-    protected type = 'foorm'
-
-    private fns!: FtringsPool<ReturnType<TDynamicFn>, TDynamicFnCtx>
-
     protected entries: TFoormEntry[]
-    
-    protected actions: TFoormAction[]
 
-    constructor(opts?: { title: string, entries?: TFoormEntry[], actions?: TFoormAction[] }) {
-        this.title = opts?.title || ''
+    protected submit?: TFoormSubmit
+
+    protected title?: StringOrFtring
+
+    private fns!: FtringsPool<string | boolean, TFoormFnCtx>
+
+    constructor(opts?: TFoormOptions) {
         this.entries = opts?.entries || []
-        this.actions = opts?.actions || []
+        this.submit = opts?.submit
+        this.title = opts?.title || ''
     }
 
-    getField(name: string) {
-        return this.entries.find(e => e.field === name)
+    public addEntry(entry: TFoormEntry) {
+        this.entries.push(entry)
     }
 
-    setValue(field: string, value: unknown) {
-        const entry = this.entries.find(e => e.field === field)
-        if (entry) entry.value = value
+    public setTitle(title: string) {
+        this.title = title
     }
 
-    getEntries(): TFoormEntry[] {
-        this.entries.forEach(e => {
-            if (!e.validators) e.validators = []
-        })
-        return this.entries
+    public setSubmit(submit: TFoormSubmit) {
+        this.submit = submit
     }
 
-    setEntries(entries: TFoormEntry[]) {
-        this.entries = entries
+    public transportable(): Required<TFoormOptions> {
+        return {
+            title: this.title ?? '',
+            submit: this.submit ?? { text: 'Submit' },
+            entries: this.entries.map((e) => ({
+                ...this.normalizeEntry(e),
+                validators: (e.validators || []).filter((v) => isFtring(v)),
+            })),
+        }
     }
 
-    getActions(): TFoormAction[] {
-        return this.actions
+    protected normalizeEntry(e: TFoormEntry) {
+        return {
+            ...e,
+            name: e.name || e.field,
+            label: e.label || e.field,
+            type: e.type || 'text',
+        }
     }
 
-    setActions(actions: TFoormAction[]) {
-        this.actions = actions
-    }
-
-    getFormValidator(): ((inputs: Record<string, unknown>) => { passed: boolean, errors: Record<string, string> }) {
+    public executable() {
         if (!this.fns) this.fns = new FtringsPool()
-        const fields: Record<string, { entry: TFoormEntry, validators: TDynamicFn[] }> = {}
-        for (const entry of this.getEntries()) {
-            if (entry.validators && entry.field) {
+        return {
+            title: transformFtrings<undefined, string>(
+                this.title || '',
+                this.fns
+            ),
+            submit: {
+                text: transformFtrings<undefined, string>(
+                    this.submit?.text || 'Submit',
+                    this.fns
+                ),
+                disabled: transformFtrings<undefined, boolean>(
+                    this.submit?.disabled,
+                    this.fns
+                ),
+            },
+            entries: this.entries
+                .map((e) => this.normalizeEntry(e))
+                .map((e) => ({
+                    ...e,
+                    // strings
+                    label: transformFtrings<unknown, string>(e.label, this.fns),
+                    description: transformFtrings<unknown, string>(
+                        e.description,
+                        this.fns
+                    ),
+                    hint: transformFtrings<unknown, unknown>(e.hint, this.fns),
+                    placeholder: transformFtrings<unknown, string>(
+                        e.placeholder,
+                        this.fns
+                    ),
+                    // strings || objects
+                    classes: transformFtringsInObj(e.classes, this.fns),
+                    styles: transformFtringsInObj<unknown, string, string>(
+                        e.styles,
+                        this.fns
+                    ),
+                    // booleans
+                    optional: transformFtrings<unknown, boolean>(
+                        e.optional,
+                        this.fns
+                    ),
+                    disabled: transformFtrings<unknown, boolean>(
+                        e.disabled,
+                        this.fns
+                    ),
+                    hidden: transformFtrings<unknown, boolean>(
+                        e.hidden,
+                        this.fns
+                    ),
+                })),
+        }
+    }
+
+    getValidator(): (inputs: Record<string, unknown>) => {
+        passed: boolean
+        errors: Record<string, string>
+        } {
+        if (!this.fns) this.fns = new FtringsPool()
+        const entries = this.executable().entries
+        const fields: Record<
+            string,
+            { entry: typeof entries[0]; validators: TFoormValidatorFn[] }
+        > = {}
+        for (const entry of entries) {
+            if (entry.field) {
                 fields[entry.field] = {
                     entry,
-                    validators: entry.validators.map(v => this.fns.getFn(v)),
+                    validators: (entry.validators || []).map((v) =>
+                        isFtring(v) ? this.fns.getFn(v.v) : v
+                    ),
                 }
-                if (!entry.optional) fields[entry.field].validators.unshift(this.fns.getFn('!!v || "Required"'))
             }
+            fields[entry.field].validators.unshift(
+                this.fns.getFn('entry.optional || !!v || "Required"')
+            )
         }
-        return (inputs: Record<string, unknown>) => {
+        return (data: Record<string, unknown>) => {
             let passed = true
             const errors: Record<string, string> = {}
             for (const [key, value] of Object.entries(fields)) {
-                const result = validate({
-                    v: inputs[key],
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const evalEntry = { ...value.entry }
+                const ctx = {
+                    v: data[key],
                     validators: value.validators,
-                    entry: value.entry,
-                    inputs,
+                    entry: value.entry as TFoormEntry<unknown>,
+                    data,
+                }
+                if (typeof evalEntry.optional === 'function') {
+                    evalEntry.optional = evalEntry.optional(ctx)
+                }
+                if (typeof evalEntry.disabled === 'function') {
+                    evalEntry.disabled = evalEntry.disabled(ctx)
+                }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const result = validate<any>({
+                    v: data[key],
+                    validators: value.validators,
+                    entry: evalEntry as TFoormEntry,
+                    data,
                 })
                 if (!result.passed) {
                     passed = false
@@ -81,105 +176,59 @@ export class Foorm {
             }
         }
     }
-
-    genUIEntries(): TFoormEntryUI[] {
-        if (!this.fns) this.fns = new FtringsPool()
-        let autoFocusAttached = false
-        const uiEntries: TFoormEntryUI[] = []
-        for (const entry of this.getEntries()) {
-            const uiEntry = Object.assign({}, entry) as TFoormEntryUI
-
-            // apply autofocus to the first focusable element of this form
-            if (!autoFocusAttached && entry.focusable) {
-                autoFocusAttached = true
-                uiEntry.autoFocus = true
-            }
-
-            // create dynamic validators
-            if (entry.validators) {
-                uiEntry.validators = entry.validators.map(v => this.fns.getFn(v))
-            }
-            if (!uiEntry.validators) uiEntry.validators = []
-            if (!entry.optional) uiEntry.validators.unshift(entry.type === 'multi-select' ? this.fns.getFn('(!!v && !!v.length) || "Required"') : this.fns.getFn('!!v || "Required"'))
-            // create dynamic classes
-            if (entry.classes) {
-                uiEntry.classes = evalFtringObject(entry.classes, this.fns)
-            }
-            // create dynamic disabled
-            if (entry.disabled) {
-                uiEntry.disabled = this.fns.getFn(entry.disabled)
-            }
-
-            uiEntries.push(uiEntry)
-
-            // assign next focus on enter
-            let next: TFoormEntryUI | undefined = undefined
-            for (let i = uiEntries.length - 1; i >= 0; i--) {
-                const uiEntry = uiEntries[i]
-                uiEntry.id = [uiEntry.field, uiEntry.type, i].join('-')
-                if (uiEntry.nextFocusable) {
-                    if (next) {
-                        uiEntry.next = next
-                    }
-                    next = uiEntry
-                }
-            }
-        }
-
-        return uiEntries
-    }
-
-    genUiActions(): TFoormActionUI[] {
-        const uiActions: TFoormActionUI[] = []
-        for (const action of this.getActions()) {
-            uiActions.push({
-                classes: action.classes && evalFtringObject(action.classes, this.fns) || undefined,
-                text: action.text,
-                type: action.type,
-                action: action.action,
-                isDefault: action.isDefault,
-                disabled: action.disabled ? this.fns.getFn(action.disabled) : undefined
-            })
-        }
-        return uiActions
-    }
-
-    getUiMetadata(): TFoormUiMetadata {
-        return {
-            title: this.title,
-            entries: this.genUIEntries(),
-            actions: this.genUiActions(),
-        }
-    }
 }
 
-export function validate(opts: {
-    v: unknown,
-    inputs?: Record<string, unknown>
-    entry?: TFoormEntry
-    validators: TDynamicFn[]
+export type TFoormExecutableMeta = ReturnType<Foorm['executable']>
+
+export function validate<T = string>(opts: {
+    v: T
+    data: Record<string, unknown>
+    entry?: TFoormEntry<T>
+    validators: TFoormValidatorFn<T>[]
 }) {
-    for (const validator of (opts.validators || [])) {
-        const result = validator({ v: opts.v || '', inputs: opts.inputs, entry: opts.entry })
+    for (const validator of opts.validators || []) {
+        const result = validator({
+            v: opts.v,
+            data: opts.data,
+            entry: opts.entry,
+        })
         if (result !== true) {
             return {
                 passed: false,
-                error: (result || 'Wrong value'),
+                error: result || 'Wrong value',
             }
         }
     }
     return { passed: true }
 }
 
-function evalFtringObject(o: string | Record<string, string>, ftring: FtringsPool<ReturnType<TDynamicFn>, TDynamicFnCtx>): ((__ctx__: TDynamicFnCtx) => string | boolean) | Record<string, (__ctx__: TDynamicFnCtx) => string | boolean> {
-    let result: ((__ctx__: TDynamicFnCtx) => string | boolean) | Record<string, (__ctx__: TDynamicFnCtx) => string | boolean>
-    if (typeof o === 'string') {
-        result = ftring.getFn(o)
-    } else {
-        result = {}
-        for (const [key, value] of Object.entries(o)) {
-            result[key] = ftring.getFn(value)
+function transformFtrings<T, R>(
+    value: undefined | R | TFtring | TFoormFn<T, R>,
+    fns: FtringsPool<string | boolean, TFoormFnCtx>
+): R | TFoormFn<T, R> {
+    if (typeof value === 'undefined') return value as R
+    return isFtring(value)
+        ? (fns.getFn(value.v) as unknown as TFoormFn<T, R>)
+        : value
+}
+
+function transformFtringsInObj<T = unknown, S = string, B = boolean>(
+    value:
+        | undefined
+        | S
+        | TFtring
+        | TFoormFn<T, S>
+        | Record<string, undefined | B | TFtring | TFoormFn<T, B>>,
+    fns: FtringsPool<string | boolean, TFoormFnCtx>
+): S | TFoormFn<T, S> | Record<string, B | TFoormFn<T, B>> {
+    if (isFtring(value)) return transformFtrings<T, S>(value, fns)
+    if (typeof value === 'function') return value
+    if (typeof value === 'object' && value !== null) {
+        const obj: Record<string, B | TFoormFn<T, B>> = {}
+        for (const [key, val] of Object.entries(value)) {
+            obj[key] = transformFtrings<T, B>(val as B, fns)
         }
+        return obj
     }
-    return result
+    return value as S
 }

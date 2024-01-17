@@ -5,6 +5,7 @@
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "private": true,
   "sideEffects": false,
   "scripts": {
     "dev": "vite --force",
