@@ -51,7 +51,7 @@ export class Foorm {
         }
     }
 
-    protected normalizeEntry(e: TFoormEntry): TFoormEntry {
+    protected normalizeEntry<T, O>(e: TFoormEntry<T, O>): TFoormEntry<T, O> {
         return {
             ...e,
             name: e.name || e.field,
@@ -94,7 +94,7 @@ export class Foorm {
                         e.description,
                         this.fns
                     ),
-                    hint: transformFtrings<unknown, unknown>(e.hint, this.fns),
+                    hint: transformFtrings<unknown, string>(e.hint, this.fns),
                     placeholder: transformFtrings<unknown, string>(
                         e.placeholder,
                         this.fns
@@ -118,6 +118,9 @@ export class Foorm {
                         e.hidden,
                         this.fns
                     ),
+                    validators: this.prepareValidators(
+                        e.validators
+                    ) as TFoormValidatorFn<unknown>[],
                 })),
         }
     }
@@ -157,25 +160,34 @@ export class Foorm {
             let passed = true
             const errors: Record<string, string> = {}
             for (const [key, value] of Object.entries(fields)) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const evalEntry = { ...value.entry }
-                const ctx = {
+                const ctx: TFoormFnCtx<unknown> = {
                     v: data[key],
-                    validators: value.validators,
-                    entry: value.entry as TFoormEntry<unknown>,
+                    entry: {
+                        field: evalEntry.field,
+                        type: evalEntry.type,
+                        component: evalEntry.component,
+                        name: evalEntry.name,
+                        length: evalEntry.length,
+                    },
                     data,
                 }
-                if (typeof evalEntry.optional === 'function') {
-                    evalEntry.optional = evalEntry.optional(ctx)
-                }
-                if (typeof evalEntry.disabled === 'function') {
-                    evalEntry.disabled = evalEntry.disabled(ctx)
+                if (ctx.entry) {
+                    if (typeof evalEntry.disabled === 'function') {
+                        ctx.entry.disabled = evalEntry.disabled = evalEntry.disabled(ctx)
+                    }
+                    if (typeof evalEntry.optional === 'function') {
+                        ctx.entry.optional = evalEntry.optional = evalEntry.optional(ctx)
+                    }
+                    if (typeof evalEntry.hidden === 'function') {
+                        ctx.entry.hidden = evalEntry.hidden = evalEntry.hidden(ctx)
+                    }
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const result = validate<any>({
                     v: data[key],
                     validators: value.validators,
-                    entry: evalEntry as TFoormEntry,
+                    entry: ctx.entry,
                     data,
                 })
                 if (!result.passed) {
@@ -196,10 +208,7 @@ export class Foorm {
 export type TFoormExecutableMeta = ReturnType<Foorm['executable']>
 export type TFoormExecutableEntry = TFoormExecutableMeta['entries'][number]
 
-export function validate<T = string>(opts: {
-    v: T
-    data: Record<string, unknown>
-    entry?: TFoormEntry<T>
+export function validate<T = string>(opts: TFoormFnCtx<T> & {
     validators: TFoormValidatorFn<T>[]
 }) {
     for (const validator of opts.validators || []) {

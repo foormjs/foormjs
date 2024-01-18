@@ -121,11 +121,8 @@ describe('foorm', () => {
       "styles": "max-width: 255px",
       "type": "text",
       "validators": [
-        {
-          "__is_ftring__": true,
-          "__type__": undefined,
-          "v": "v.length > 10",
-        },
+        [Function],
+        [Function],
         [Function],
       ],
     },
@@ -145,9 +142,13 @@ describe('foorm', () => {
         "min-height": "100px",
       },
       "type": "type-2",
+      "validators": [
+        [Function],
+      ],
     },
   ],
   "submit": {
+    "disabled": undefined,
     "text": [Function],
   },
   "title": [Function],

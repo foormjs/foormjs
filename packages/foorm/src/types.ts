@@ -5,13 +5,20 @@ export type ObjSOF = Record<string, StringOrFtring>
 export type TFoormFnCtx<T = string> = {
     v?: T
     data: Record<string, unknown>
-    entry?: TFoormEntry<T>
+    entry?: Pick<TFoormEntry<T, unknown, string, boolean>, TRelevantFields> & { optional?: boolean; disabled?: boolean; hidden?: boolean }
     action?: string
 }
 export type TFoormValidatorFn<T = string> = (ctx: TFoormFnCtx<T>) => string | boolean
 export type TFoormFn<T = string, R = string | boolean> = (
     ctx: TFoormFnCtx<T>
 ) => R
+
+type TRelevantFields = 'field' |
+'type' |
+'component' |
+'name' |
+'attrs' |
+'length'
 
 export interface TFoormEntry<
     T = string,
@@ -21,7 +28,7 @@ export interface TFoormEntry<
     FNFTR = TFtring
 > {
     field: string
-    
+
     // description
     label?: string | SFTR
     description?: string | SFTR
@@ -54,7 +61,9 @@ export interface TFoormEntry<
     validators?: (FNFTR | TFoormValidatorFn<T>)[]
 }
 
-export type TFoormEntryExecutable<T = string, O = string> = TFoormEntry<
+// type RequireProps<T, K extends keyof T> = T & Required<Pick<T, K>>
+
+export type TFoormEntryExecutable<T = unknown, O = string> = TFoormEntry<
     T,
     O,
     TFoormFn<T, string>,
