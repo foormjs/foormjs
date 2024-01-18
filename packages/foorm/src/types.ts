@@ -42,6 +42,7 @@ export interface TFoormEntry<
     // behavior
     type?: string
     component?: string
+    autocomplete?: string
 
     // field mapping
     name?: string
