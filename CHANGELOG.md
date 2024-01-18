@@ -1,3 +1,12 @@
+## [0.0.2-alpha.5](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.4...v0.0.2-alpha.5) (2024-01-18)
+
+
+### Features
+
+* add static context to scope and form ([bf5d7dc](https://github.com/foormjs/foormjs/commit/bf5d7dc83c68d3d736a35613d6ab7d9896bdd4dc))
+
+
+
 ## [0.0.2-alpha.4](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.3...v0.0.2-alpha.4) (2024-01-18)
 
 
