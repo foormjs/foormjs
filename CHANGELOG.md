@@ -1,3 +1,12 @@
+## [0.0.2-alpha.4](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.3...v0.0.2-alpha.4) (2024-01-18)
+
+
+### Features
+
+* add autocomplete prop ([03a00b3](https://github.com/foormjs/foormjs/commit/03a00b3b9e7f24654640915377986a46d5397d26))
+
+
+
 ## [0.0.2-alpha.3](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.2...v0.0.2-alpha.3) (2024-01-18)
 
 
