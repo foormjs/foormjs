@@ -1,7 +1,7 @@
 {
   "name": "@foormjs/flags",
   "private": true,
-  "version": "0.0.2-alpha.2",
+  "version": "0.0.2-alpha.3",
   "description": "@foormjs/flags",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",

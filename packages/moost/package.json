@@ -1,6 +1,6 @@
 {
   "name": "@foormjs/moost",
-  "version": "0.0.2-alpha.2",
+  "version": "0.0.2-alpha.3",
   "private": true,
   "description": "@foormjs/moost",
   "main": "dist/index.cjs",
