@@ -1,6 +1,6 @@
 {
   "name": "foormjs",
-  "version": "0.0.2-alpha.0",
+  "version": "0.0.2-alpha.1",
   "description": "Backend-driven dynamic forms with dual-end validation for seamless data collection",
   "main": "index.js",
   "type": "module",
