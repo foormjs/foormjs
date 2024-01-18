@@ -1,5 +1,5 @@
 import { FtringsPool } from '@prostojs/ftring'
-import { StringOrFtring, TFoormEntry, TFoormValidatorFn, TFoormFnCtx, TFoormFn, TFtring, TFoormEntryExecutable } from './types'
+import { StringOrFtring, TFoormEntry, TFoormValidatorFn, TFoormFnScope, TFoormFn, TFtring, TFoormEntryExecutable } from './types'
 import { isFtring } from './utils'
 
 export interface TFoormSubmit<S = TFtring, B = TFtring> {
@@ -11,6 +11,7 @@ export interface TFoormOptions {
     title?: StringOrFtring
     entries: TFoormEntry[]
     submit?: TFoormSubmit
+    context?: Record<string, unknown>
 }
 
 export class Foorm {
@@ -20,12 +21,15 @@ export class Foorm {
 
     protected title?: StringOrFtring
 
-    private fns!: FtringsPool<string | boolean, TFoormFnCtx>
+    protected context: Record<string, unknown>
+
+    private fns!: FtringsPool<string | boolean, TFoormFnScope>
 
     constructor(opts?: TFoormOptions) {
         this.entries = opts?.entries || []
         this.submit = opts?.submit
         this.title = opts?.title || ''
+        this.context = opts?.context || {}
     }
 
     public addEntry(entry: TFoormEntry) {
@@ -40,10 +44,24 @@ export class Foorm {
         this.submit = submit
     }
 
-    public transportable(): Required<TFoormOptions> {
+    public setContext<T extends Record<string, unknown>>(context: T) {
+        this.context = context
+    }
+
+    /**
+     * Normalizes form metadata and removes all the functions
+     * from validators.
+     * 
+     * @param replaceContext a context to be transported along with metadata
+     * @returns form metadata without functions
+     */
+    public transportable<T extends Record<string, unknown>>(
+        replaceContext?: T
+    ): Required<TFoormOptions> & { context?: Record<string, unknown> } {
         return {
             title: this.title ?? '',
             submit: this.submit ?? { text: 'Submit' },
+            context: replaceContext || this.context,
             entries: this.entries.map((e) => ({
                 ...this.normalizeEntry(e),
                 validators: (e.validators || []).filter((v) => isFtring(v)),
@@ -66,12 +84,18 @@ export class Foorm {
         }
     }
 
+    /**
+     * Evaluates all the ftrings into functions, makes it ready for execution
+     * 
+     * @returns form metadata with functions
+     */
     public executable(): {
         title: string | TFoormFn<undefined, string>
         submit: {
             text: string | TFoormFn<undefined, string>
             disabled: boolean | TFoormFn<undefined, boolean>
         }
+        context: Record<string, unknown>
         entries: TFoormEntryExecutable[]
         } {
         if (!this.fns) this.fns = new FtringsPool()
@@ -90,6 +114,7 @@ export class Foorm {
                     this.fns
                 ),
             },
+            context: this.context,
             entries: this.entries
                 .map((e) => this.normalizeEntry(e))
                 .map((e) => ({
@@ -167,8 +192,9 @@ export class Foorm {
             const errors: Record<string, string> = {}
             for (const [key, value] of Object.entries(fields)) {
                 const evalEntry = { ...value.entry }
-                const ctx: TFoormFnCtx<unknown> = {
+                const scope: TFoormFnScope<unknown> = {
                     v: data[key],
+                    context: this.context,
                     entry: {
                         field: evalEntry.field,
                         type: evalEntry.type,
@@ -178,25 +204,26 @@ export class Foorm {
                     },
                     data,
                 }
-                if (ctx.entry) {
+                if (scope.entry) {
                     if (typeof evalEntry.disabled === 'function') {
-                        ctx.entry.disabled = evalEntry.disabled =
-                            evalEntry.disabled(ctx)
+                        scope.entry.disabled = evalEntry.disabled =
+                            evalEntry.disabled(scope)
                     }
                     if (typeof evalEntry.optional === 'function') {
-                        ctx.entry.optional = evalEntry.optional =
-                            evalEntry.optional(ctx)
+                        scope.entry.optional = evalEntry.optional =
+                            evalEntry.optional(scope)
                     }
                     if (typeof evalEntry.hidden === 'function') {
-                        ctx.entry.hidden = evalEntry.hidden =
-                            evalEntry.hidden(ctx)
+                        scope.entry.hidden = evalEntry.hidden =
+                            evalEntry.hidden(scope)
                     }
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const result = validate<any>({
                     v: data[key],
+                    context: this.context,
                     validators: value.validators,
-                    entry: ctx.entry,
+                    entry: scope.entry,
                     data,
                 })
                 if (!result.passed) {
@@ -217,12 +244,13 @@ export class Foorm {
 export type TFoormExecutableMeta = ReturnType<Foorm['executable']>
 export type TFoormExecutableEntry = TFoormExecutableMeta['entries'][number]
 
-export function validate<T = string>(opts: TFoormFnCtx<T> & {
+export function validate<T = string>(opts: TFoormFnScope<T> & {
     validators: TFoormValidatorFn<T>[]
 }) {
     for (const validator of opts.validators || []) {
         const result = validator({
             v: opts.v,
+            context: opts.context,
             data: opts.data,
             entry: opts.entry,
         })
@@ -238,7 +266,7 @@ export function validate<T = string>(opts: TFoormFnCtx<T> & {
 
 function transformFtrings<T, R>(
     value: undefined | R | TFtring | TFoormFn<T, R>,
-    fns: FtringsPool<string | boolean, TFoormFnCtx>
+    fns: FtringsPool<string | boolean, TFoormFnScope>
 ): R | TFoormFn<T, R> {
     if (typeof value === 'undefined') return value as R
     return isFtring(value)
@@ -253,7 +281,7 @@ function transformFtringsInObj<T = unknown, S = string, B = boolean>(
         | TFtring
         | TFoormFn<T, S>
         | Record<string, undefined | B | TFtring | TFoormFn<T, B>>,
-    fns: FtringsPool<string | boolean, TFoormFnCtx>
+    fns: FtringsPool<string | boolean, TFoormFnScope>
 ): S | TFoormFn<T, S> | Record<string, B | TFoormFn<T, B>> {
     if (isFtring(value)) return transformFtrings<T, S>(value, fns)
     if (typeof value === 'function') return value

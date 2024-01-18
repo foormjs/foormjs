@@ -2,15 +2,16 @@ export type TFtring = { __is_ftring__: true; v: string, __type__?: 'boolean' | '
 export type StringOrFtring = string | TFtring
 export type ObjSOF = Record<string, StringOrFtring>
 
-export type TFoormFnCtx<T = string> = {
+export type TFoormFnScope<T = string> = {
     v?: T
     data: Record<string, unknown>
+    context: Record<string, unknown>
     entry?: Pick<TFoormEntry<T, unknown, string, boolean>, TRelevantFields> & { optional?: boolean; disabled?: boolean; hidden?: boolean }
     action?: string
 }
-export type TFoormValidatorFn<T = string> = (ctx: TFoormFnCtx<T>) => string | boolean
+export type TFoormValidatorFn<T = string> = (ctx: TFoormFnScope<T>) => string | boolean
 export type TFoormFn<T = string, R = string | boolean> = (
-    ctx: TFoormFnCtx<T>
+    ctx: TFoormFnScope<T>
 ) => R
 
 type TRelevantFields = 'field' |

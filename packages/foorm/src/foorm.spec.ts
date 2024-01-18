@@ -35,6 +35,7 @@ describe('foorm', () => {
     it('must prepare transferable object', () => {
         expect(foorm.transportable()).toMatchInlineSnapshot(`
 {
+  "context": {},
   "entries": [
     {
       "classes": "class-a class-b",
@@ -106,6 +107,7 @@ describe('foorm', () => {
     it('must prepare executable object', () => {
         expect(foorm.executable()).toMatchInlineSnapshot(`
 {
+  "context": {},
   "entries": [
     {
       "classes": "class-a class-b",
