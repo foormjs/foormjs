@@ -208,14 +208,20 @@ export class Foorm {
                     if (typeof evalEntry.disabled === 'function') {
                         scope.entry.disabled = evalEntry.disabled =
                             evalEntry.disabled(scope)
+                    } else {
+                        scope.entry.disabled = evalEntry.disabled
                     }
                     if (typeof evalEntry.optional === 'function') {
                         scope.entry.optional = evalEntry.optional =
                             evalEntry.optional(scope)
+                    } else {
+                        scope.entry.optional = evalEntry.optional
                     }
                     if (typeof evalEntry.hidden === 'function') {
                         scope.entry.hidden = evalEntry.hidden =
                             evalEntry.hidden(scope)
+                    } else {
+                        scope.entry.hidden = evalEntry.hidden
                     }
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
