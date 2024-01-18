@@ -1,3 +1,12 @@
+## [0.0.2-alpha.6](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.5...v0.0.2-alpha.6) (2024-01-18)
+
+
+### Bug Fixes
+
+* pass boolean entry props to scope ([c3b1ce5](https://github.com/foormjs/foormjs/commit/c3b1ce53d7e987a4aecb1732069170a12bcd1ef7))
+
+
+
 ## [0.0.2-alpha.5](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.4...v0.0.2-alpha.5) (2024-01-18)
 
 
