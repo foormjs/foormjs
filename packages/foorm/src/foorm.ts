@@ -1,5 +1,5 @@
 import { FtringsPool } from '@prostojs/ftring'
-import { StringOrFtring, TFoormEntry, TFoormValidatorFn, TFoormFnCtx, TFoormFn, TFtring } from './types'
+import { StringOrFtring, TFoormEntry, TFoormValidatorFn, TFoormFnCtx, TFoormFn, TFtring, TFoormEntryExecutable } from './types'
 import { isFtring } from './utils'
 
 export interface TFoormSubmit<S = TFtring, B = TFtring> {
@@ -51,7 +51,7 @@ export class Foorm {
         }
     }
 
-    protected normalizeEntry(e: TFoormEntry) {
+    protected normalizeEntry(e: TFoormEntry): TFoormEntry {
         return {
             ...e,
             name: e.name || e.field,
@@ -60,7 +60,14 @@ export class Foorm {
         }
     }
 
-    public executable() {
+    public executable(): {
+        title: string | TFoormFn<undefined, string>
+        submit: {
+            text: string | TFoormFn<undefined, string>
+            disabled: boolean | TFoormFn<undefined, boolean>
+        }
+        entries: TFoormEntryExecutable
+        } {
         if (!this.fns) this.fns = new FtringsPool()
         return {
             title: transformFtrings<undefined, string>(
@@ -115,7 +122,17 @@ export class Foorm {
         }
     }
 
-    getValidator(): (inputs: Record<string, unknown>) => {
+    prepareValidators(_validators: TFoormEntry['validators']) {
+        const validators = (_validators || []).map((v) =>
+            isFtring(v) ? this.fns.getFn(v.v) : v
+        )
+        validators.unshift(
+            this.fns.getFn('entry.optional || !!v || "Required"')
+        )
+        return validators
+    }
+
+    getFormValidator(): (inputs: Record<string, unknown>) => {
         passed: boolean
         errors: Record<string, string>
         } {
@@ -123,15 +140,13 @@ export class Foorm {
         const entries = this.executable().entries
         const fields: Record<
             string,
-            { entry: typeof entries[0]; validators: TFoormValidatorFn[] }
+            { entry: (typeof entries)[number]; validators: TFoormValidatorFn[] }
         > = {}
         for (const entry of entries) {
             if (entry.field) {
                 fields[entry.field] = {
                     entry,
-                    validators: (entry.validators || []).map((v) =>
-                        isFtring(v) ? this.fns.getFn(v.v) : v
-                    ),
+                    validators: this.prepareValidators(entry.validators),
                 }
             }
             fields[entry.field].validators.unshift(
@@ -179,6 +194,7 @@ export class Foorm {
 }
 
 export type TFoormExecutableMeta = ReturnType<Foorm['executable']>
+export type TFoormExecutableEntry = TFoormExecutableMeta['entries'][number]
 
 export function validate<T = string>(opts: {
     v: T

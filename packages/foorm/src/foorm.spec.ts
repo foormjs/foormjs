@@ -156,7 +156,7 @@ describe('foorm', () => {
     })
     it('must prepare validator', () => {
         expect(
-            foorm.getValidator()({
+            foorm.getFormValidator()({
                 input: 't',
                 'field-2': '',
             })
@@ -169,7 +169,7 @@ describe('foorm', () => {
 }
 `)
         expect(
-            foorm.getValidator()({
+            foorm.getFormValidator()({
                 input: 'test 123456789',
                 'field-2': '',
             })

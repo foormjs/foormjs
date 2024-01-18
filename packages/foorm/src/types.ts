@@ -20,6 +20,8 @@ export interface TFoormEntry<
     BFTR = TFtring,
     FNFTR = TFtring
 > {
+    field: string
+    
     // description
     label?: string | SFTR
     description?: string | SFTR
@@ -36,7 +38,6 @@ export interface TFoormEntry<
 
     // field mapping
     name?: string
-    field: string
     value?: T
 
     // data options
@@ -52,3 +53,11 @@ export interface TFoormEntry<
     length?: number
     validators?: (FNFTR | TFoormValidatorFn<T>)[]
 }
+
+export type TFoormEntryExecutable<T = string, O = string> = TFoormEntry<
+    T,
+    O,
+    TFoormFn<T, string>,
+    TFoormFn<T, boolean>,
+    TFoormValidatorFn<T>
+>
