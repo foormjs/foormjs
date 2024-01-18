@@ -51,7 +51,9 @@ export class Foorm {
         }
     }
 
-    protected normalizeEntry<T, O>(e: TFoormEntry<T, O>): TFoormEntry<T, O> {
+    protected normalizeEntry<T, O>(
+        e: TFoormEntry<T, O>
+    ): RequireProps<TFoormEntry<T, O>, 'label' | 'name' | 'type'> {
         return {
             ...e,
             name: e.name || e.field,
@@ -174,13 +176,16 @@ export class Foorm {
                 }
                 if (ctx.entry) {
                     if (typeof evalEntry.disabled === 'function') {
-                        ctx.entry.disabled = evalEntry.disabled = evalEntry.disabled(ctx)
+                        ctx.entry.disabled = evalEntry.disabled =
+                            evalEntry.disabled(ctx)
                     }
                     if (typeof evalEntry.optional === 'function') {
-                        ctx.entry.optional = evalEntry.optional = evalEntry.optional(ctx)
+                        ctx.entry.optional = evalEntry.optional =
+                            evalEntry.optional(ctx)
                     }
                     if (typeof evalEntry.hidden === 'function') {
-                        ctx.entry.hidden = evalEntry.hidden = evalEntry.hidden(ctx)
+                        ctx.entry.hidden = evalEntry.hidden =
+                            evalEntry.hidden(ctx)
                     }
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -257,3 +262,5 @@ function transformFtringsInObj<T = unknown, S = string, B = boolean>(
     }
     return value as S
 }
+
+type RequireProps<T, K extends keyof T> = T & Required<Pick<T, K>>
