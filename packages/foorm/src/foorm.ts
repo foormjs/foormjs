@@ -66,7 +66,7 @@ export class Foorm {
             text: string | TFoormFn<undefined, string>
             disabled: boolean | TFoormFn<undefined, boolean>
         }
-        entries: TFoormEntryExecutable
+        entries: TFoormEntryExecutable[]
         } {
         if (!this.fns) this.fns = new FtringsPool()
         return {
@@ -140,7 +140,7 @@ export class Foorm {
         const entries = this.executable().entries
         const fields: Record<
             string,
-            { entry: (typeof entries)[number]; validators: TFoormValidatorFn[] }
+            { entry: TFoormEntryExecutable; validators: TFoormValidatorFn[] }
         > = {}
         for (const entry of entries) {
             if (entry.field) {
