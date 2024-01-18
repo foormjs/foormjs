@@ -53,7 +53,11 @@ export class Foorm {
 
     protected normalizeEntry<T, O>(
         e: TFoormEntry<T, O>
-    ): RequireProps<TFoormEntry<T, O>, 'label' | 'name' | 'type'> {
+    ): TFoormEntry<T, O> & {
+        name: string
+        label: string | TFtring
+        type: string
+    } {
         return {
             ...e,
             name: e.name || e.field,
@@ -262,5 +266,3 @@ function transformFtringsInObj<T = unknown, S = string, B = boolean>(
     }
     return value as S
 }
-
-type RequireProps<T, K extends keyof T> = T & Required<Pick<T, K>>

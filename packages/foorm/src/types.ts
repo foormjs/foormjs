@@ -61,15 +61,10 @@ export interface TFoormEntry<
     validators?: (FNFTR | TFoormValidatorFn<T>)[]
 }
 
-type RequireProps<T, K extends keyof T> = T & Required<Pick<T, K>>
-
-export type TFoormEntryExecutable<T = unknown, O = string> = RequireProps<
-    TFoormEntry<
-        T,
-        O,
-        TFoormFn<T, string>,
-        TFoormFn<T, boolean>,
-        TFoormValidatorFn<T>
-    >,
-    'name' | 'label' | 'type'
->
+export type TFoormEntryExecutable<T = unknown, O = string> = TFoormEntry<
+    T,
+    O,
+    TFoormFn<T, string>,
+    TFoormFn<T, boolean>,
+    TFoormValidatorFn<T>
+> & { name: string; label: string | TFoormFn<T, string>; type: string }
