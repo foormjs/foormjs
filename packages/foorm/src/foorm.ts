@@ -56,7 +56,8 @@ export class Foorm {
      * @returns form metadata without functions
      */
     public transportable<T extends Record<string, unknown>>(
-        replaceContext?: T
+        replaceContext?: T,
+        replaceValues?: Record<string, unknown>,
     ): Required<TFoormOptions> & { context?: Record<string, unknown> } {
         return {
             title: this.title ?? '',
@@ -64,6 +65,7 @@ export class Foorm {
             context: replaceContext || this.context,
             entries: this.entries.map((e) => ({
                 ...e,
+                value: replaceValues ? replaceValues[e.field] as typeof e.value : e.value,
                 validators: (e.validators || []).filter((v) => isFtring(v)),
             })),
         }
