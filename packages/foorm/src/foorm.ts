@@ -1,5 +1,5 @@
 import { FtringsPool } from '@prostojs/ftring'
-import { StringOrFtring, TFoormEntry, TFoormValidatorFn, TFoormFnScope, TFoormFn, TFtring, TFoormEntryExecutable } from './types'
+import { StringOrFtring, TFoormEntry, TFoormValidatorFn, TFoormFnScope, TFoormFn, TFtring, TFoormEntryExecutable, TFoormMetaExecutable } from './types'
 import { isFtring } from './utils'
 
 export interface TFoormSubmit<S = TFtring, B = TFtring> {
@@ -89,15 +89,7 @@ export class Foorm {
      * 
      * @returns form metadata with functions
      */
-    public executable(): {
-        title: string | TFoormFn<undefined, string>
-        submit: {
-            text: string | TFoormFn<undefined, string>
-            disabled: boolean | TFoormFn<undefined, boolean>
-        }
-        context: Record<string, unknown>
-        entries: TFoormEntryExecutable[]
-        } {
+    public executable(): TFoormMetaExecutable {
         if (!this.fns) this.fns = new FtringsPool()
         return {
             title: transformFtrings<undefined, string>(

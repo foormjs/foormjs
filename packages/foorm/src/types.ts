@@ -71,3 +71,13 @@ export type TFoormEntryExecutable<T = unknown, O = string> = TFoormEntry<
     TFoormFn<T, boolean>,
     TFoormValidatorFn<T>
 > & { name: string; label: string | TFoormFn<T, string>; type: string }
+
+export type TFoormMetaExecutable = {
+    title: string | TFoormFn<undefined, string>
+    submit: {
+        text: string | TFoormFn<undefined, string>
+        disabled: boolean | TFoormFn<undefined, boolean>
+    }
+    context: Record<string, unknown>
+    entries: TFoormEntryExecutable[]
+}
