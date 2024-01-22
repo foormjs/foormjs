@@ -1,3 +1,12 @@
+## [0.0.2-alpha.10](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.9...v0.0.2-alpha.10) (2024-01-22)
+
+
+### Features
+
+* add createFormData method ([b33376d](https://github.com/foormjs/foormjs/commit/b33376d074a1645e00503af4caa3fff44b0c4aa6))
+
+
+
 ## [0.0.2-alpha.9](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.8...v0.0.2-alpha.9) (2024-01-22)
 
 
