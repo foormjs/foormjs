@@ -29,6 +29,7 @@ export interface TFoormEntry<
     FNFTR = TFtring
 > {
     field: string
+    altAction?: string
 
     // description
     label?: string | SFTR
@@ -52,7 +53,7 @@ export interface TFoormEntry<
     // data options
     options?: O[]
 
-    // additional binding attributes
+    // additional attributes
     attrs?: Record<string, unknown>
 
     // constraits

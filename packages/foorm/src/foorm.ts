@@ -63,7 +63,7 @@ export class Foorm {
             submit: this.submit ?? { text: 'Submit' },
             context: replaceContext || this.context,
             entries: this.entries.map((e) => ({
-                ...this.normalizeEntry(e),
+                ...e,
                 validators: (e.validators || []).filter((v) => isFtring(v)),
             })),
         }
