@@ -1,3 +1,12 @@
+## [0.0.2-alpha.8](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.7...v0.0.2-alpha.8) (2024-01-22)
+
+
+### Features
+
+* add "supportsAltAction" method ([06db902](https://github.com/foormjs/foormjs/commit/06db90221a0267b566a804217e7648255f6fd8b8))
+
+
+
 ## [0.0.2-alpha.7](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.6...v0.0.2-alpha.7) (2024-01-22)
 
 
