@@ -51,7 +51,7 @@ export class Foorm {
     /**
      * Normalizes form metadata and removes all the functions
      * from validators.
-     * 
+     *
      * @param replaceContext a context to be transported along with metadata
      * @returns form metadata without functions
      */
@@ -86,7 +86,7 @@ export class Foorm {
 
     /**
      * Evaluates all the ftrings into functions, makes it ready for execution
-     * 
+     *
      * @returns form metadata with functions
      */
     public executable(): TFoormMetaExecutable {
@@ -148,6 +148,17 @@ export class Foorm {
         }
     }
 
+    createFormData<T extends Record<string, unknown>>(): T {
+        const data: T = {} as T
+        for (const entry of this.entries) {
+            if (entry.type !== 'action') {
+                data[entry.field as keyof T] = (entry.value ||
+                    undefined) as T[keyof T]
+            }
+        }
+        return data
+    }
+
     prepareValidators(_validators: TFoormEntry['validators']) {
         const validators = (_validators || []).map((v) =>
             isFtring(v) ? this.fns.getFn(v.v) : v
@@ -159,7 +170,7 @@ export class Foorm {
     }
 
     supportsAltAction(altAction: string) {
-        return !!this.entries.find(e => e.altAction === altAction)
+        return !!this.entries.find((e) => e.altAction === altAction)
     }
 
     getFormValidator(): (inputs: Record<string, unknown>) => {
