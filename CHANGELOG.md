@@ -1,3 +1,12 @@
+## [0.0.2-alpha.7](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.6...v0.0.2-alpha.7) (2024-01-22)
+
+
+### Features
+
+* add altAction to foorm entry ([f24fbad](https://github.com/foormjs/foormjs/commit/f24fbad2ec7642ec136cb8e61c4436c3a962dab8))
+
+
+
 ## [0.0.2-alpha.6](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.5...v0.0.2-alpha.6) (2024-01-18)
 
 
