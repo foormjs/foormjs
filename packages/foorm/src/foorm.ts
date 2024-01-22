@@ -166,6 +166,10 @@ export class Foorm {
         return validators
     }
 
+    supportsAltAction(altAction: string) {
+        return !!this.entries.find(e => e.altAction === altAction)
+    }
+
     getFormValidator(): (inputs: Record<string, unknown>) => {
         passed: boolean
         errors: Record<string, string>
@@ -246,9 +250,6 @@ export class Foorm {
         }
     }
 }
-
-export type TFoormExecutableMeta = ReturnType<Foorm['executable']>
-export type TFoormExecutableEntry = TFoormExecutableMeta['entries'][number]
 
 export function validate<T = string>(opts: TFoormFnScope<T> & {
     validators: TFoormValidatorFn<T>[]
