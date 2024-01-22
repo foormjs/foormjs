@@ -1,3 +1,12 @@
+## [0.0.2-alpha.11](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.10...v0.0.2-alpha.11) (2024-01-22)
+
+
+### Features
+
+* add replaceValues to transportable ([2333d9e](https://github.com/foormjs/foormjs/commit/2333d9e8fe0a64def922882e98dcdc96ab728777))
+
+
+
 ## [0.0.2-alpha.10](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.9...v0.0.2-alpha.10) (2024-01-22)
 
 
