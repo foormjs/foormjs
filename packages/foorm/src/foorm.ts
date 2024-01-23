@@ -1,5 +1,5 @@
 import { FtringsPool } from '@prostojs/ftring'
-import { StringOrFtring, TFoormEntry, TFoormValidatorFn, TFoormFnScope, TFoormFn, TFtring, TFoormEntryExecutable, TFoormMetaExecutable } from './types'
+import { StringOrFtring, TFoormEntry, TFoormValidatorFn, TFoormFnScope, TFoormFn, TFtring, TFoormEntryExecutable, TFoormMetaExecutable, TFoormEntryOptions } from './types'
 import { isFtring } from './utils'
 
 export interface TFoormSubmit<S = TFtring, B = TFtring> {
@@ -146,6 +146,11 @@ export class Foorm {
                     validators: this.prepareValidators(
                         e.validators
                     ) as TFoormValidatorFn<unknown>[],
+                    // options
+                    options: transformFtrings<unknown, TFoormEntryOptions[]>(
+                        e.options,
+                        this.fns
+                    ),
                 })),
         }
     }

@@ -21,12 +21,14 @@ type TRelevantFields = 'field' |
 'attrs' |
 'length'
 
+export type TFoormEntryOptions = { key: string; label: string } | string
 export interface TFoormEntry<
     T = string,
-    O = string,
+    O = TFoormEntryOptions,
     SFTR = TFtring,
     BFTR = TFtring,
-    FNFTR = TFtring
+    FNFTR = TFtring,
+    OFTR = TFtring
 > {
     field: string
     altAction?: string
@@ -51,7 +53,7 @@ export interface TFoormEntry<
     value?: T
 
     // data options
-    options?: O[]
+    options?: O[] | OFTR
 
     // additional attributes
     attrs?: Record<string, unknown>
@@ -64,12 +66,13 @@ export interface TFoormEntry<
     validators?: (FNFTR | TFoormValidatorFn<T>)[]
 }
 
-export type TFoormEntryExecutable<T = unknown, O = string> = TFoormEntry<
+export type TFoormEntryExecutable<T = unknown, O = TFoormEntryOptions> = TFoormEntry<
     T,
     O,
     TFoormFn<T, string>,
     TFoormFn<T, boolean>,
-    TFoormValidatorFn<T>
+    TFoormValidatorFn<T>,
+    TFoormFn<T, O[]>
 > & { name: string; label: string | TFoormFn<T, string>; type: string }
 
 export type TFoormMetaExecutable = {
