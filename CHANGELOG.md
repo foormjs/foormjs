@@ -1,3 +1,12 @@
+## [0.0.2-alpha.12](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.11...v0.0.2-alpha.12) (2024-01-23)
+
+
+### Features
+
+* support ftring for entry options ([853dc32](https://github.com/foormjs/foormjs/commit/853dc324f4128b3a06c162d81d0c15069f8a3d66))
+
+
+
 ## [0.0.2-alpha.11](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.10...v0.0.2-alpha.11) (2024-01-22)
 
 

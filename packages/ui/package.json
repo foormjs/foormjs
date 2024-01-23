@@ -1,6 +1,6 @@
 {
   "name": "@foormjs/ui",
-  "version": "0.0.2-alpha.11",
+  "version": "0.0.2-alpha.12",
   "description": "@foormjs/ui",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -62,6 +62,6 @@
     "vite-plugin-dts": "^3.6.3"
   },
   "dependencies": {
-    "foorm": "0.0.2-alpha.11"
+    "foorm": "0.0.2-alpha.12"
   }
 }
