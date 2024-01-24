@@ -1,3 +1,12 @@
+## [0.0.2-alpha.14](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.13...v0.0.2-alpha.14) (2024-01-24)
+
+
+### Bug Fixes
+
+* fix attrs type ([58b235b](https://github.com/foormjs/foormjs/commit/58b235b8e35a62793564e662f745b3bdb609e7e2))
+
+
+
 ## [0.0.2-alpha.13](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.12...v0.0.2-alpha.13) (2024-01-24)
 
 
