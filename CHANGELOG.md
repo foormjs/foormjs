@@ -1,3 +1,12 @@
+## [0.0.2-alpha.13](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.12...v0.0.2-alpha.13) (2024-01-24)
+
+
+### Features
+
+* make attrs executable fns ([74d65e4](https://github.com/foormjs/foormjs/commit/74d65e44d8ae6562c48ad2f5c935978d3c81902c))
+
+
+
 ## [0.0.2-alpha.12](https://github.com/foormjs/foormjs/compare/v0.0.2-alpha.11...v0.0.2-alpha.12) (2024-01-23)
 
 
