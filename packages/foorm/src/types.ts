@@ -56,7 +56,7 @@ export interface TFoormEntry<
     options?: O[] | OFTR
 
     // additional attributes
-    attrs?: Record<string, unknown>
+    attrs?: Record<string, SFTR>
 
     // constraits
     optional?: boolean | BFTR

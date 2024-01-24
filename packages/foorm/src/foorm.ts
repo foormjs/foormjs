@@ -151,6 +151,11 @@ export class Foorm {
                         e.options,
                         this.fns
                     ),
+                    // attrs
+                    attrs: transformFtringsInObj<unknown, string, string>(
+                        e.attrs,
+                        this.fns
+                    ) as Record<string, TFoormFn<unknown, string>>,
                 })),
         }
     }
