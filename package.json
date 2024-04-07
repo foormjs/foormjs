@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "bootstrap": "node ./scripts/bootstrap",
-    "build": "node ./scripts/build && pnpm -F @foormjs/vue build",
+    "build": "node ./scripts/build",
     "release": "node ./scripts/release",
     "test": "jest --runInBand",
     "test:cov": "jest --runInBand --coverage",
