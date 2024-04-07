@@ -51,7 +51,14 @@ const emit = defineEmits<{
     :form-context="formContext"
     v-slot="form"
   >
-    <slot name="form.header" :clear-errors="form.clearErrors" :reset="form.reset">
+    <slot
+      name="form.header"
+      :clear-errors="form.clearErrors"
+      :reset="form.reset"
+      :title="executable.title"
+      :formContext="formContext"
+      :disabled="_submitDisabled"
+    >
       <h2 v-if="!!executable.title">{{ executable.title }}</h2>
     </slot>
     <slot name="form.before" :clear-errors="form.clearErrors" :reset="form.reset"></slot>
@@ -142,17 +149,30 @@ const emit = defineEmits<{
         </div>
       </slot>
     </OoField>
-    <slot name="form.after" :clear-errors="form.clearErrors" :reset="form.reset"></slot>
+    <slot
+      name="form.after"
+      :clear-errors="form.clearErrors"
+      :reset="form.reset"
+      :disabled="_submitDisabled"
+      :formContext="formContext"
+    ></slot>
 
     <slot
       name="form.submit"
       :disabled="_submitDisabled"
       :clear-errors="form.clearErrors"
       :reset="form.reset"
+      :formContext="formContext"
     >
       <button :disabled="_submitDisabled">{{ executable.submit.text }}</button>
     </slot>
-    <slot name="form.footer" :clear-errors="form.clearErrors" :reset="form.reset"></slot>
+    <slot
+      name="form.footer"
+      :disabled="_submitDisabled"
+      :clear-errors="form.clearErrors"
+      :reset="form.reset"
+      :formContext="formContext"
+    ></slot>
   </VuilessForm>
 </template>
 
