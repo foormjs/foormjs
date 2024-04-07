@@ -1,0 +1,127 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`foorm must prepare executable object 1`] = `
+{
+  "context": {},
+  "entries": [
+    {
+      "attrs": undefined,
+      "classes": "class-a class-b",
+      "description": undefined,
+      "disabled": false,
+      "field": "input",
+      "hidden": undefined,
+      "hint": undefined,
+      "label": "Input Label",
+      "name": "input",
+      "optional": true,
+      "options": undefined,
+      "placeholder": undefined,
+      "styles": "max-width: 255px",
+      "type": "text",
+      "validators": [
+        [Function],
+        [Function],
+        [Function],
+      ],
+    },
+    {
+      "attrs": undefined,
+      "classes": [Function],
+      "description": undefined,
+      "disabled": [Function],
+      "field": "field-2",
+      "hidden": undefined,
+      "hint": undefined,
+      "label": [Function],
+      "name": "field-2",
+      "optional": [Function],
+      "options": undefined,
+      "placeholder": undefined,
+      "styles": {
+        "max-width": [Function],
+        "min-height": "100px",
+      },
+      "type": "type-2",
+      "validators": [
+        [Function],
+      ],
+    },
+  ],
+  "submit": {
+    "disabled": undefined,
+    "text": [Function],
+  },
+  "title": [Function],
+}
+`;
+
+exports[`foorm must prepare transferable object 1`] = `
+{
+  "context": {},
+  "entries": [
+    {
+      "classes": "class-a class-b",
+      "disabled": false,
+      "field": "input",
+      "label": "Input Label",
+      "optional": true,
+      "styles": "max-width: 255px",
+      "validators": [
+        {
+          "__is_ftring__": true,
+          "__type__": undefined,
+          "v": "v.length > 10",
+        },
+      ],
+      "value": undefined,
+    },
+    {
+      "classes": {
+        "__is_ftring__": true,
+        "__type__": undefined,
+        "v": ""class-a class-b"",
+      },
+      "disabled": {
+        "__is_ftring__": true,
+        "__type__": undefined,
+        "v": "!!data.input",
+      },
+      "field": "field-2",
+      "label": {
+        "__is_ftring__": true,
+        "__type__": undefined,
+        "v": ""Field Label" + v",
+      },
+      "optional": {
+        "__is_ftring__": true,
+        "__type__": undefined,
+        "v": "data.input.length < 2",
+      },
+      "styles": {
+        "max-width": {
+          "__is_ftring__": true,
+          "__type__": undefined,
+          "v": ""255px"",
+        },
+        "min-height": "100px",
+      },
+      "type": "type-2",
+      "validators": [],
+      "value": undefined,
+    },
+  ],
+  "submit": {
+    "text": {
+      "__is_ftring__": true,
+      "__type__": undefined,
+      "v": ""Submit"",
+    },
+  },
+  "title": {
+    "__is_ftring__": true,
+    "__type__": undefined,
+    "v": ""My Title"",
+  },
+}
+`;

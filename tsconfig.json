@@ -1,32 +1,28 @@
 {
-    "compilerOptions": {
-        "baseUrl": ".",
-        "outDir": "dist",
-        "moduleResolution": "node",
-        "esModuleInterop": true,
-        "target": "es2015",
-        "lib": ["ESNext", "DOM", "WebWorker", "DOM.Iterable"],
-        "noUnusedLocals": true,
-        "types": ["jest", "node"],
-        "declaration": false,
-        "declarationMap": false,
-        "resolveJsonModule": true,
-        "downlevelIteration": true,
-        "forceConsistentCasingInFileNames": true,
-        "strict": true,
-        "noImplicitAny": true,
-        "skipLibCheck": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "removeComments": false,
-        "paths": {
-            "foorm": ["packages/foorm/src"],
-            "@foormjs/*": ["packages/*/src"]
-        }
-    },
-    "include": [
-        "packages/*/src",
-        "packages/*/__tests__",
-        "explorations"
-    ]
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "dist",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "target": "es2015",
+    "lib": ["ESNext", "DOM", "WebWorker", "DOM.Iterable"],
+    "noUnusedLocals": true,
+    "types": ["jest", "node"],
+    "declaration": false,
+    "declarationMap": false,
+    "resolveJsonModule": true,
+    "downlevelIteration": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "skipLibCheck": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "removeComments": false,
+    "paths": {
+      "foorm": ["packages/foorm/src"],
+      "@foormjs/*": ["packages/*/src"]
+    }
+  },
+  "include": ["packages/*/src", "packages/*/__tests__", "explorations"]
 }

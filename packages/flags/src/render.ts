@@ -1,42 +1,66 @@
 import { flagsMeta } from './meta'
 
 export function renderFlag(name: keyof typeof flagsMeta, size = 32) {
-    const sx = 640
-    const sy = 480
-    let flag = ''
-    const meta = flagsMeta[name] as { dir: 'H' | 'V', c?: string[], w?: number[], e?: { n: 'path' | 'circle', fill?: number | string, stroke?: number | string, d?: string, cx?: string, cy?: string, r?: string }[], raw?: string }
-    if (meta.c && !meta.w) {
-        meta.w = meta.c.map(() => 1)
+  const sx = 640
+  const sy = 480
+  let flag = ''
+  const meta = flagsMeta[name] as {
+    dir: 'H' | 'V'
+    c?: string[]
+    w?: number[]
+    e?: Array<{
+      n: 'path' | 'circle'
+      fill?: number | string
+      stroke?: number | string
+      d?: string
+      cx?: string
+      cy?: string
+      r?: string
+    }>
+    raw?: string
+  }
+  if (meta.c && !meta.w) {
+    meta.w = meta.c.map(() => 1)
+  }
+  if (meta.c && meta.w) {
+    const totalW = meta.w.reduce((a, b) => a + b, 0)
+    let pos = 0
+    for (let i = 0; i < meta.c.length; i++) {
+      const c = meta.c[i]
+      const w = meta.w[i]
+      const length = meta.dir === 'V' ? sy : sx
+      const baseWidth = meta.dir === 'V' ? sx : sy
+      const width = (baseWidth / totalW) * w
+      const center = pos + width / 2
+      flag += `\n<path d="M${meta.dir === 'V' ? '' : '0 '}${center}${meta.dir === 'V' ? ' 0' : ''} ${meta.dir || 'H'} ${length}" stroke-width="${width}" stroke="${c}" />`
+      pos += width
     }
-    if (meta.c && meta.w) {
-        const totalW = meta.w.reduce((a, b) => a + b, 0)
-        let pos = 0
-        for (let i = 0; i < meta.c.length; i++) {
-            const c = meta.c[i]
-            const w = meta.w[i]
-            const length = meta.dir === 'V' ? sy : sx
-            const baseWidth = meta.dir === 'V' ? sx : sy
-            const width = baseWidth / totalW * w
-            const center = pos + width / 2
-            flag += `\n<path d="M${meta.dir === 'V' ? '' : '0 '}${center}${meta.dir === 'V' ? ' 0' : ''} ${meta.dir || 'H'} ${ length }" stroke-width="${ width }" stroke="${ c }" />`
-            pos += width
-        }
+  }
+  if (meta.e) {
+    for (const { n, d, fill, stroke, cx, cy, r } of meta.e) {
+      const f =
+        typeof fill === 'number'
+          ? ` fill="${meta.c?.[fill]}"`
+          : typeof fill === 'string'
+            ? ` fill="${fill}"`
+            : ''
+      const s =
+        typeof stroke === 'number'
+          ? ` stroke="${meta.c?.[stroke]}"`
+          : typeof stroke === 'string'
+            ? ` stroke="${stroke}"`
+            : ''
+      if (n === 'path') {
+        flag += `\n<path${f}${s} d="${d || ''}"/>`
+      } else if (n === 'circle') {
+        flag += `\n<circle${f}${s} cx="${cx || '0'}" cy="${cy || '0'}" r="${r || '0'}"/>`
+      }
     }
-    if (meta.e) {
-        for (const { n, d, fill, stroke, cx, cy, r } of meta.e) {
-            const f = typeof fill === 'number' ? ` fill="${(meta.c && meta.c[fill]) as string}"` : typeof fill === 'string' ? ` fill="${fill}"` : ''
-            const s = typeof stroke === 'number' ? ` stroke="${(meta.c && meta.c[stroke]) as string}"` : typeof stroke === 'string' ? ` stroke="${stroke}"` : ''
-            if (n === 'path') {
-                flag += `\n<path${f}${s} d="${ d || '' }"/>`
-            } else if (n === 'circle') {
-                flag += `\n<circle${f}${s} cx="${ cx || '0' }" cy="${ cy || '0' }" r="${ r || '0' }"/>`
-            }
-        }
-    }
-    if (meta.raw) {
-        flag += '\n' + meta.raw
-    }
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${ sx } ${ sy }">${ flag }    
+  }
+  if (meta.raw) {
+    flag += `\n${meta.raw}`
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${sx} ${sy}">${flag}    
 </svg>`
 }
 

@@ -1,0 +1,17 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    },
+    {
+      "path": "./tsconfig.app.json"
+    }
+  ],
+  "compilerOptions": {
+    "paths": {
+      "foorm": ["../packages/foorm/src"],
+      "@foormjs/*": ["../packages/*/src"]
+    }
+  }
+}

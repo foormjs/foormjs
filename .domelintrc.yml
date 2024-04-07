@@ -18,7 +18,7 @@ ignoredRules:
   - no-void
   - unicorn/expiring-todo-comments
   - '@typescript-eslint/promise-function-async'
-  - '@typescript-eslint/await-thenable'
+  - 'import/no-default-export'
 
 relaxedRules:
   - '@typescript-eslint/no-unnecessary-condition'

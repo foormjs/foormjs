@@ -8,5 +8,3 @@ temp
 .npmrc
 docs/.vitepress/cache
 # <<< domelint-end
-rollup.config.js
-scripts

@@ -75,7 +75,6 @@ rules:
     - considerComments: true
   import/no-absolute-path: error
   import/no-anonymous-default-export: error
-  import/no-default-export: error
   import/no-duplicates: error
   import/no-dynamic-require: error
   import/no-empty-named-blocks: error
@@ -382,6 +381,7 @@ overrides:
         - error
         - default: array-simple
           readonly: generic
+      '@typescript-eslint/await-thenable': error
       '@typescript-eslint/ban-tslint-comment': error
       '@typescript-eslint/ban-types': error
       '@typescript-eslint/class-literal-property-style': error

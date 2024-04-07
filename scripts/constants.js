@@ -1,1 +1,1 @@
-export const PROJECT = 'foorm';
+export const PROJECT = 'foorm'
