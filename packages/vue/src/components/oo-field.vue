@@ -4,7 +4,7 @@ import { VuilessField, type TVuilessState } from 'vuiless-forms'
 import { type TFoormFnScope, type TFoormEntryExecutable } from 'foorm'
 import { computed, inject, type ComputedRef } from 'vue'
 
-type Props = TFoormEntryExecutable
+type Props = TFoormEntryExecutable & { error?: string }
 
 const props = defineProps<Props>()
 
@@ -43,26 +43,16 @@ const _classes = computed(() => {
     return {
       [v]: true,
       disabled: _disabled.value,
-      // error: !validation.value.passed,
       required: !_optional.value,
     }
   } else {
     return {
       ...(v || {}),
       disabled: _disabled.value,
-      // error: !validation.value.passed,
       required: !_optional.value,
     }
   }
 })
-
-// const _stateClasses = computed(() => {
-//   return {
-//     disabled: _classes.value?.disabled,
-//     error: _classes.value?.error,
-//     required: _classes.value?.required,
-//   }
-// })
 
 const _styles = computed(
   () => evalFnObj(props.styles, ctx.value) as string | Record<string, string>
@@ -92,7 +82,7 @@ const rules = computed(() => {
   >
     <slot
       :on-blur="vuilessField.onBlur"
-      :error="vuilessField.error"
+      :error="error || vuilessField.error"
       :model="vuilessField.model"
       :form-data="vuiless.formData"
       :form-context="vuiless.formContext"
@@ -102,7 +92,7 @@ const rules = computed(() => {
       :placeholder="_placeholder"
       :classes="{
         ..._classes,
-        error: !!vuilessField.error,
+        error: !!error || !!vuilessField.error,
       }"
       :styles="_styles"
       :optional="_optional"
