@@ -1,11 +1,10 @@
-<script setup lang="ts" generic="TFormData extends object, TFormContext extends object">
+<script setup lang="ts" generic="TFormData = any, TFormContext = any">
 import { VuilessForm } from 'vuiless-forms'
 import type { TVuilessState } from 'vuiless-forms'
 import OoField from './oo-field.vue'
 import { Foorm } from 'foorm'
 import { computed, ref, type Component } from 'vue'
-import { evalFn } from '../utils'
-import { type TFoormFnScope, type TFoormFn } from 'foorm'
+import { type TFoormFnScope, evalParameter } from 'foorm'
 import { type TFoormComponentProps } from './types'
 
 export interface Props<TF, TC> {
@@ -36,17 +35,18 @@ const ctx = computed<TFoormFnScope>(
 const _data = ref<TFormData>({} as TFormData)
 const data = computed<TFormData>(() => props.formData || (_data.value as TFormData))
 
-const _submitDisabled = computed(() =>
-  evalFn<boolean>(executable.value.submit.disabled as TFoormFn<unknown, boolean>, ctx.value)
-)
+function valueOrComputed<T>(v: T) {
+  if (typeof v === 'function') {
+    return computed(() => evalParameter(v, ctx.value))
+  }
+  return ref(v)
+}
 
-const _submitText = computed(() =>
-  evalFn(executable.value.submit.text as TFoormFn<unknown, string>, ctx.value)
-)
+const _submitDisabled = valueOrComputed(executable.value.submit.disabled)
 
-const _title = computed(() =>
-  evalFn(executable.value.title as TFoormFn<unknown, string>, ctx.value)
-)
+const _submitText = valueOrComputed(executable.value.submit.text)
+
+const _title = valueOrComputed(executable.value.title)
 
 function handleAction(name: string) {
   if (props.form.supportsAltAction(name)) {
@@ -119,8 +119,8 @@ const emit = defineEmits<{
         </div>
 
         <component
-          v-else-if="props.types?.[f.type]"
-          :is="props.types[f.type]"
+          v-else-if="props.types?.[f.type!]"
+          :is="props.types[f.type!]"
           :on-blur="field.onBlur"
           :error="field.error"
           :model="field.model"

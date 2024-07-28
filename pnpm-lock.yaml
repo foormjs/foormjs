@@ -8,12 +8,15 @@ importers:
 
   .:
     devDependencies:
+      '@prostojs/deserialize-fn':
+        specifier: ^0.0.5
+        version: 0.0.5
       '@prostojs/dye':
         specifier: ^0.3.0
         version: 0.3.0
-      '@prostojs/ftring':
-        specifier: ^0.0.4
-        version: 0.0.4
+      '@prostojs/serialize-fn':
+        specifier: ^0.0.5
+        version: 0.0.5
       '@prostojs/wf':
         specifier: ^0.0.10
         version: 0.0.10
@@ -169,9 +172,12 @@ importers:
 
   packages/foorm:
     dependencies:
-      '@prostojs/ftring':
-        specifier: ^0.0.4
-        version: 0.0.4
+      '@prostojs/deserialize-fn':
+        specifier: ^0.0.5
+        version: 0.0.5
+      '@prostojs/serialize-fn':
+        specifier: ^0.0.5
+        version: 0.0.5
 
   packages/moost: {}
 
@@ -1555,6 +1561,9 @@ packages:
     resolution: {integrity: sha512-DQH+nAFBGGCYq11x2Cc9xYjiIsNCR+pVgzC5Y409opTQBPXqyGg7v7kVJcgwfYBJBwXvem6wen13Ae71teNXhA==}
     dev: true
 
+  /@prostojs/deserialize-fn@0.0.5:
+    resolution: {integrity: sha512-pXyp6be5qKXl776woeucIRwWMcTlDX2DyuTnq+otgDs5hF/0iNXfLnEsuW0zSxjwNs1V7Sdk2rYP8rS8DaJivQ==}
+
   /@prostojs/dye@0.3.0:
     resolution: {integrity: sha512-cTjzK+qXL/vda4Ak/saQ9w82F41KYsDh5ycEPFR9Xkk/M4qpldH8dqOQ9ZI5sySZZAFrzoDzbRYd2GqYoyv/Ww==}
     dev: true
@@ -1562,9 +1571,6 @@ packages:
   /@prostojs/ftring@0.0.3:
     resolution: {integrity: sha512-23uhbe4xDWoZ7sVbmbwSuo8+OPRG8XlTsKhpTnB7Mx6odjRHHsatt+2lPi/aHvYjZ7Jc5p2Jo3CpBDONU4qlbg==}
     dev: true
-
-  /@prostojs/ftring@0.0.4:
-    resolution: {integrity: sha512-oLrPVn/UkifSfRRqDH1W055YvwxZRVHdLjlVQBPhM7xsosn0nFIQaRSNiZJH/GIRXR9ghj+INoJ9aNDJlvaogg==}
 
   /@prostojs/logger@0.3.7:
     resolution: {integrity: sha512-qQ/VA5kvHaFLDNC9HMYKKQvh+Td90JQpo175TU7i+PeJAfvMXcFV+0jlBfqVOoimuebPCtcciRiGGt0/vKEeBA==}
@@ -1583,6 +1589,13 @@ packages:
       '@prostojs/parser': 0.5.5
       '@prostojs/tree': 0.2.2
     dev: true
+
+  /@prostojs/serialize-fn@0.0.5:
+    resolution: {integrity: sha512-rbvzsxmexw/RdRp7oBbBqj4Jff+O9pAXUDjaGYGhAAns3RBtOBP2tFBP0oW6bJhojPFL75mGzlZBw8cJalBPWw==}
+    dependencies:
+      acorn: 8.12.1
+      acorn-globals: 7.0.1
+      acorn-walk: 8.3.3
 
   /@prostojs/tree@0.2.2:
     resolution: {integrity: sha512-N4NHd5Nwy4nFsvmZhSgWhYCKuDuvtFpZPZOI2TKhWj44N8trlpU9MgruBlYKhwrc0RTDKhxp13JaDQ6bR4RLMA==}
@@ -2745,6 +2758,12 @@ packages:
       through: 2.3.8
     dev: true
 
+  /acorn-globals@7.0.1:
+    resolution: {integrity: sha512-umOSDSDrfHbTNPuNpC2NSnnA3LUrqpevPb4T9jRx4MagXNS0rs+gwiTcAvqCRmsD6utzsrzNt+ebm00SNWiC3Q==}
+    dependencies:
+      acorn: 8.12.1
+      acorn-walk: 8.3.3
+
   /acorn-jsx@5.3.2(acorn@8.11.3):
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
     peerDependencies:
@@ -2753,11 +2772,22 @@ packages:
       acorn: 8.11.3
     dev: true
 
+  /acorn-walk@8.3.3:
+    resolution: {integrity: sha512-MxXdReSRhGO7VlFe1bRG/oI7/mdLV9B9JJT0N8vZOhF7gFRR5l3M8W9G8JxmKV+JC5mGqJ0QvqfSOLsCPa4nUw==}
+    engines: {node: '>=0.4.0'}
+    dependencies:
+      acorn: 8.12.1
+
   /acorn@8.11.3:
     resolution: {integrity: sha512-Y9rRfJG5jcKOE0CLisYbojUjIrIEE7AGMzA/Sm4BslANhbS+cDMpgBdcPT91oJ7OuJ9hYJBx59RjbhxVnrF8Xg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
     dev: true
+
+  /acorn@8.12.1:
+    resolution: {integrity: sha512-tcpGyI9zbizT9JbV6oYE477V6mTlXvvi0T0G3SNIYE2apm/G5huBa1+K89VGeovbg+jycCrfhl3ADxErOuO6Jg==}
+    engines: {node: '>=0.4.0'}
+    hasBin: true
 
   /add-stream@1.0.0:
     resolution: {integrity: sha512-qQLMr+8o0WC4FZGQTcJiKBVC59JylcPSrTtk6usvmIDFUOCKegapy1VHQwRbFMOFyb/inzUVqHs+eMYKDM1YeQ==}

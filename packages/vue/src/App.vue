@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import ooFoorm from '@/components/oo-form.vue'
-import { Foorm, ftring } from 'foorm'
-import { ref } from 'vue'
+import { Foorm, deserializeForm, serializeForm } from 'foorm'
 
 const form = new Foorm({
-  title: 'User',
+  title: (data: { firstName?: string }) => 'User ' + (data.firstName || '<unknown>'),
   entries: [],
 })
 form.addEntry({
@@ -13,15 +12,15 @@ form.addEntry({
   field: '_',
   description: 'Enter your name and age',
 })
-form.addEntry({
+form.addEntry<string>({
   field: 'firstName',
   description: 'Not a nickname',
   placeholder: 'John',
   name: 'first name',
   label: 'First Name',
-  validators: [ftring`!!v || 'Required'`],
+  validators: [(v: string) => !!v || 'Required'],
   classes: {
-    foo: ftring`v === 'foo'`,
+    foo: (v: string) => v === 'foo',
   },
 })
 form.addEntry({
@@ -30,9 +29,9 @@ form.addEntry({
   hint: 'Real last name please',
   name: 'last name',
   label: 'Last Name',
-  validators: [ftring`!!v || 'Required'`],
+  validators: [(v: string) => !!v || 'Required'],
   classes: {
-    bar: ftring`v === 'bar'`,
+    bar: (v: string) => v === 'bar',
   },
 })
 form.addEntry({
@@ -40,12 +39,14 @@ form.addEntry({
   name: 'age',
   label: 'Age',
   type: 'number',
-  validators: [ftring`!!v || 'Required'`],
+  validators: [(v: string) => !!v || 'Required'],
 })
 form.setSubmit({
   text: 'Submit',
-  disabled: ftring`data.firstName?.toLowerCase() === 'artem'`,
+  disabled: (data: any) => data.firstName?.toLowerCase() === 'artem',
 })
+
+const newForm = deserializeForm(serializeForm(form))
 
 function handleSubmit(d: unknown) {
   console.log(d)
@@ -54,7 +55,7 @@ function handleSubmit(d: unknown) {
 
 <template>
   <main>
-    <oo-foorm class="form" :form="form" @submit="handleSubmit"> </oo-foorm>
+    <oo-foorm class="form" :form="newForm" @submit="handleSubmit"> </oo-foorm>
   </main>
 </template>
 

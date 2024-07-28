@@ -13,6 +13,9 @@ export default defineConfig({
     dts({
       insertTypesEntry: true,
       rollupTypes: true,
+      compilerOptions: {
+        skipLibCheck: true,
+      },
     }),
   ],
   build: {

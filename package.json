@@ -37,7 +37,8 @@
   "homepage": "https://github.com/foormjs/foormjs#readme",
   "devDependencies": {
     "@prostojs/dye": "^0.3.0",
-    "@prostojs/ftring": "^0.0.4",
+    "@prostojs/serialize-fn": "^0.0.5",
+    "@prostojs/deserialize-fn": "^0.0.5",
     "@prostojs/wf": "^0.0.10",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",

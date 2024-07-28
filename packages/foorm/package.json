@@ -35,6 +35,7 @@
   },
   "homepage": "https://github.com/foormjs/foormjs/tree/main/packages/foorm#readme",
   "dependencies": {
-    "@prostojs/ftring": "^0.0.4"
+    "@prostojs/serialize-fn": "^0.0.5",
+    "@prostojs/deserialize-fn": "^0.0.5"
   }
 }

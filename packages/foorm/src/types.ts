@@ -1,50 +1,53 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface TFtring {
-  __is_ftring__: true
-  v: string
-  __type__?: 'boolean' | 'string' | 'number'
-}
-export type StringOrFtring = string | TFtring
-export type ObjSOF = Record<string, StringOrFtring>
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-export interface TFoormFnScope<T = string> {
-  v?: T
-  data: Record<string, unknown>
-  context: Record<string, unknown>
-  entry?: Pick<TFoormEntry<T, unknown, string, boolean>, TRelevantFields> & {
-    optional?: boolean
-    disabled?: boolean
-    hidden?: boolean
-  }
+export type TFoormFnTop<OF, D, C> = (data: D, ctx: C) => OF
+export type TFoormFnField<OF, V, D, C> = (v: V, data: D, ctx: C, entry: TFoormEntryEvaluated) => OF
+export interface TFoormFnSerializedTop<OF, D, C> {
+  (ctx: TFoormFnScope<undefined, D, C>): OF
+  __deserialized?: boolean
+}
+export interface TFoormFnSerializedField<OF, V, D, C> {
+  (ctx: TFoormFnScope<V, D, C>): OF
+  __deserialized?: boolean
+}
+
+export type TComputed<OF, D, C> = OF | TFoormFnTop<OF, D, C> | TFoormFnSerializedTop<OF, D, C>
+export type TComputedWithVal<OF, V, D, C> =
+  | OF
+  | TFoormFnField<OF, V, D, C>
+  | TFoormFnSerializedField<OF, V, D, C>
+
+export interface TFoormFnScope<
+  V = string,
+  D = Record<string, unknown>,
+  C = Record<string, unknown>,
+> {
+  v?: V
+  data: D
+  context: C
+  entry?: TFoormEntryEvaluated
   action?: string
 }
-export type TFoormValidatorFn<T = string> = (ctx: TFoormFnScope<T>) => string | boolean
-export type TFoormFn<T = string, R = string | boolean> = (ctx: TFoormFnScope<T>) => R
-
-type TRelevantFields = 'field' | 'type' | 'component' | 'name' | 'attrs' | 'length'
+export type TFoormValidatorFn<V, D, C> = Exclude<
+  Exclude<TComputedWithVal<boolean | string, V, D, C>, boolean>,
+  string
+>
 
 export type TFoormEntryOptions = { key: string; label: string } | string
-export interface TFoormEntry<
-  T = string,
-  O = TFoormEntryOptions,
-  SFTR = TFtring,
-  BFTR = TFtring,
-  FNFTR = TFtring,
-  OFTR = TFtring,
-> {
+export interface TFoormEntry<V, D, C, O extends TFoormEntryOptions> {
   field: string
   altAction?: string
 
   // description
-  label?: string | SFTR
-  description?: string | SFTR
-  hint?: string | SFTR
-  placeholder?: string | SFTR
+  label?: TComputedWithVal<string, V, D, C>
+  description?: TComputedWithVal<string, V, D, C>
+  hint?: TComputedWithVal<string, V, D, C>
+  placeholder?: TComputedWithVal<string, V, D, C>
 
   // appearence
-  classes?: (string | SFTR) | Record<string, boolean | BFTR>
-  styles?: (string | SFTR) | Record<string, string | SFTR>
+  classes?: TComputedWithVal<string, V, D, C> | Record<string, TComputedWithVal<boolean, V, D, C>>
+  styles?: TComputedWithVal<string, V, D, C> | Record<string, TComputedWithVal<string, V, D, C>>
 
   // behavior
   type?: string
@@ -53,37 +56,89 @@ export interface TFoormEntry<
 
   // field mapping
   name?: string
-  value?: T
+  value?: V
 
   // data options
-  options?: O[] | OFTR
+  options?: O[] | TComputedWithVal<O[], V, D, C>
 
   // additional attributes
-  attrs?: Record<string, string | SFTR>
+  attrs?: Record<string, TComputedWithVal<any, V, D, C>>
 
   // constraits
-  optional?: boolean | BFTR
-  disabled?: boolean | BFTR
-  hidden?: boolean | BFTR
+  optional?: TComputedWithVal<boolean, V, D, C>
+  disabled?: TComputedWithVal<boolean, V, D, C>
+  hidden?: TComputedWithVal<boolean, V, D, C>
   length?: number
-  validators?: Array<FNFTR | TFoormValidatorFn<T>>
+  validators?: Array<TFoormValidatorFn<V, D, C>>
 }
 
-export type TFoormEntryExecutable<T = unknown, O = TFoormEntryOptions> = TFoormEntry<
-  T,
-  O,
-  TFoormFn<T, string>,
-  TFoormFn<T, boolean>,
-  TFoormValidatorFn<T>,
-  TFoormFn<T, O[]>
-> & { name: string; label: string | TFoormFn<T, string>; type: string }
-
-export interface TFoormMetaExecutable {
-  title: string | TFoormFn<undefined, string>
+export interface TFoormMetaExecutable<D, C> {
+  title: TComputed<string, D, C>
   submit: {
-    text: string | TFoormFn<undefined, string>
-    disabled: boolean | TFoormFn<undefined, boolean>
+    text: TComputed<string, D, C>
+    disabled?: TComputed<boolean, D, C>
   }
-  context: Record<string, unknown>
-  entries: TFoormEntryExecutable[]
+  context: C
+  entries: Array<TFoormEntry<any, D, C, TFoormEntryOptions>>
+}
+
+export interface TSerializedFn {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  __fn__: string
+}
+
+export interface TFoormSerialized<V = any, O = any> {
+  title?: string | TSerializedFn
+  submit: {
+    text: string | TSerializedFn
+    disabled: boolean | TSerializedFn
+  }
+  context: any
+  entries: Array<{
+    field: string
+    altAction?: string
+
+    // description
+    label?: string | TSerializedFn
+    description?: string | TSerializedFn
+    hint?: string | TSerializedFn
+    placeholder?: string | TSerializedFn
+
+    // appearence
+    classes?: string | TSerializedFn | Record<string, TSerializedFn>
+    styles?: string | TSerializedFn | Record<string, string | TSerializedFn>
+
+    // behavior
+    type?: string
+    component?: string
+    autocomplete?: string
+
+    // field mapping
+    name?: string
+    value?: V
+
+    // data options
+    options?: O[] | TSerializedFn
+
+    // additional attributes
+    attrs?: Record<string, string | TSerializedFn>
+
+    // constraits
+    optional?: TSerializedFn
+    disabled?: TSerializedFn
+    hidden?: TSerializedFn
+    length?: number
+    validators?: TSerializedFn[]
+  }>
+}
+
+export interface TFoormEntryEvaluated {
+  field: string
+  type: string
+  component?: string
+  name: string
+  length?: number
+  disabled?: boolean
+  optional?: boolean
+  hidden?: boolean
 }

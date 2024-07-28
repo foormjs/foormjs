@@ -1,10 +1,10 @@
-import type { TFoormEntry } from 'foorm'
+import type { TFoormEntry, TFoormEntryOptions } from 'foorm'
 
 /* eslint-disable @typescript-eslint/ban-types */
-export interface TFoormComponentProps<T, TFormData, TFormContext> {
+export interface TFoormComponentProps<V, TFormData, TFormContext> {
   onBlur: Function
   error?: string
-  model: { value: T }
+  model: { value: V }
   formData: TFormData
   formContext?: TFormContext
   label?: string
@@ -20,7 +20,7 @@ export interface TFoormComponentProps<T, TFormData, TFormContext> {
   type: string
   altAction?: string
   name?: string
-  field?: TFoormEntry
+  field?: TFoormEntry<V, TFormData, TFormContext, TFoormEntryOptions>
   options?: unknown[]
   length?: number
   autocomplete?: string
