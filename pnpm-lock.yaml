@@ -184,7 +184,7 @@ importers:
   packages/vue:
     dependencies:
       foorm:
-        specifier: 0.0.3
+        specifier: 0.1.0
         version: link:../foorm
       vue:
         specifier: ^3.3.9

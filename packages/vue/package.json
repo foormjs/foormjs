@@ -1,6 +1,6 @@
 {
   "name": "@foormjs/vue",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "@foormjs/vue",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -47,7 +47,7 @@
     "type-check": "vue-tsc --build --force"
   },
   "dependencies": {
-    "foorm": "0.0.3",
+    "foorm": "0.1.0",
     "vue": "^3.3.9",
     "vuiless-forms": "^0.0.3"
   },
