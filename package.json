@@ -1,7 +1,7 @@
 {
   "name": "foormjs",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Backend-driven dynamic forms with dual-end validation for seamless data collection",
   "main": "index.js",
   "type": "module",
