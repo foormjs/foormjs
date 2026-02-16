@@ -1,10 +1,10 @@
-<script setup lang="ts" generic="TFormData, TFormContext">
-import { evalFnObj } from '../utils'
+<script setup lang="ts" generic="TFormData = any, TFormContext = any">
+import { evalAttrs } from '../utils'
 import { VuilessField, type TVuilessState } from 'vuiless-forms'
-import { type TFoormEntry, type TFoormEntryOptions, type TFoormFnScope, evalParameter } from 'foorm'
-import { computed, inject, ref, type ComputedRef } from 'vue'
+import { type TFoormField, type TFoormFnScope, evalComputed } from 'foorm'
+import { computed, inject, type ComputedRef } from 'vue'
 
-type Props = TFoormEntry<any, TFormData, TFormContext, TFoormEntryOptions> & {
+type Props = TFoormField & {
   error?: string
 }
 
@@ -14,75 +14,74 @@ const vuiless = inject<ComputedRef<TVuilessState<TFormData, TFormContext>>>(
   'vuiless'
 ) as ComputedRef<TVuilessState<TFormData, TFormContext>>
 
-const ctx = computed<TFoormFnScope>(
-  () =>
-    ({
-      v: vuiless.value.formData[props.field as keyof TFormData],
-      data: vuiless?.value.formData,
-      context: vuiless?.value.formContext,
-      entry: props,
-    }) as TFoormFnScope
-)
+// Base scope (without evaluated entry) for constraint evaluation
+const baseCtx = computed<TFoormFnScope>(() => ({
+  v: vuiless.value.formData[props.field as keyof TFormData],
+  data: vuiless.value.formData as Record<string, unknown>,
+  context: (vuiless.value.formContext ?? {}) as Record<string, unknown>,
+}))
 
-function valueOrComputed<T>(v: T) {
-  if (typeof v === 'function') {
-    return computed(() => evalParameter(v, ctx.value, true))
-  }
-  return ref(v)
-}
+// Constraints (evaluated first, before full scope)
+const _optional = computed(() => evalComputed(props.optional, baseCtx.value))
+const _disabled = computed(() => evalComputed(props.disabled, baseCtx.value))
+const _hidden = computed(() => evalComputed(props.hidden, baseCtx.value))
 
-// description
-const _label = valueOrComputed(props.label)
-const _description = valueOrComputed(props.description)
-const _hint = valueOrComputed(props.hint)
-const _placeholder = valueOrComputed(props.placeholder)
+// Full scope with evaluated entry (for description, appearance, validators)
+const ctx = computed<TFoormFnScope>(() => ({
+  ...baseCtx.value,
+  entry: {
+    field: props.field,
+    type: props.type,
+    component: props.component,
+    name: props.name || props.field,
+    disabled: _disabled.value,
+    optional: _optional.value,
+    hidden: _hidden.value,
+  },
+}))
 
-// constraints
-const _optional = valueOrComputed(props.optional)
-const _disabled = valueOrComputed(props.disabled)
-const _hidden = valueOrComputed(props.hidden)
+// Description
+const _label = computed(() => evalComputed(props.label, ctx.value))
+const _description = computed(() => evalComputed(props.description, ctx.value))
+const _hint = computed(() => evalComputed(props.hint, ctx.value))
+const _placeholder = computed(() => evalComputed(props.placeholder, ctx.value))
 
-// options
-const _options = valueOrComputed(props.options)
+// Options
+const _options = computed(() => evalComputed(props.options, ctx.value))
 
-// appearance
+// Appearance
 const _classes = computed(() => {
-  const v = evalFnObj(props.classes, ctx.value)
+  const v = evalComputed(props.classes, ctx.value)
   if (typeof v === 'string') {
     return {
       [v]: true,
       disabled: _disabled.value,
       required: !_optional.value,
     }
-  } else {
-    return {
-      ...(v || {}),
-      disabled: _disabled.value,
-      required: !_optional.value,
-    }
+  }
+  return {
+    ...(v || {}),
+    disabled: _disabled.value,
+    required: !_optional.value,
   }
 })
 
 const _styles = computed(
-  () => evalFnObj(props.styles, ctx.value) as string | Record<string, string>
+  () => evalComputed(props.styles, ctx.value) as string | Record<string, string> | undefined
 )
 
-const _attrs = computed(() => evalFnObj(props.attrs, ctx.value) as Record<string, string>)
+const _attrs = computed(() => evalAttrs(props.attrs, ctx.value))
 
-// have to wrap validators into rule fn format
+// Wrap validators into vuiless-forms rule format: (v, data, context) => boolean | string
 const rules = computed(() => {
-  return props.validators?.map(
-    fn => (v: string, data: TFormData, context: TFormContext) =>
-      evalParameter(
-        fn,
-        {
-          v,
-          data: data as Record<string, unknown>,
-          context: context as Record<string, unknown>,
-          entry: props as unknown as undefined,
-        },
-        true
-      )
+  return props.validators.map(
+    fn => (v: unknown, data: TFormData, context: TFormContext) =>
+      fn({
+        v,
+        data: data as Record<string, unknown>,
+        context: (context ?? {}) as Record<string, unknown>,
+        entry: ctx.value.entry,
+      })
   )
 })
 </script>
@@ -117,7 +116,7 @@ const rules = computed(() => {
       :v-name="name"
       :field="field"
       :options="_options"
-      :length="length"
+      :max-length="maxLength"
       :required="!_optional"
       :autocomplete="autocomplete"
       :attrs="_attrs"

@@ -34,8 +34,7 @@
     "url": "https://github.com/foormjs/foormjs/issues"
   },
   "homepage": "https://github.com/foormjs/foormjs/tree/main/packages/foorm#readme",
-  "dependencies": {
-    "@prostojs/serialize-fn": "^0.0.5",
-    "@prostojs/deserialize-fn": "^0.0.5"
+  "scripts": {
+    "pub": "pnpm publish --access public --no-git-checks"
   }
 }

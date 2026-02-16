@@ -39,6 +39,16 @@ const replacePlugin = replace({
   preventAssignment: true,
 })
 
+function getBuildOptions(target) {
+  const pkg = require(`./packages/${target}/package.json`)
+  const buildArray = Array.isArray(pkg.build) ? pkg.build : pkg.build ? [pkg.build] : [{}]
+  return buildArray.map(build => ({
+    entries: build.entries || ['src/index.ts'],
+    formats: build.format ? [build.format] : ['mjs', 'cjs'],
+    dts: build.dts ?? true,
+  }))
+}
+
 const targets = readdirSync('packages').filter(f => {
   if (f !== target) {
     return false
@@ -56,23 +66,33 @@ const targets = readdirSync('packages').filter(f => {
   return true
 })
 
-const configs = targets.flatMap(target => [
-  createConfig(target, 'mjs'),
-  createConfig(target, 'cjs'),
-  createDtsConfig(target),
-])
+const configs = targets.flatMap(target => {
+  const builds = getBuildOptions(target)
+  return builds.flatMap(build => {
+    const results = []
+    for (const entry of build.entries) {
+      const fileName = entry.split('/').pop().replace(/\.\w+$/, '')
+      for (const format of build.formats) {
+        results.push(createConfig(target, format, entry, fileName))
+      }
+      if (build.dts) {
+        results.push(createDtsConfig(target, entry, fileName))
+      }
+    }
+    return results
+  })
+})
 
-function createConfig(target, type) {
+function createConfig(target, type, entry = 'src/index.ts', fileName = 'index') {
   const formats = {
     cjs: 'cjs',
     mjs: 'es',
   }
   return {
     external,
-    input: `./packages/${target}/src/index.ts`,
+    input: `./packages/${target}/${entry}`,
     output: {
-      // dir: `./packages/${target}/dist`,
-      file: `./packages/${target}/dist/index.${type}`,
+      file: `./packages/${target}/dist/${fileName}.${type}`,
       format: formats[type],
       sourcemap: false,
     },
@@ -96,12 +116,12 @@ function createConfig(target, type) {
   }
 }
 
-function createDtsConfig(target) {
+function createDtsConfig(target, entry = 'src/index.ts', fileName = 'index') {
   return {
     external,
-    input: `./packages/${target}/src/index.ts`,
+    input: `./packages/${target}/${entry}`,
     output: {
-      file: `./packages/${target}/dist/index.d.ts`,
+      file: `./packages/${target}/dist/${fileName}.d.ts`,
       format: 'es',
       sourcemap: false,
     },

@@ -1,4 +1,4 @@
-import type { TFoormEntry, TFoormEntryOptions } from 'foorm'
+import type { TFoormEntryOptions, TFoormField } from 'foorm'
 
 /* eslint-disable @typescript-eslint/ban-types */
 export interface TFoormComponentProps<V, TFormData, TFormContext> {
@@ -20,8 +20,8 @@ export interface TFoormComponentProps<V, TFormData, TFormContext> {
   type: string
   altAction?: string
   name?: string
-  field?: TFoormEntry<V, TFormData, TFormContext, TFoormEntryOptions>
-  options?: unknown[]
-  length?: number
+  field?: TFoormField
+  options?: TFoormEntryOptions[]
+  maxLength?: number
   autocomplete?: string
 }

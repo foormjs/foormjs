@@ -7,7 +7,7 @@
     "target": "es2015",
     "lib": ["ESNext", "DOM", "WebWorker", "DOM.Iterable"],
     "noUnusedLocals": true,
-    "types": ["jest", "node"],
+    "types": ["vitest/globals", "node"],
     "declaration": false,
     "declarationMap": false,
     "resolveJsonModule": true,

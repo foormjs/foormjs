@@ -14,7 +14,7 @@ export const packagesDir = path.resolve(__dirname, '../packages')
 
 const files = fs.readdirSync(packagesDir)
 
-export const mainPkg = require('../package.json')
+const mainPkg = require('../package.json')
 
 export const version = mainPkg.version
 export const packages = files

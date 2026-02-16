@@ -5,8 +5,7 @@ import minimist from 'minimist'
 import path from 'path'
 import semver from 'semver'
 
-import { PROJECT } from './constants.js'
-import { __dirname, mainPkg, out, packages, require, version as currentVersion } from './utils.js'
+import { __dirname, out, packages, require, version as currentVersion } from './utils.js'
 
 const { prompt } = require('enquirer')
 
@@ -24,8 +23,6 @@ if (isDryRun) {
 if (skipBuild) {
   out.warn('Skip Build!')
 }
-
-const skippedPackages = []
 
 const versionIncrements = [
   'patch',
@@ -88,17 +85,14 @@ async function main() {
     out.warn(`(skipped)`)
   }
 
-  // update all package versions and inter-dependencies
-  out.step('Updating cross dependencies...')
+  // update all package versions
+  out.step('Updating versions...')
   updateVersions(targetVersion)
 
   // build all packages with types
   out.step('Building all packages...')
   if (!skipBuild && !isDryRun) {
     await run('pnpm', ['run', 'build', '--release'])
-    // test generated dts files
-    // out.step('Verifying type declarations...')
-    // await run('pnpm', ['run', 'test-dts-only'])
   } else {
     out.warn(`(skipped)`)
   }
@@ -107,7 +101,7 @@ async function main() {
   out.step('Generating changelog...')
   await run(`pnpm`, ['run', 'changelog'])
 
-  // update package-lock.json
+  // update lockfile
   out.step('Updating lockfile...')
   await run(`pnpm`, ['i'])
 
@@ -120,11 +114,9 @@ async function main() {
     console.log('No changes to commit.')
   }
 
-  // publish packages
+  // publish packages via workspace pub scripts
   out.step('Publishing packages...')
-  for (const pkg of packages) {
-    await publishPackage(pkg, targetVersion, runIfNotDry)
-  }
+  await runIfNotDry('pnpm', ['-r', 'run', 'pub'])
 
   // push to GitHub
   out.step('Pushing to GitHub...')
@@ -135,99 +127,20 @@ async function main() {
   if (isDryRun) {
     console.log(`\nDry run finished - run git diff to see package changes.`)
   }
-
-  if (skippedPackages.length > 0) {
-    out.warn(
-      `The following packages are skipped and NOT published:\n- ${skippedPackages.join('\n- ')}`
-    )
-  }
   console.log()
 }
 
 function updateVersions(version) {
   // 1. update root package.json
   updatePackage(path.resolve(__dirname, '..', 'package.json'), version)
-  // 2. update all packages
+  // 2. update all workspace packages
   packages.forEach(p => updatePackage(p.pkgPath, version))
 }
 
 function updatePackage(pkgPath, version) {
   const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
   pkg.version = version
-  updateDeps(pkg, 'dependencies', version)
-  updateDeps(pkg, 'peerDependencies', version)
   fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
-}
-
-function updateDeps(pkg, depType, version) {
-  const deps = pkg[depType]
-  if (!deps) {
-    return
-  }
-  updateDepsFrom(pkg, mainPkg, depType)
-  Object.keys(deps).forEach(dep => {
-    if (dep === PROJECT || dep.startsWith(`@${PROJECT}js`)) {
-      out.warn(`${pkg.name} -> ${depType} -> ${dep}@${version}`)
-      deps[dep] = version
-    }
-  })
-}
-
-function updateDepsFrom(targetPkg, sourcePkg, depType) {
-  const deps = targetPkg[depType]
-  if (!deps) {
-    return
-  }
-  Object.keys(deps).forEach(dep => {
-    if (sourcePkg.dependencies && sourcePkg.dependencies[dep]) {
-      deps[dep] = sourcePkg.dependencies[dep]
-    }
-    if (sourcePkg.devDependencies && sourcePkg.devDependencies[dep]) {
-      deps[dep] = sourcePkg.devDependencies[dep]
-    }
-    if (sourcePkg.peerDependencies && sourcePkg.peerDependencies[dep]) {
-      deps[dep] = sourcePkg.peerDependencies[dep]
-    }
-  })
-}
-
-async function publishPackage(pkg, version, runIfNotDry) {
-  if (skippedPackages.includes(pkg.name)) {
-    return
-  }
-  if (pkg.pkg.private) {
-    return
-  }
-
-  let releaseTag = null
-  if (args.tag) {
-    releaseTag = args.tag
-  } else if (version.includes('alpha')) {
-    releaseTag = 'alpha'
-  } else if (version.includes('beta')) {
-    releaseTag = 'beta'
-  } else if (version.includes('rc')) {
-    releaseTag = 'rc'
-  }
-
-  out.step(`Publishing ${pkg.name}...`)
-  try {
-    await runIfNotDry(
-      'npm',
-      ['publish', '--access', 'public', '--registry=https://registry.npmjs.org/'],
-      {
-        cwd: pkg.pkgRoot,
-        stdio: 'pipe',
-      }
-    )
-    out.success(`Successfully published ${pkg.name}@${version}`)
-  } catch (error) {
-    if (/previously published/.test(error.stderr)) {
-      out.error(`Skipping already published: ${pkg.name}`)
-    } else {
-      throw error
-    }
-  }
 }
 
 main().catch(error => {

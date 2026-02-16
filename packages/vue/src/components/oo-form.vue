@@ -2,13 +2,12 @@
 import { VuilessForm } from 'vuiless-forms'
 import type { TVuilessState } from 'vuiless-forms'
 import OoField from './oo-field.vue'
-import { Foorm } from 'foorm'
+import { type TFoormModel, type TFoormFnScope, evalComputed, supportsAltAction } from 'foorm'
 import { computed, ref, type Component } from 'vue'
-import { type TFoormFnScope, evalParameter } from 'foorm'
 import { type TFoormComponentProps } from './types'
 
 export interface Props<TF, TC> {
-  form: Foorm
+  form: TFoormModel
   formData?: TF
   formContext?: TC
   firstValidation?: TVuilessState<TF, TC>['firstValidation']
@@ -19,37 +18,21 @@ export interface Props<TF, TC> {
 
 const props = defineProps<Props<TFormData, TFormContext>>()
 
-const executable = computed(() => {
-  return props.form.executable()
-})
-
-const ctx = computed<TFoormFnScope>(
-  () =>
-    ({
-      v: undefined,
-      data: data.value,
-      context: props.formContext,
-      entry: props,
-    }) as unknown as TFoormFnScope
-)
 const _data = ref<TFormData>({} as TFormData)
 const data = computed<TFormData>(() => props.formData || (_data.value as TFormData))
 
-function valueOrComputed<T>(v: T) {
-  if (typeof v === 'function') {
-    return computed(() => evalParameter(v, ctx.value))
-  }
-  return ref(v)
-}
+const ctx = computed<TFoormFnScope>(() => ({
+  v: undefined,
+  data: data.value as Record<string, unknown>,
+  context: (props.formContext ?? {}) as Record<string, unknown>,
+}))
 
-const _submitDisabled = valueOrComputed(executable.value.submit.disabled)
-
-const _submitText = valueOrComputed(executable.value.submit.text)
-
-const _title = valueOrComputed(executable.value.title)
+const _title = computed(() => evalComputed(props.form.title, ctx.value))
+const _submitText = computed(() => evalComputed(props.form.submit.text, ctx.value))
+const _submitDisabled = computed(() => evalComputed(props.form.submit.disabled, ctx.value))
 
 function handleAction(name: string) {
-  if (props.form.supportsAltAction(name)) {
+  if (supportsAltAction(props.form, name)) {
     emit('action', name, data.value)
   } else {
     emit('unsupported-action', name, data.value)
@@ -82,7 +65,13 @@ const emit = defineEmits<{
       <h2 v-if="!!_title">{{ _title }}</h2>
     </slot>
     <slot name="form.before" :clear-errors="form.clearErrors" :reset="form.reset"></slot>
-    <OoField v-for="f of executable.entries" v-bind="f" v-slot="field" :error="errors?.[f.field]">
+    <OoField
+      v-for="f of props.form.fields"
+      :key="f.field"
+      v-bind="f"
+      v-slot="field"
+      :error="errors?.[f.field]"
+    >
       <slot :name="`field:${field.type}`" v-bind="field">
         <component
           v-if="f.component && props.components?.[f.component]"
@@ -107,7 +96,7 @@ const emit = defineEmits<{
           :name="field.vName"
           :field="field"
           :options="field.options"
-          :length="field.length"
+          :max-length="field.maxLength"
           :autocomplete="field.autocomplete"
           @action="handleAction"
           v-bind="field.attrs"
@@ -141,7 +130,7 @@ const emit = defineEmits<{
           :name="field.vName"
           :field="field"
           :options="field.options"
-          :length="field.length"
+          :max-length="field.maxLength"
           :autocomplete="field.autocomplete"
           @action="handleAction"
           v-bind="field.attrs"

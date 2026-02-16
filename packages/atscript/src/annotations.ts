@@ -1,0 +1,202 @@
+import type { TAnnotationsTree, TMessages } from '@atscript/core'
+import { AnnotationSpec } from '@atscript/core'
+
+/**
+ * Attempts to compile a function string with `new Function` and returns
+ * diagnostic errors if it fails. Used by @foorm.fn.* and @foorm.validate
+ * annotation validate hooks.
+ */
+function validateFnString(
+  fnStr: string,
+  range: { start: { line: number; character: number }; end: { line: number; character: number } }
+): TMessages | undefined {
+  try {
+    // eslint-disable-next-line no-new-func
+    new Function('v', 'data', 'context', 'entry', `return (${fnStr})(v, data, context, entry)`)
+  } catch (e) {
+    return [
+      {
+        severity: 1,
+        message: `Invalid function string: ${(e as Error).message}`,
+        range,
+      },
+    ]
+  }
+  return undefined
+}
+
+function fnAnnotation(description: string): AnnotationSpec {
+  return new AnnotationSpec({
+    description,
+    nodeType: ['prop'],
+    argument: {
+      name: 'fn',
+      type: 'string',
+      description: 'JS function string: (value, data, context, entry) => result',
+    },
+    validate(token, args) {
+      if (args[0]) {
+        return validateFnString(args[0].text, args[0].range)
+      }
+      return undefined
+    },
+  })
+}
+
+function fnTopAnnotation(description: string): AnnotationSpec {
+  return new AnnotationSpec({
+    description,
+    nodeType: ['interface'],
+    argument: {
+      name: 'fn',
+      type: 'string',
+      description: 'JS function string: (data, context) => result',
+    },
+    validate(token, args) {
+      if (args[0]) {
+        return validateFnString(args[0].text, args[0].range)
+      }
+      return undefined
+    },
+  })
+}
+
+export const annotations: TAnnotationsTree = {
+  foorm: {
+    // ── Form-level static annotations ────────────────────────
+    title: new AnnotationSpec({
+      description: 'Static form title',
+      nodeType: ['interface'],
+      argument: {
+        name: 'title',
+        type: 'string',
+        description: 'The form title text',
+      },
+    }),
+
+    submit: {
+      text: new AnnotationSpec({
+        description: 'Static submit button text',
+        nodeType: ['interface'],
+        argument: {
+          name: 'text',
+          type: 'string',
+          description: 'Submit button label',
+        },
+      }),
+    },
+
+    // ── Field-level static annotations ───────────────────────
+    type: new AnnotationSpec({
+      description: 'Field input type',
+      nodeType: ['prop'],
+      argument: {
+        name: 'type',
+        type: 'string',
+        values: ['text', 'password', 'number', 'select', 'textarea', 'checkbox', 'radio', 'date', 'paragraph', 'action'],
+        description: 'The input type for this field',
+      },
+    }),
+
+    component: new AnnotationSpec({
+      description: 'Named component override for rendering this field',
+      nodeType: ['prop'],
+      argument: {
+        name: 'name',
+        type: 'string',
+        description: 'Component name from the components registry',
+      },
+    }),
+
+    autocomplete: new AnnotationSpec({
+      description: 'HTML autocomplete attribute value',
+      nodeType: ['prop'],
+      argument: {
+        name: 'value',
+        type: 'string',
+        description: 'Autocomplete value (e.g., "email", "given-name")',
+      },
+    }),
+
+    altAction: new AnnotationSpec({
+      description: 'Alternate submit action name for this field',
+      nodeType: ['prop'],
+      argument: {
+        name: 'action',
+        type: 'string',
+        description: 'The action name emitted on submit',
+      },
+    }),
+
+    value: new AnnotationSpec({
+      description: 'Default value for this field',
+      nodeType: ['prop'],
+      argument: {
+        name: 'value',
+        type: 'string',
+        description: 'Default value (parsed by field type at runtime)',
+      },
+    }),
+
+    order: new AnnotationSpec({
+      description: 'Explicit rendering order for this field',
+      nodeType: ['prop'],
+      argument: {
+        name: 'order',
+        type: 'number',
+        description: 'Numeric order (lower = earlier)',
+      },
+    }),
+
+    hidden: new AnnotationSpec({
+      description: 'Statically mark this field as hidden',
+      nodeType: ['prop'],
+    }),
+
+    disabled: new AnnotationSpec({
+      description: 'Statically mark this field as disabled',
+      nodeType: ['prop'],
+    }),
+
+    // ── Validation annotation ────────────────────────────────
+    validate: new AnnotationSpec({
+      description: 'Custom JS validator function string. Returns true for pass, or an error message string.',
+      nodeType: ['prop'],
+      multiple: true,
+      mergeStrategy: 'append',
+      argument: {
+        name: 'fn',
+        type: 'string',
+        description: 'JS function string: (value, data, context) => boolean | string',
+      },
+      validate(token, args) {
+        if (args[0]) {
+          return validateFnString(args[0].text, args[0].range)
+        }
+        return undefined
+      },
+    }),
+
+    // ── Computed (fn) annotations ────────────────────────────
+    fn: {
+      // Form-level computed
+      title: fnTopAnnotation('Computed form title: (data, context) => string'),
+      submit: {
+        text: fnTopAnnotation('Computed submit button text: (data, context) => string'),
+        disabled: fnTopAnnotation('Computed submit disabled state: (data, context) => boolean'),
+      },
+
+      // Field-level computed
+      label: fnAnnotation('Computed label: (value, data, context, entry) => string'),
+      description: fnAnnotation('Computed description: (value, data, context, entry) => string'),
+      hint: fnAnnotation('Computed hint: (value, data, context, entry) => string'),
+      placeholder: fnAnnotation('Computed placeholder: (value, data, context, entry) => string'),
+      disabled: fnAnnotation('Computed disabled state: (value, data, context, entry) => boolean'),
+      hidden: fnAnnotation('Computed hidden state: (value, data, context, entry) => boolean'),
+      optional: fnAnnotation('Computed optional state: (value, data, context, entry) => boolean'),
+      classes: fnAnnotation('Computed CSS classes: (value, data, context, entry) => string | Record<string, boolean>'),
+      styles: fnAnnotation('Computed inline styles: (value, data, context, entry) => string | Record<string, string>'),
+      options: fnAnnotation('Computed select/radio options: (value, data, context, entry) => Array'),
+    },
+  },
+}
