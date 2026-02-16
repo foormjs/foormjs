@@ -174,7 +174,7 @@ function optLabel(opt: TFoormEntryOptions): string {
           <div class="oo-error-slot">{{ field.error || field.hint }}</div>
         </div>
 
-        <p v-else-if="field.type === 'paragraph'">{{ field.description }}</p>
+        <p v-else-if="field.type === 'paragraph'">{{ field.value }}</p>
 
         <div
           class="oo-default-field"

@@ -49,6 +49,7 @@ export interface TFoormField {
   altAction?: string
   order?: number
   name?: string
+  phantom?: boolean // True for non-data fields (paragraph, action) that shouldn't be in form data
 
   // Description (static or computed)
   label: TComputed<string>

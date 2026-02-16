@@ -45,7 +45,8 @@ const hidden = makeReactive(props.hidden, baseScope, false)
 const readonly = makeReactive(props.readonly, baseScope, false)
 
 // Derived computed values
-const required = computed(() => !unwrap(optional))
+// Phantom fields don't need required attribute
+const required = props.phantom ? undefined : computed(() => !unwrap(optional))
 
 // Full scope with entry
 const scope = computed<TFoormFnScope>(() => ({
@@ -102,8 +103,14 @@ function getClasses(error: string | undefined, vuilessError: string | undefined)
 // Attrs - always computed (evalAttrs processes the entire object)
 const attrs = computed(() => evalAttrs(props.attrs, scope.value))
 
+// Phantom value - only for phantom fields (paragraph, action)
+const phantomValue = props.phantom
+  ? computed(() => (typeof props.value === 'function' ? props.value(scope.value) : props.value))
+  : undefined
+
 // Conditional watcher for readonly computed values
-if (typeof props.value === 'function') {
+// Skip phantom fields (paragraph, action) as they shouldn't be in form data
+if (typeof props.value === 'function' && !props.phantom) {
   const computedValue = computed(() => {
     if (unwrap(readonly)) {
       return (props.value as Function)(scope.value)
@@ -150,6 +157,7 @@ const rules = props.validators.map(fn => {
       :description="description"
       :hint="hint"
       :placeholder="placeholder"
+      :value="phantomValue"
       :classes="getClasses(error, vuilessField.error)"
       :styles="styles"
       :optional="optional"

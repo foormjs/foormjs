@@ -325,6 +325,7 @@ export function createFoorm(
       altAction: pm.get('foorm.altAction') as string | undefined,
       order: pm.get('foorm.order') as number | undefined,
       name: name,
+      phantom: prop.type?.kind === '' && prop.type?.designType === 'phantom',
 
       // Batch resolve text properties (reduces function call overhead)
       ...resolveTextProperties(pm, name),

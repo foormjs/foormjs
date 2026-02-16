@@ -21,7 +21,7 @@ test.describe('Form Structure', () => {
   })
 
   test('paragraph primitive renders description as <p>', async ({ page }) => {
-    await expect(page.locator('p')).toHaveText('Please fill out this form')
+    await expect(page.locator('p').first()).toHaveText('Please fill out this form')
   })
 
   test('paragraph does not render an input', async ({ page }) => {
@@ -516,5 +516,48 @@ test.describe('Custom Component', () => {
     )
     // #fffbeb is rgb(255, 251, 235)
     expect(bgColor).toBe('rgb(255, 251, 235)')
+  })
+})
+
+// ── Computed Paragraph ────────────────────────────────────────────
+
+test.describe('Computed Paragraph', () => {
+  test('renders default computed paragraph text when no data', async ({ page }) => {
+    const summaryP = page.locator('p').filter({ hasText: 'Fill out your info' })
+    await expect(summaryP).toHaveText('Fill out your info above to see a summary.')
+  })
+
+  test('computed paragraph updates when firstName and lastName are filled', async ({ page }) => {
+    await page.locator('input[name="firstName"]').fill('John')
+    await page.locator('input[name="lastName"]').fill('Doe')
+
+    const summaryP = page.locator('p').filter({ hasText: 'Hello, John' })
+    await expect(summaryP).toHaveText('Hello, John Doe! You are 25 years old.')
+  })
+
+  test('computed paragraph reacts to age changes', async ({ page }) => {
+    await page.locator('input[name="firstName"]').fill('Jane')
+    await page.locator('input[name="lastName"]').fill('Smith')
+
+    // Age has default value of 25
+    let summaryP = page.locator('p').filter({ hasText: 'Hello, Jane' })
+    await expect(summaryP).toHaveText('Hello, Jane Smith! You are 25 years old.')
+
+    // Change age
+    await page.locator('input[name="age"]').fill('30')
+    await expect(summaryP).toHaveText('Hello, Jane Smith! You are 30 years old.')
+  })
+
+  test('computed paragraph reverts when firstName is cleared', async ({ page }) => {
+    await page.locator('input[name="firstName"]').fill('Bob')
+    await page.locator('input[name="lastName"]').fill('Johnson')
+
+    let summaryP = page.locator('p').filter({ hasText: 'Hello, Bob' })
+    await expect(summaryP).toBeVisible()
+
+    await page.locator('input[name="firstName"]').clear()
+
+    const defaultP = page.locator('p').filter({ hasText: 'Fill out your info' })
+    await expect(defaultP).toHaveText('Fill out your info above to see a summary.')
   })
 })

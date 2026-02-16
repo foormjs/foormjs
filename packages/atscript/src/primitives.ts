@@ -12,7 +12,7 @@ export const primitives: TAtscriptConfig['primitives'] = {
       },
       paragraph: {
         documentation:
-          'Read-only paragraph text — rendered as static content, not an input field. Use @meta.label for the paragraph text.',
+          'Read-only paragraph text — rendered as static content, not an input field. Use @foorm.value for static text or @foorm.fn.value for computed text.',
       },
       select: {
         type: 'string',

@@ -4,7 +4,8 @@
 export interface E2eTestForm {
     // Paragraph primitive
     @meta.label 'Welcome'
-    @meta.description 'Please fill out this form'
+    @foorm.value 'Please fill out this form'
+    @foorm.order 0
     info: foorm.paragraph
 
     // Text field: label, description, placeholder, autocomplete, validate, order
@@ -169,4 +170,10 @@ export interface E2eTestForm {
     @foorm.validate '(v) => !v || v.length >= 3 || "Must be at least 3 characters"'
     @foorm.order 20
     favoriteStar?: string
+
+    // Computed paragraph with foorm.fn.value
+    @meta.label 'Summary'
+    @foorm.fn.value '(v, data) => data.firstName && data.lastName ? "Hello, " + data.firstName + " " + data.lastName + "! You are " + (data.age || "?") + " years old." : "Fill out your info above to see a summary."'
+    @foorm.order 21
+    summary: foorm.paragraph
 }

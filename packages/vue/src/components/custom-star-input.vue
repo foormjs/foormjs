@@ -26,7 +26,7 @@ defineEmits<{
         :name="name"
         :type="type"
         :disabled="disabled"
-        :readonly="field?.readonly"
+        :readonly="(field?.readonly as boolean)"
         :maxlength="maxLength"
         class="star-input"
       />
