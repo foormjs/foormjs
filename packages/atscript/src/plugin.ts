@@ -1,4 +1,5 @@
-import type { TAtscriptPlugin } from '@atscript/core'
+import type { TAnnotationsTree, TAtscriptPlugin } from '@atscript/core'
+import { AnnotationSpec } from '@atscript/core'
 
 export { annotations } from './annotations'
 export { primitives } from './primitives'
@@ -12,16 +13,61 @@ export interface TFoormPluginOptions {
    * Built-in values: text, password, number, select, textarea, checkbox, radio, date, paragraph, action
    */
   extraTypes?: string[]
+
+  /**
+   * List of custom component names available in the project.
+   * Enables IDE autocomplete and validation for @foorm.component annotation.
+   * When omitted, @foorm.component accepts any string.
+   */
+  components?: string[]
 }
+
+const BUILTIN_TYPES = ['text', 'password', 'number', 'select', 'textarea', 'checkbox', 'radio', 'date', 'paragraph', 'action']
 
 export function foormPlugin(opts?: TFoormPluginOptions): TAtscriptPlugin {
   return {
     name: 'foorm',
 
     config() {
+      if (!opts?.extraTypes?.length && !opts?.components?.length) {
+        return { primitives, annotations }
+      }
+
+      const foormNs = annotations.foorm as TAnnotationsTree
+      const overrides: TAnnotationsTree = {}
+
+      if (opts.extraTypes?.length) {
+        overrides.type = new AnnotationSpec({
+          description: 'Field input type',
+          nodeType: ['prop'],
+          argument: {
+            name: 'type',
+            type: 'string',
+            values: [...BUILTIN_TYPES, ...opts.extraTypes],
+            description: 'The input type for this field',
+          },
+        })
+      }
+
+      if (opts.components?.length) {
+        overrides.component = new AnnotationSpec({
+          description: 'Named component override for rendering this field',
+          nodeType: ['prop'],
+          argument: {
+            name: 'name',
+            type: 'string',
+            values: opts.components,
+            description: 'Component name from the components registry',
+          },
+        })
+      }
+
       return {
         primitives,
-        annotations,
+        annotations: {
+          ...annotations,
+          foorm: { ...foormNs, ...overrides },
+        },
       }
     },
   }

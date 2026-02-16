@@ -4,5 +4,7 @@ import { foormPlugin } from '@foormjs/atscript/plugin'
 
 export default defineConfig({
   rootDir: 'src',
-  plugins: [ts(), foormPlugin()],
+  plugins: [ts(), foormPlugin({
+    components: ['CustomInput', 'DatePicker', 'RichTextEditor'],
+  })],
 })

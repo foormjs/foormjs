@@ -49,14 +49,18 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@foormjs/atscript": "workspace:^",
     "foorm": "workspace:^",
     "vue": "^3.5.28",
     "vuiless-forms": "^0.0.3"
   },
+  "peerDependencies": {
+    "@atscript/core": "^0.1.6",
+    "@atscript/typescript": "^0.1.6"
+  },
   "devDependencies": {
     "@atscript/core": "^0.1.6",
     "@atscript/typescript": "^0.1.6",
-    "@foormjs/atscript": "workspace:^",
     "@playwright/test": "^1.58.2",
     "@tsconfig/node20": "^20.1.9",
     "@types/node": "^20.19.33",

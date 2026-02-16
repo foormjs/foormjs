@@ -125,6 +125,9 @@ importers:
 
   packages/vue:
     dependencies:
+      '@foormjs/atscript':
+        specifier: workspace:^
+        version: link:../atscript
       foorm:
         specifier: workspace:^
         version: link:../foorm
@@ -141,9 +144,6 @@ importers:
       '@atscript/typescript':
         specifier: ^0.1.6
         version: 0.1.6(@atscript/core@0.1.6)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)
-      '@foormjs/atscript':
-        specifier: workspace:^
-        version: link:../atscript
       '@playwright/test':
         specifier: ^1.58.2
         version: 1.58.2
