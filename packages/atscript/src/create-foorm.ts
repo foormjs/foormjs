@@ -1,38 +1,12 @@
+import type { TAtscriptAnnotatedType, TAtscriptTypeObject } from '@atscript/typescript/utils'
 import type { TComputed, TFoormEntryOptions, TFoormField, TFoormFnScope, TFoormModel, TFoormSubmit } from 'foorm'
+
+import { isPhantomType } from '@atscript/typescript/utils'
 
 import { compileFieldFn, compileTopFn, compileValidatorFn } from './fn-compiler'
 
-/**
- * Minimal interface for an ATScript annotated type's metadata map.
- * Avoids a hard dependency on @atscript/typescript.
- */
-export interface TMetadataLike {
-  get(key: string): unknown
-}
-
-/**
- * Minimal interface for an ATScript annotated type property.
- */
-export interface TAnnotatedPropLike {
-  type: {
-    tags?: Set<string>
-    designType?: string
-  }
-  metadata: TMetadataLike
-  optional?: boolean
-}
-
-/**
- * Minimal interface for an ATScript annotated type (object kind).
- * Accepts any TAtscriptAnnotatedType from @atscript/typescript.
- */
-export interface TAnnotatedTypeLike {
-  type: {
-    kind: string
-    props: Map<string, TAnnotatedPropLike>
-  }
-  metadata: TMetadataLike
-}
+/** Loose metadata accessor for internal use (the global AtscriptMetadata may not be augmented at library build time). */
+type TMetadataAccessor = { get(key: string): unknown }
 
 /**
  * Resolves a static annotation or a @foorm.fn.* computed annotation.
@@ -42,7 +16,7 @@ export interface TAnnotatedTypeLike {
 function resolveComputed<T>(
   staticKey: string,
   fnKey: string,
-  metadata: TMetadataLike,
+  metadata: TMetadataAccessor,
   compileFn: (fnStr: string) => (scope: TFoormFnScope) => T,
   defaultValue: T
 ): TComputed<T> {
@@ -73,8 +47,8 @@ function resolveComputed<T>(
  * const validator = getFormValidator(model)
  * ```
  */
-export function createFoorm(type: TAnnotatedTypeLike): TFoormModel {
-  const metadata = type.metadata
+export function createFoorm(type: TAtscriptAnnotatedType<TAtscriptTypeObject<any, any>>): TFoormModel {
+  const metadata = type.metadata as unknown as TMetadataAccessor
   const props = type.type.props
 
   // Form-level metadata
@@ -108,14 +82,14 @@ export function createFoorm(type: TAnnotatedTypeLike): TFoormModel {
   const fields: TFoormField[] = []
 
   for (const [name, prop] of props.entries()) {
-    const pm = prop.metadata
+    const pm = prop.metadata as unknown as TMetadataAccessor
     const tags = prop.type?.tags
 
-    // Determine field type from @foorm.type or semantic primitive tags
+    // Determine field type from @foorm.type, phantom primitive tags, or default
     const foormType = pm.get('foorm.type') as string | undefined
-    const isAction = tags?.has('action') ?? false
-    const isParagraph = tags?.has('paragraph') ?? false
-    const fieldType = foormType ?? (isAction ? 'action' : isParagraph ? 'paragraph' : 'text')
+    const isPhantom = isPhantomType(prop)
+    const phantomTag = isPhantom ? (tags?.has('action') ? 'action' : tags?.has('paragraph') ? 'paragraph' : undefined) : undefined
+    const fieldType = foormType ?? phantomTag ?? 'text'
 
     // Build validators from @foorm.validate
     const validators: Array<(scope: TFoormFnScope) => boolean | string> = []

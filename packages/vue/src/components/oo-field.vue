@@ -19,6 +19,7 @@ const baseCtx = computed<TFoormFnScope>(() => ({
   v: vuiless.value.formData[props.field as keyof TFormData],
   data: vuiless.value.formData as Record<string, unknown>,
   context: (vuiless.value.formContext ?? {}) as Record<string, unknown>,
+  entry: undefined,
 }))
 
 // Constraints (evaluated first, before full scope)

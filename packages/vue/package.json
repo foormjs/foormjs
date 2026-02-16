@@ -45,7 +45,8 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
-    "pub": "pnpm publish --access public --no-git-checks"
+    "pub": "pnpm publish --access public --no-git-checks",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "foorm": "workspace:^",
@@ -53,9 +54,10 @@
     "vuiless-forms": "^0.0.3"
   },
   "devDependencies": {
-    "@atscript/core": "^0.1.3",
-    "@atscript/typescript": "^0.1.3",
+    "@atscript/core": "^0.1.6",
+    "@atscript/typescript": "^0.1.6",
     "@foormjs/atscript": "workspace:^",
+    "@playwright/test": "^1.58.2",
     "@tsconfig/node20": "^20.1.9",
     "@types/node": "^20.19.33",
     "@vitejs/plugin-vue": "^5.2.4",

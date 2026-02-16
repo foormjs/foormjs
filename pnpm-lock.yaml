@@ -105,11 +105,11 @@ importers:
   packages/atscript:
     dependencies:
       '@atscript/core':
-        specifier: ^0.1.0
-        version: 0.1.3
+        specifier: ^0.1.6
+        version: 0.1.6
       '@atscript/typescript':
-        specifier: ^0.1.0
-        version: 0.1.3(@atscript/core@0.1.3)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)
+        specifier: ^0.1.6
+        version: 0.1.6(@atscript/core@0.1.6)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)
       '@prostojs/deserialize-fn':
         specifier: ^0.0.5
         version: 0.0.5
@@ -136,14 +136,17 @@ importers:
         version: 0.0.3(typescript@5.4.5)
     devDependencies:
       '@atscript/core':
-        specifier: ^0.1.3
-        version: 0.1.3
+        specifier: ^0.1.6
+        version: 0.1.6
       '@atscript/typescript':
-        specifier: ^0.1.3
-        version: 0.1.3(@atscript/core@0.1.3)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)
+        specifier: ^0.1.6
+        version: 0.1.6(@atscript/core@0.1.6)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)
       '@foormjs/atscript':
         specifier: workspace:^
         version: link:../atscript
+      '@playwright/test':
+        specifier: ^1.58.2
+        version: 1.58.2
       '@tsconfig/node20':
         specifier: ^20.1.9
         version: 20.1.9
@@ -164,7 +167,7 @@ importers:
         version: 5.4.5
       unplugin-atscript:
         specifier: ^0.1.3
-        version: 0.1.3(@atscript/core@0.1.3)(@atscript/typescript@0.1.3(@atscript/core@0.1.3)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2))
+        version: 0.1.3(@atscript/core@0.1.6)(@atscript/typescript@0.1.6(@atscript/core@0.1.6)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2))
       vite:
         specifier: ^5.4.21
         version: 5.4.21(@types/node@20.19.33)
@@ -253,14 +256,14 @@ packages:
     resolution: {integrity: sha512-xcaCqbhupVWhuBP1nwbk1XNvwrGljozutEiLx06mvqDf3o8cHyEgQSHS4fKJM+UAggaWVnnFW+Nne5aQ8SUJXg==}
     engines: {node: '>= 14.0.0'}
 
-  '@atscript/core@0.1.3':
-    resolution: {integrity: sha512-MTfTUEwSxa/CUkx4p6xz+C/fdTnLvvCMBIcCJ9zEK66rBQ9Z4D9zrSxSgjgsAoVRvDLSpBC5vh20ZlMwFIPegQ==}
+  '@atscript/core@0.1.6':
+    resolution: {integrity: sha512-DaMkhUZkqCYgX5otQYRDB9Xs6Al+CLax+ktYdPxJNB+warD7VaV0mnTOcUVGRasU1s/CUUSlarJM0Ngd2cV6ug==}
 
-  '@atscript/typescript@0.1.3':
-    resolution: {integrity: sha512-9pblyACrWB9mATIZ/z2H3wKpUbL2svFsl4S/oDdycs6zL4sEPQs/cGgDMp+/tw/t/w47QzkIey6GR/2NiMURDw==}
+  '@atscript/typescript@0.1.6':
+    resolution: {integrity: sha512-jYndnJIC+wfRwAkADMbajQ/8M8SDCIvj0G3ssPFSI8h9KcsdzsK+jc0e9wvT+b9nILoKut7rAKUqqdvWs8CPUA==}
     hasBin: true
     peerDependencies:
-      '@atscript/core': ^0.1.3
+      '@atscript/core': ^0.1.6
 
   '@babel/code-frame@7.29.0':
     resolution: {integrity: sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw==}
@@ -707,6 +710,11 @@ packages:
 
   '@oxc-project/types@0.113.0':
     resolution: {integrity: sha512-Tp3XmgxwNQ9pEN9vxgJBAqdRamHibi76iowQ38O2I4PMpcvNRQNVsU2n1x1nv9yh0XoTrGFzf7cZSGxmixxrhA==}
+
+  '@playwright/test@1.58.2':
+    resolution: {integrity: sha512-akea+6bHYBBfA9uQqSYmlJXn61cTa+jbO87xVLCWbTqbWadRVmhxlXATaOjOgcBaWU4ePo0wB41KMFv3o35IXA==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   '@prostojs/cache@0.0.1':
     resolution: {integrity: sha512-DQH+nAFBGGCYq11x2Cc9xYjiIsNCR+pVgzC5Y409opTQBPXqyGg7v7kVJcgwfYBJBwXvem6wen13Ae71teNXhA==}
@@ -2014,6 +2022,11 @@ packages:
   fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
 
+  fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -2824,6 +2837,16 @@ packages:
   pkg-dir@4.2.0:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
     engines: {node: '>=8'}
+
+  playwright-core@1.58.2:
+    resolution: {integrity: sha512-yZkEtftgwS8CsfYo7nm0KE8jsvm6i/PTgVtB8DL726wNf6H2IMsDuxCpJj59KDaxCtSnrWan2AeDqM7JBaultg==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  playwright@1.58.2:
+    resolution: {integrity: sha512-vA30H8Nvkq/cPBnNw4Q8TWz1EJyqgpuinBcHET0YVJVFldr8JDNiU9LaWAE1KqSkRYazuaBhTpB5ZzShOezQ6A==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   pluralize@8.0.0:
     resolution: {integrity: sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA==}
@@ -3770,16 +3793,16 @@ snapshots:
     dependencies:
       '@algolia/client-common': 5.48.1
 
-  '@atscript/core@0.1.3':
+  '@atscript/core@0.1.6':
     dependencies:
       '@prostojs/parser': 0.5.11
       defu: 6.1.4
       glob: 13.0.3
       rolldown: 1.0.0-rc.4
 
-  '@atscript/typescript@0.1.3(@atscript/core@0.1.3)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)':
+  '@atscript/typescript@0.1.6(@atscript/core@0.1.6)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)':
     dependencies:
-      '@atscript/core': 0.1.3
+      '@atscript/core': 0.1.6
       '@moostjs/event-cli': 0.5.33(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(moost@0.5.33)(wooks@0.6.2)
       moost: 0.5.33
     transitivePeerDependencies:
@@ -4123,6 +4146,10 @@ snapshots:
       fastq: 1.20.1
 
   '@oxc-project/types@0.113.0': {}
+
+  '@playwright/test@1.58.2':
+    dependencies:
+      playwright: 1.58.2
 
   '@prostojs/cache@0.0.1': {}
 
@@ -5647,6 +5674,9 @@ snapshots:
 
   fs.realpath@1.0.0: {}
 
+  fsevents@2.3.2:
+    optional: true
+
   fsevents@2.3.3:
     optional: true
 
@@ -6451,6 +6481,14 @@ snapshots:
     dependencies:
       find-up: 4.1.0
 
+  playwright-core@1.58.2: {}
+
+  playwright@1.58.2:
+    dependencies:
+      playwright-core: 1.58.2
+    optionalDependencies:
+      fsevents: 2.3.2
+
   pluralize@8.0.0: {}
 
   possible-typed-array-names@1.1.0: {}
@@ -7045,10 +7083,10 @@ snapshots:
 
   universalify@2.0.1: {}
 
-  unplugin-atscript@0.1.3(@atscript/core@0.1.3)(@atscript/typescript@0.1.3(@atscript/core@0.1.3)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)):
+  unplugin-atscript@0.1.3(@atscript/core@0.1.6)(@atscript/typescript@0.1.6(@atscript/core@0.1.6)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)):
     dependencies:
-      '@atscript/core': 0.1.3
-      '@atscript/typescript': 0.1.3(@atscript/core@0.1.3)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)
+      '@atscript/core': 0.1.6
+      '@atscript/typescript': 0.1.6(@atscript/core@0.1.6)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)
       unplugin: 2.3.11
 
   unplugin@2.3.11:

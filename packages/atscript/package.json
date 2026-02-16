@@ -21,14 +21,20 @@
   },
   "typesVersions": {
     "*": {
-      "plugin": ["dist/plugin.d.ts"],
-      "": ["dist/index.d.ts"]
+      "plugin": [
+        "dist/plugin.d.ts"
+      ],
+      "": [
+        "dist/index.d.ts"
+      ]
     }
   },
   "build": [
     {},
     {
-      "entries": ["src/plugin.ts"],
+      "entries": [
+        "src/plugin.ts"
+      ],
       "dts": true
     }
   ],
@@ -57,11 +63,11 @@
     "pub": "pnpm publish --access public --no-git-checks"
   },
   "dependencies": {
-    "@atscript/core": "^0.1.0",
+    "@atscript/core": "^0.1.6",
     "@prostojs/deserialize-fn": "^0.0.5",
     "foorm": "workspace:^"
   },
   "peerDependencies": {
-    "@atscript/typescript": "^0.1.0"
+    "@atscript/typescript": "^0.1.6"
   }
 }

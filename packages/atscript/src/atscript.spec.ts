@@ -1,5 +1,5 @@
 import { compileFieldFn, compileTopFn, compileValidatorFn } from './fn-compiler'
-import { createFoorm, type TAnnotatedTypeLike } from './create-foorm'
+import { createFoorm } from './create-foorm'
 
 // ── fn-compiler ─────────────────────────────────────────────
 
@@ -55,12 +55,13 @@ function makeType(opts: {
     metadata?: Record<string, unknown>
     optional?: boolean
     tags?: string[]
+    designType?: string
   }>
-}): TAnnotatedTypeLike {
+}) {
   const propsMap = new Map<string, any>()
   for (const [name, prop] of Object.entries(opts.props)) {
     propsMap.set(name, {
-      type: { tags: prop.tags ? new Set(prop.tags) : undefined },
+      type: { kind: '', tags: prop.tags ? new Set(prop.tags) : undefined, designType: prop.designType },
       metadata: makeMeta(prop.metadata ?? {}),
       optional: prop.optional,
     })
@@ -68,7 +69,7 @@ function makeType(opts: {
   return {
     type: { kind: 'object', props: propsMap },
     metadata: makeMeta(opts.metadata ?? {}),
-  }
+  } as unknown as Parameters<typeof createFoorm>[0]
 }
 
 describe('createFoorm', () => {
@@ -115,10 +116,10 @@ describe('createFoorm', () => {
     expect(model.fields[0].type).toBe('number')
   })
 
-  it('detects action type from semantic primitive tag', () => {
+  it('detects action type from phantom primitive tag', () => {
     const type = makeType({
       props: {
-        save: { metadata: {}, tags: ['action'] },
+        save: { metadata: {}, tags: ['action'], designType: 'phantom' },
       },
     })
 
@@ -126,10 +127,10 @@ describe('createFoorm', () => {
     expect(model.fields[0].type).toBe('action')
   })
 
-  it('detects paragraph type from semantic primitive tag', () => {
+  it('detects paragraph type from phantom primitive tag', () => {
     const type = makeType({
       props: {
-        info: { metadata: {}, tags: ['paragraph'] },
+        info: { metadata: {}, tags: ['paragraph'], designType: 'phantom' },
       },
     })
 

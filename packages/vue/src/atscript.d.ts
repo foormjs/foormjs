@@ -52,6 +52,6 @@ declare global {
     "foorm.fn.options": string
     "meta.hint": string
   }
-  type AtscriptPrimitiveTags = "never" | "string" | "email" | "phone" | "date" | "isoDate" | "uuid" | "number" | "positive" | "negative" | "single" | "double" | "int" | "timestamp" | "boolean" | "true" | "false" | "null" | "void" | "undefined" | "foorm" | "action" | "paragraph"
+  type AtscriptPrimitiveTags = "never" | "string" | "email" | "phone" | "date" | "isoDate" | "uuid" | "number" | "positive" | "negative" | "single" | "double" | "int" | "timestamp" | "boolean" | "true" | "false" | "null" | "void" | "undefined" | "phantom" | "foorm" | "action" | "paragraph"
 }
 // prettier-ignore-end

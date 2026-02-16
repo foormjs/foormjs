@@ -25,6 +25,7 @@ const ctx = computed<TFoormFnScope>(() => ({
   v: undefined,
   data: data.value as Record<string, unknown>,
   context: (props.formContext ?? {}) as Record<string, unknown>,
+  entry: undefined,
 }))
 
 const _title = computed(() => evalComputed(props.form.title, ctx.value))
@@ -141,6 +142,7 @@ const emit = defineEmits<{
           class="oo-default-field"
           :class="field.classes"
           v-else-if="['text', 'password', 'number'].includes(field.type)"
+          v-show="!field.hidden"
         >
           <label>{{ field.label }}</label>
           <span v-if="!!field.description">{{ field.description }}</span>
@@ -151,11 +153,22 @@ const emit = defineEmits<{
             :autocomplete="field.autocomplete"
             :name="field.vName"
             :type="field.type"
+            :disabled="field.disabled"
           />
           <div class="oo-error-slot">{{ field.error || field.hint }}</div>
         </div>
 
         <p v-else-if="field.type === 'paragraph'">{{ field.description }}</p>
+
+        <div
+          class="oo-default-field oo-action-field"
+          :class="field.classes"
+          v-else-if="field.type === 'action'"
+        >
+          <button type="button" @click="handleAction(field.altAction!)">
+            {{ field.label }}
+          </button>
+        </div>
 
         <div v-else>
           [{{ field.label }}] Not supported field type "{{ field.type }}" {{ field.component }}
@@ -195,22 +208,122 @@ const emit = defineEmits<{
   display: flex;
   flex-direction: column;
   gap: 4px;
+  margin-bottom: 4px;
 }
 
-.oo-default-field.required label:after {
-  content: ' *';
-  color: red;
+.oo-default-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
 }
+
+.oo-default-field.required label::after {
+  content: ' *';
+  color: #ef4444;
+}
+
+.oo-default-field span {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.oo-default-field input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1d1d1f;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.oo-default-field input::placeholder {
+  color: #9ca3af;
+}
+
+.oo-default-field input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.oo-default-field input:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
 .oo-default-field.error input {
-  outline: 1px solid red;
+  border-color: #ef4444;
+}
+
+.oo-default-field.error input:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
 }
 
 .oo-default-field .oo-error-slot {
-  height: 14px;
-  line-height: 12px;
+  min-height: 16px;
+  line-height: 16px;
   font-size: 12px;
+  color: #6b7280;
 }
+
 .oo-default-field.error .oo-error-slot {
-  color: red;
+  color: #ef4444;
+}
+
+.oo-default-field.oo-action-field button {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.oo-default-field.oo-action-field button:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+p {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+button[type='submit'],
+button:not([type]) {
+  margin-top: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  background: #6366f1;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+button[type='submit']:hover,
+button:not([type]):hover {
+  background: #4f46e5;
+}
+
+button[type='submit']:disabled,
+button:not([type]):disabled {
+  background: #c7d2fe;
+  cursor: not-allowed;
 }
 </style>

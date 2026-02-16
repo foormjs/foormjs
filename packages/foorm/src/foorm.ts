@@ -20,14 +20,17 @@ export function validate(
   return { passed: true }
 }
 
+/** Field types that are UI-only elements, excluded from form data and validation. */
+const NON_DATA_TYPES = new Set(['action', 'paragraph'])
+
 /**
  * Creates initial form data from field default values.
- * Skips fields with type 'action' (buttons, not data).
+ * Skips non-data field types (action, paragraph).
  */
 export function createFormData<T = Record<string, unknown>>(fields: TFoormField[]): T {
   const data = {} as Record<string, unknown>
   for (const f of fields) {
-    if (f.type !== 'action') {
+    if (!NON_DATA_TYPES.has(f.type)) {
       data[f.field] = f.value ?? undefined
     }
   }
@@ -48,7 +51,7 @@ export function getFormValidator(
     const errors: Record<string, string> = {}
 
     for (const f of model.fields) {
-      if (f.type === 'action') {
+      if (NON_DATA_TYPES.has(f.type)) {
         continue
       }
 
