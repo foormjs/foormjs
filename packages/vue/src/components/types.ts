@@ -1,8 +1,7 @@
 import type { TFoormEntryOptions, TFoormField } from 'foorm'
 
-/* eslint-disable @typescript-eslint/ban-types */
 export interface TFoormComponentProps<V, TFormData, TFormContext> {
-  onBlur: Function
+  onBlur: (event: FocusEvent) => void
   error?: string
   model: { value: V }
   formData: TFormData

@@ -6,7 +6,6 @@ import { out, packages, require } from './utils.js'
 
 const allTargets = packages
   .filter(({ pkg }) => pkg && !pkg.private)
-  .filter(({ pkg }) => !pkg.customBuild)
   .map(({ shortName }) => shortName)
 const args = minimist(process.argv.slice(2))
 const targets = args._
@@ -47,9 +46,17 @@ async function build(target) {
     return
   }
 
-  const env = 'production'
-
   out.log()
+
+  // Handle packages with custom build process (e.g., vue uses Vite)
+  if (pkg.customBuild) {
+    out.step(`Custom build ${target}...`)
+    await execa('pnpm', ['build'], { stdio: 'inherit', cwd: pkgDir })
+    return
+  }
+
+  // Standard rollup build
+  const env = 'production'
   out.step(`Rollup ${target}...`)
 
   await execa(

@@ -12,6 +12,10 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "skipLibCheck": true,
     "baseUrl": ".",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolvePackageJsonExports": true,
+    "resolvePackageJsonImports": true,
     "paths": {
       "@/*": ["./src/*"],
       "foorm": ["../foorm/src"],
