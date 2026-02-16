@@ -1,3 +1,12 @@
+# [0.2.0](https://github.com/foormjs/foormjs/compare/v0.1.0...v0.2.0) (2026-02-16)
+
+
+### Features
+
+* add checkbox, radio and select ([92ffc2e](https://github.com/foormjs/foormjs/commit/92ffc2efae852da523047ff97a79ed98841d43ec))
+
+
+
 # [0.1.0](https://github.com/foormjs/foormjs/compare/v0.0.3...v0.1.0) (2024-07-30)
 
 ## [0.0.3](https://github.com/foormjs/foormjs/compare/v0.0.2...v0.0.3) (2024-04-07)
