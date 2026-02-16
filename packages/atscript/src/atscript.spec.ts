@@ -235,4 +235,89 @@ describe('createFoorm', () => {
     const model = createFoorm(type)
     expect(model.submit.text).toBe('Submit')
   })
+
+  it('detects select type from foorm primitive tag', () => {
+    const type = makeType({
+      props: {
+        country: { metadata: {}, tags: ['select'] },
+      },
+    })
+    const model = createFoorm(type)
+    expect(model.fields[0].type).toBe('select')
+  })
+
+  it('detects radio type from foorm primitive tag', () => {
+    const type = makeType({
+      props: {
+        gender: { metadata: {}, tags: ['radio'] },
+      },
+    })
+    const model = createFoorm(type)
+    expect(model.fields[0].type).toBe('radio')
+  })
+
+  it('detects checkbox type from foorm primitive tag', () => {
+    const type = makeType({
+      props: {
+        agree: { metadata: {}, tags: ['checkbox'] },
+      },
+    })
+    const model = createFoorm(type)
+    expect(model.fields[0].type).toBe('checkbox')
+  })
+
+  it('parses static options from foorm.options annotation', () => {
+    const type = makeType({
+      props: {
+        country: {
+          metadata: {
+            'foorm.options': [
+              { label: 'United States', value: 'us' },
+              { label: 'Canada', value: 'ca' },
+            ],
+          },
+          tags: ['select'],
+        },
+      },
+    })
+    const model = createFoorm(type)
+    expect(model.fields[0].options).toEqual([
+      { key: 'us', label: 'United States' },
+      { key: 'ca', label: 'Canada' },
+    ])
+  })
+
+  it('uses label as key when value is omitted in static options', () => {
+    const type = makeType({
+      props: {
+        color: {
+          metadata: {
+            'foorm.options': [{ label: 'Red' }, { label: 'Blue' }],
+          },
+          tags: ['select'],
+        },
+      },
+    })
+    const model = createFoorm(type)
+    expect(model.fields[0].options).toEqual(['Red', 'Blue'])
+  })
+
+  it('fn.options takes precedence over static options', () => {
+    const type = makeType({
+      props: {
+        city: {
+          metadata: {
+            'foorm.fn.options': '(v, data, context) => context.cities || []',
+            'foorm.options': [{ label: 'Fallback', value: 'fb' }],
+          },
+          tags: ['select'],
+        },
+      },
+    })
+    const model = createFoorm(type)
+    expect(typeof model.fields[0].options).toBe('function')
+    const fn = model.fields[0].options as Function
+    const result = fn({ v: undefined, data: {}, context: { cities: [{ key: 'nyc', label: 'NYC' }] }, entry: { field: 'city', type: 'select', name: 'city' } })
+    expect(result).toEqual([{ key: 'nyc', label: 'NYC' }])
+  })
 })

@@ -88,9 +88,38 @@ export interface E2eTestForm {
     @foorm.order 10
     styledField?: string
 
+    // Select with static options
+    @meta.label 'Country'
+    @meta.placeholder 'Select a country'
+    @foorm.options 'United States', 'us'
+    @foorm.options 'Canada', 'ca'
+    @foorm.options 'United Kingdom', 'uk'
+    @foorm.order 11
+    country?: foorm.select
+
+    // Radio with static options
+    @meta.label 'Gender'
+    @foorm.options 'Male', 'male'
+    @foorm.options 'Female', 'female'
+    @foorm.options 'Other', 'other'
+    @foorm.order 12
+    gender?: foorm.radio
+
+    // Checkbox (single boolean)
+    @meta.label 'I agree to terms and conditions'
+    @foorm.order 13
+    agreeToTerms: foorm.checkbox
+
+    // Select with context-driven options
+    @meta.label 'City'
+    @meta.placeholder 'Select a city'
+    @foorm.fn.options '(v, data, context) => context.cityOptions || []'
+    @foorm.order 14
+    city?: foorm.select
+
     // Action primitive with altAction
     @meta.label 'Reset Password'
     @foorm.altAction 'reset-password'
-    @foorm.order 11
+    @foorm.order 15
     resetAction: foorm.action
 }

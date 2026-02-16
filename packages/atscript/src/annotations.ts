@@ -158,6 +158,28 @@ export const annotations: TAnnotationsTree = {
       nodeType: ['prop'],
     }),
 
+    // ── Options annotation ──────────────────────────────────
+    options: new AnnotationSpec({
+      description:
+        'Static option for select/radio fields. Repeat for each option. Label is the display text, value is the key (defaults to label).',
+      nodeType: ['prop'],
+      multiple: true,
+      mergeStrategy: 'replace',
+      argument: [
+        {
+          name: 'label',
+          type: 'string',
+          description: 'Display label for the option',
+        },
+        {
+          name: 'value',
+          type: 'string',
+          optional: true,
+          description: 'Value/key for the option (defaults to label if omitted)',
+        },
+      ],
+    }),
+
     // ── Validation annotation ────────────────────────────────
     validate: new AnnotationSpec({
       description: 'Custom JS validator function string. Returns true for pass, or an error message string.',

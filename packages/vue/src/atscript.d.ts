@@ -36,6 +36,7 @@ declare global {
     "foorm.order": number
     "foorm.hidden": boolean
     "foorm.disabled": boolean
+    "foorm.options": ({ label: string, value?: string })[]
     "foorm.validate": (string)[]
     "foorm.fn.title": string
     "foorm.fn.submit.text": string
@@ -52,6 +53,6 @@ declare global {
     "foorm.fn.options": string
     "meta.hint": string
   }
-  type AtscriptPrimitiveTags = "never" | "string" | "email" | "phone" | "date" | "isoDate" | "uuid" | "number" | "positive" | "negative" | "single" | "double" | "int" | "timestamp" | "boolean" | "true" | "false" | "null" | "void" | "undefined" | "phantom" | "foorm" | "action" | "paragraph"
+  type AtscriptPrimitiveTags = "never" | "string" | "email" | "phone" | "date" | "isoDate" | "uuid" | "number" | "positive" | "negative" | "single" | "double" | "int" | "timestamp" | "boolean" | "true" | "false" | "null" | "void" | "undefined" | "phantom" | "foorm" | "action" | "paragraph" | "select" | "radio" | "checkbox"
 }
 // prettier-ignore-end

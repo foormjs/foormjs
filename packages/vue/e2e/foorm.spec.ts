@@ -236,3 +236,111 @@ test.describe('Primitives and Actions', () => {
     expect(logs.some(l => l.includes('action') && l.includes('reset-password'))).toBe(true)
   })
 })
+
+// ── Select Fields ─────────────────────────────────────────────────
+
+test.describe('Select Fields', () => {
+  test('renders select with static options', async ({ page }) => {
+    const select = page.locator('select[name="country"]')
+    await expect(select).toBeVisible()
+    const options = select.locator('option')
+    // placeholder + 3 options
+    await expect(options).toHaveCount(4)
+    await expect(options.nth(0)).toHaveText('Select a country')
+    await expect(options.nth(1)).toHaveText('United States')
+    await expect(options.nth(2)).toHaveText('Canada')
+    await expect(options.nth(3)).toHaveText('United Kingdom')
+  })
+
+  test('select placeholder option is disabled', async ({ page }) => {
+    const placeholder = page.locator('select[name="country"] option').first()
+    await expect(placeholder).toBeDisabled()
+  })
+
+  test('select option values match keys', async ({ page }) => {
+    const options = page.locator('select[name="country"] option:not([disabled])')
+    await expect(options.nth(0)).toHaveAttribute('value', 'us')
+    await expect(options.nth(1)).toHaveAttribute('value', 'ca')
+    await expect(options.nth(2)).toHaveAttribute('value', 'uk')
+  })
+
+  test('selecting an option updates the model', async ({ page }) => {
+    const select = page.locator('select[name="country"]')
+    await select.selectOption('ca')
+    await expect(select).toHaveValue('ca')
+  })
+
+  test('renders select with context-driven options', async ({ page }) => {
+    const citySelect = page.locator('select[name="city"]')
+    await expect(citySelect).toBeVisible()
+    // placeholder + 3 context options
+    const options = citySelect.locator('option')
+    await expect(options).toHaveCount(4)
+    await expect(options.nth(1)).toHaveText('New York')
+    await expect(options.nth(2)).toHaveText('Los Angeles')
+    await expect(options.nth(3)).toHaveText('Chicago')
+  })
+
+  test('context-driven select option values match keys', async ({ page }) => {
+    const options = page.locator('select[name="city"] option:not([disabled])')
+    await expect(options.nth(0)).toHaveAttribute('value', 'nyc')
+    await expect(options.nth(1)).toHaveAttribute('value', 'la')
+    await expect(options.nth(2)).toHaveAttribute('value', 'chi')
+  })
+})
+
+// ── Radio Fields ──────────────────────────────────────────────────
+
+test.describe('Radio Fields', () => {
+  test('renders radio group with options', async ({ page }) => {
+    const radios = page.locator('input[name="gender"]')
+    await expect(radios).toHaveCount(3)
+  })
+
+  test('radio options have correct values', async ({ page }) => {
+    const radios = page.locator('input[name="gender"]')
+    await expect(radios.nth(0)).toHaveAttribute('value', 'male')
+    await expect(radios.nth(1)).toHaveAttribute('value', 'female')
+    await expect(radios.nth(2)).toHaveAttribute('value', 'other')
+  })
+
+  test('radio labels display correctly', async ({ page }) => {
+    const radioField = page.locator('.oo-radio-field').filter({ hasText: 'Gender' })
+    const labels = radioField.locator('.oo-radio-group label')
+    await expect(labels.nth(0)).toContainText('Male')
+    await expect(labels.nth(1)).toContainText('Female')
+    await expect(labels.nth(2)).toContainText('Other')
+  })
+
+  test('selecting a radio updates the model', async ({ page }) => {
+    const femaleRadio = page.locator('input[name="gender"][value="female"]')
+    await femaleRadio.check()
+    await expect(femaleRadio).toBeChecked()
+    // Other radios should be unchecked
+    await expect(page.locator('input[name="gender"][value="male"]')).not.toBeChecked()
+  })
+})
+
+// ── Checkbox Fields ───────────────────────────────────────────────
+
+test.describe('Checkbox Fields', () => {
+  test('renders checkbox with label', async ({ page }) => {
+    const checkbox = page.locator('input[name="agreeToTerms"]')
+    await expect(checkbox).toBeVisible()
+    await expect(checkbox).toHaveAttribute('type', 'checkbox')
+  })
+
+  test('checkbox label text is correct', async ({ page }) => {
+    const checkboxField = page.locator('.oo-checkbox-field')
+    await expect(checkboxField.locator('label')).toContainText('I agree to terms and conditions')
+  })
+
+  test('checkbox toggles boolean value', async ({ page }) => {
+    const checkbox = page.locator('input[name="agreeToTerms"]')
+    await expect(checkbox).not.toBeChecked()
+    await checkbox.check()
+    await expect(checkbox).toBeChecked()
+    await checkbox.uncheck()
+    await expect(checkbox).not.toBeChecked()
+  })
+})

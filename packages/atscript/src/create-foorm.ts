@@ -1,12 +1,27 @@
 import type { TAtscriptAnnotatedType, TAtscriptTypeObject } from '@atscript/typescript/utils'
 import type { TComputed, TFoormEntryOptions, TFoormField, TFoormFnScope, TFoormModel, TFoormSubmit } from 'foorm'
 
-import { isPhantomType } from '@atscript/typescript/utils'
-
 import { compileFieldFn, compileTopFn, compileValidatorFn } from './fn-compiler'
 
 /** Loose metadata accessor for internal use (the global AtscriptMetadata may not be augmented at library build time). */
 type TMetadataAccessor = { get(key: string): unknown }
+
+/** Known foorm primitive extension tags that map directly to field types. */
+const FOORM_TAGS = new Set(['action', 'paragraph', 'select', 'radio', 'checkbox'])
+
+/** Converts a static @foorm.options annotation value to TFoormEntryOptions[]. */
+function parseStaticOptions(raw: unknown): TFoormEntryOptions[] {
+  const items = Array.isArray(raw) ? raw : [raw]
+  return items.map((item) => {
+    // Multi-arg annotations are stored as { label, value? }
+    if (typeof item === 'object' && item !== null && 'label' in item) {
+      const { label, value } = item as { label: string; value?: string }
+      return value !== undefined ? { key: value, label } : label
+    }
+    // Plain string fallback (single-arg or raw value)
+    return String(item)
+  })
+}
 
 /**
  * Resolves a static annotation or a @foorm.fn.* computed annotation.
@@ -85,11 +100,10 @@ export function createFoorm(type: TAtscriptAnnotatedType<TAtscriptTypeObject<any
     const pm = prop.metadata as unknown as TMetadataAccessor
     const tags = prop.type?.tags
 
-    // Determine field type from @foorm.type, phantom primitive tags, or default
+    // Determine field type from @foorm.type, foorm primitive tags, or default
     const foormType = pm.get('foorm.type') as string | undefined
-    const isPhantom = isPhantomType(prop)
-    const phantomTag = isPhantom ? (tags?.has('action') ? 'action' : tags?.has('paragraph') ? 'paragraph' : undefined) : undefined
-    const fieldType = foormType ?? phantomTag ?? 'text'
+    const foormTag = tags ? [...tags].find((t) => FOORM_TAGS.has(t)) : undefined
+    const fieldType = foormType ?? foormTag ?? 'text'
 
     // Build validators from @foorm.validate
     const validators: Array<(scope: TFoormFnScope) => boolean | string> = []
@@ -173,6 +187,10 @@ export function createFoorm(type: TAtscriptAnnotatedType<TAtscriptTypeObject<any
         const fnStr = pm.get('foorm.fn.options')
         if (typeof fnStr === 'string') {
           return compileFieldFn<TFoormEntryOptions[]>(fnStr)
+        }
+        const staticOpts = pm.get('foorm.options')
+        if (staticOpts) {
+          return parseStaticOptions(staticOpts)
         }
         return undefined
       })(),

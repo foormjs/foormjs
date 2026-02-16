@@ -5,6 +5,14 @@ import { E2eTestForm } from './forms/e2e-test-form.as'
 
 const { form, formData } = useFoorm(E2eTestForm)
 
+const formContext = {
+  cityOptions: [
+    { key: 'nyc', label: 'New York' },
+    { key: 'la', label: 'Los Angeles' },
+    { key: 'chi', label: 'Chicago' },
+  ],
+}
+
 function handleSubmit(d: unknown) {
   console.log('submit', d)
 }
@@ -20,6 +28,7 @@ function handleAction(name: string, d: unknown) {
       class="form"
       :form="form"
       :form-data="formData"
+      :form-context="formContext"
       first-validation="on-blur"
       @submit="handleSubmit"
       @action="handleAction"

@@ -24,6 +24,10 @@ export declare class E2eTestForm {
   hiddenField?: string
   disabledField?: string
   styledField?: string
+  country?: string /* select */
+  gender?: string /* radio */
+  agreeToTerms: boolean /* checkbox */
+  city?: string /* select */
   // resetAction: foorm.action
   static __is_atscript_annotated_type: true
   static type: TAtscriptTypeObject<keyof E2eTestForm, E2eTestForm>

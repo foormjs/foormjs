@@ -14,6 +14,20 @@ export const primitives: TAtscriptConfig['primitives'] = {
         documentation:
           'Read-only paragraph text — rendered as static content, not an input field. Use @meta.label for the paragraph text.',
       },
+      select: {
+        type: 'string',
+        documentation:
+          'Dropdown select field. Use @foorm.options to define static choices or @foorm.fn.options for computed choices.',
+      },
+      radio: {
+        type: 'string',
+        documentation:
+          'Radio button group. Use @foorm.options to define static choices or @foorm.fn.options for computed choices.',
+      },
+      checkbox: {
+        type: 'boolean',
+        documentation: 'Single boolean checkbox toggle.',
+      },
     },
   },
 }
