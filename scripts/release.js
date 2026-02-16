@@ -80,7 +80,7 @@ async function main() {
   // run tests before release
   out.step('Running tests...')
   if (!skipTests && !isDryRun) {
-    await run(bin('jest'), ['--clearCache'])
+    await run('pnpm', ['test'])
   } else {
     out.warn(`(skipped)`)
   }
