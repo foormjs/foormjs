@@ -11,6 +11,12 @@ const formContext = {
     { key: 'la', label: 'Los Angeles' },
     { key: 'chi', label: 'Chicago' },
   ],
+  labels: {
+    contextLabel: 'Context-Driven Label',
+  },
+  descriptions: {
+    contextDescription: 'This label and description come from nested context object',
+  },
 }
 
 function handleSubmit(d: unknown) {

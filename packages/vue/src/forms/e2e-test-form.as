@@ -152,4 +152,11 @@ export interface E2eTestForm {
     @foorm.readonly
     @foorm.fn.value '(v, data) => data.agreeToTerms ? "premium" : "basic"'
     membershipLevel?: string
+
+    // Context-driven label from deep nested object
+    @foorm.fn.label '(v, data, ctx) => ctx.labels?.contextLabel || "Fallback Label"'
+    @foorm.fn.description '(v, data, ctx) => ctx.descriptions?.contextDescription || "Fallback description"'
+    @foorm.type 'text'
+    @foorm.order 19
+    contextDrivenField?: string
 }
