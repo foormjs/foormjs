@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import OoForm from '@/components/oo-form.vue'
+import CustomStarInput from '@/components/custom-star-input.vue'
 import { useFoorm } from '@/composables/use-foorm'
 import { E2eTestForm } from './forms/e2e-test-form.as'
 
@@ -19,6 +20,10 @@ const formContext = {
   },
 }
 
+const customComponents = {
+  CustomInput: CustomStarInput,
+}
+
 function handleSubmit(d: unknown) {
   console.log('submit', d)
 }
@@ -35,6 +40,7 @@ function handleAction(name: string, d: unknown) {
       :form="form"
       :form-data="formData"
       :form-context="formContext"
+      :components="customComponents"
       first-validation="on-blur"
       @submit="handleSubmit"
       @action="handleAction"

@@ -159,4 +159,14 @@ export interface E2eTestForm {
     @foorm.type 'text'
     @foorm.order 19
     contextDrivenField?: string
+
+    // Custom component field
+    @meta.label 'Favorite Star'
+    @meta.description 'This field uses a custom component with star prefix'
+    @meta.placeholder 'Enter your favorite star'
+    @foorm.type 'text'
+    @foorm.component 'CustomInput'
+    @foorm.validate '(v) => !v || v.length >= 3 || "Must be at least 3 characters"'
+    @foorm.order 20
+    favoriteStar?: string
 }

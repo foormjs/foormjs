@@ -459,3 +459,62 @@ test.describe('Context Access', () => {
     await expect(input).toBeVisible()
   })
 })
+
+// ── Custom Component ──────────────────────────────────────────────
+
+test.describe('Custom Component', () => {
+  test('renders custom component when @foorm.component is specified', async ({ page }) => {
+    const customField = page.locator('.custom-star-input')
+    await expect(customField).toBeVisible()
+  })
+
+  test('custom component displays star prefix', async ({ page }) => {
+    const prefix = page.locator('.custom-star-input .prefix')
+    await expect(prefix).toHaveText('⭐')
+  })
+
+  test('custom component has correct label and description', async ({ page }) => {
+    const field = page.locator('.custom-star-input')
+    await expect(field.locator('label')).toHaveText('Favorite Star')
+    await expect(field.locator('.description')).toHaveText(
+      'This field uses a custom component with star prefix'
+    )
+  })
+
+  test('custom component input works correctly', async ({ page }) => {
+    const input = page.locator('.custom-star-input input[name="favoriteStar"]')
+    await expect(input).toBeVisible()
+    await input.fill('Sirius')
+    await expect(input).toHaveValue('Sirius')
+  })
+
+  test('custom component shows validation error for short input', async ({ page }) => {
+    const input = page.locator('.custom-star-input input[name="favoriteStar"]')
+    await input.fill('AB')
+    await input.blur()
+
+    const errorHint = page.locator('.custom-star-input .error-hint')
+    await expect(errorHint).toHaveText('Must be at least 3 characters')
+  })
+
+  test('custom component passes validation for valid input', async ({ page }) => {
+    const input = page.locator('.custom-star-input input[name="favoriteStar"]')
+    await input.fill('Polaris')
+    await input.blur()
+
+    const field = page.locator('.custom-star-input')
+    await expect(field).not.toHaveClass(/error/)
+  })
+
+  test('custom component has distinctive yellow styling', async ({ page }) => {
+    const inputWrapper = page.locator('.custom-star-input .input-wrapper')
+    await expect(inputWrapper).toBeVisible()
+
+    // Check that the wrapper has a background color (yellow theme)
+    const bgColor = await inputWrapper.evaluate((el) =>
+      window.getComputedStyle(el).backgroundColor
+    )
+    // #fffbeb is rgb(255, 251, 235)
+    expect(bgColor).toBe('rgb(255, 251, 235)')
+  })
+})
