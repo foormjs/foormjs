@@ -1,3 +1,13 @@
+## [0.2.1](https://github.com/foormjs/foormjs/compare/v0.2.0...v0.2.1) (2026-02-16)
+
+
+### Features
+
+* add attrs support ([2b64085](https://github.com/foormjs/foormjs/commit/2b640853a8010d76f85214de41d0b07fba6974d8))
+* add atts support ([d902f46](https://github.com/foormjs/foormjs/commit/d902f468c256c84f9ac4eefb32aad57e2898fc1a))
+
+
+
 # [0.2.0](https://github.com/foormjs/foormjs/compare/v0.1.0...v0.2.0) (2026-02-16)
 
 
