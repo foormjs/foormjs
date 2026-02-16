@@ -195,37 +195,37 @@ Paragraphs render as static text. Actions render as buttons that emit events ins
 
 ### Form-Level Annotations
 
-| Annotation | Description |
-|---|---|
-| `@foorm.title 'text'` | Static form title |
-| `@foorm.submit.text 'text'` | Static submit button text (default: `"Submit"`) |
-| `@foorm.fn.title '(data, ctx) => ...'` | Computed form title |
-| `@foorm.fn.submit.text '(data, ctx) => ...'` | Computed submit button text |
-| `@foorm.fn.submit.disabled '(data, ctx) => ...'` | Computed submit disabled state |
+| Annotation                                       | Description                                     |
+| ------------------------------------------------ | ----------------------------------------------- |
+| `@foorm.title 'text'`                            | Static form title                               |
+| `@foorm.submit.text 'text'`                      | Static submit button text (default: `"Submit"`) |
+| `@foorm.fn.title '(data, ctx) => ...'`           | Computed form title                             |
+| `@foorm.fn.submit.text '(data, ctx) => ...'`     | Computed submit button text                     |
+| `@foorm.fn.submit.disabled '(data, ctx) => ...'` | Computed submit disabled state                  |
 
 ### Field-Level Static Annotations
 
-| Annotation | Description |
-|---|---|
-| `@foorm.type 'text'` | Field input type (text, password, number, date, etc.) |
-| `@foorm.component 'name'` | Named component override for rendering |
-| `@foorm.autocomplete 'value'` | HTML autocomplete attribute |
-| `@foorm.altAction 'name'` | Alternate action name (for action fields) |
-| `@foorm.value 'default'` | Default field value |
-| `@foorm.order N` | Rendering order (lower = earlier) |
-| `@foorm.hidden` | Mark field as statically hidden |
-| `@foorm.disabled` | Mark field as statically disabled |
+| Annotation                    | Description                                           |
+| ----------------------------- | ----------------------------------------------------- |
+| `@foorm.type 'text'`          | Field input type (text, password, number, date, etc.) |
+| `@foorm.component 'name'`     | Named component override for rendering                |
+| `@foorm.autocomplete 'value'` | HTML autocomplete attribute                           |
+| `@foorm.altAction 'name'`     | Alternate action name (for action fields)             |
+| `@foorm.value 'default'`      | Default field value                                   |
+| `@foorm.order N`              | Rendering order (lower = earlier)                     |
+| `@foorm.hidden`               | Mark field as statically hidden                       |
+| `@foorm.disabled`             | Mark field as statically disabled                     |
 
 ### Options Annotation
 
-| Annotation | Description |
-|---|---|
+| Annotation                        | Description                                                                      |
+| --------------------------------- | -------------------------------------------------------------------------------- |
 | `@foorm.options 'Label', 'value'` | Add a static option. Repeat for each choice. Value defaults to label if omitted. |
 
 ### Validation Annotation
 
-| Annotation | Description |
-|---|---|
+| Annotation                                | Description                                                                                   |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `@foorm.validate '(v, data, ctx) => ...'` | Custom validator. Returns `true` to pass, or an error string. Repeat for multiple validators. |
 
 Validators run in declaration order and stop on first failure.
@@ -234,46 +234,46 @@ Validators run in declaration order and stop on first failure.
 
 All field-level computed functions receive `(value, data, context, entry)`:
 
-| Annotation | Return type | Description |
-|---|---|---|
-| `@foorm.fn.label` | `string` | Computed label |
-| `@foorm.fn.description` | `string` | Computed description |
-| `@foorm.fn.hint` | `string` | Computed hint text |
-| `@foorm.fn.placeholder` | `string` | Computed placeholder |
-| `@foorm.fn.disabled` | `boolean` | Computed disabled state |
-| `@foorm.fn.hidden` | `boolean` | Computed hidden state |
-| `@foorm.fn.optional` | `boolean` | Computed optional state |
-| `@foorm.fn.classes` | `string \| Record` | Computed CSS classes |
-| `@foorm.fn.styles` | `string \| Record` | Computed inline styles |
-| `@foorm.fn.options` | `TFoormEntryOptions[]` | Computed options (select/radio) |
+| Annotation              | Return type            | Description                     |
+| ----------------------- | ---------------------- | ------------------------------- |
+| `@foorm.fn.label`       | `string`               | Computed label                  |
+| `@foorm.fn.description` | `string`               | Computed description            |
+| `@foorm.fn.hint`        | `string`               | Computed hint text              |
+| `@foorm.fn.placeholder` | `string`               | Computed placeholder            |
+| `@foorm.fn.disabled`    | `boolean`              | Computed disabled state         |
+| `@foorm.fn.hidden`      | `boolean`              | Computed hidden state           |
+| `@foorm.fn.optional`    | `boolean`              | Computed optional state         |
+| `@foorm.fn.classes`     | `string \| Record`     | Computed CSS classes            |
+| `@foorm.fn.styles`      | `string \| Record`     | Computed inline styles          |
+| `@foorm.fn.options`     | `TFoormEntryOptions[]` | Computed options (select/radio) |
 
 ### Metadata Annotations (from ATScript core)
 
-| Annotation | Description |
-|---|---|
-| `@meta.label 'text'` | Field label |
+| Annotation                 | Description       |
+| -------------------------- | ----------------- |
+| `@meta.label 'text'`       | Field label       |
 | `@meta.description 'text'` | Field description |
-| `@meta.hint 'text'` | Hint text |
+| `@meta.hint 'text'`        | Hint text         |
 | `@meta.placeholder 'text'` | Input placeholder |
 
 ### Constraint Annotations (from ATScript core)
 
-| Annotation | Description |
-|---|---|
+| Annotation            | Description           |
+| --------------------- | --------------------- |
 | `@expect.maxLength N` | Maximum string length |
 | `@expect.minLength N` | Minimum string length |
-| `@expect.min N` | Minimum numeric value |
-| `@expect.max N` | Maximum numeric value |
+| `@expect.min N`       | Minimum numeric value |
+| `@expect.max N`       | Maximum numeric value |
 
 ## Primitives
 
-| Primitive | Underlying type | Description |
-|---|---|---|
-| `foorm.select` | `string` | Dropdown select field |
-| `foorm.radio` | `string` | Radio button group |
-| `foorm.checkbox` | `boolean` | Single checkbox toggle |
-| `foorm.action` | phantom | Button that emits an action event |
-| `foorm.paragraph` | phantom | Static read-only text |
+| Primitive         | Underlying type | Description                       |
+| ----------------- | --------------- | --------------------------------- |
+| `foorm.select`    | `string`        | Dropdown select field             |
+| `foorm.radio`     | `string`        | Radio button group                |
+| `foorm.checkbox`  | `boolean`       | Single checkbox toggle            |
+| `foorm.action`    | phantom         | Button that emits an action event |
+| `foorm.paragraph` | phantom         | Static read-only text             |
 
 Phantom primitives are excluded from form data -- they exist only for UI rendering.
 

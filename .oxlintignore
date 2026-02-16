@@ -1,5 +1,3 @@
-# >>> domelint-start
-# this block was auto-generated with do-me-lint
 explorations
 package-lock.json
 packages/**/dist
@@ -7,4 +5,4 @@ dist
 temp
 .npmrc
 docs/.vitepress/cache
-# <<< domelint-end
+**/*.as.d.ts

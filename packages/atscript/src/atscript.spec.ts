@@ -6,14 +6,33 @@ import { createFoorm } from './create-foorm'
 describe('compileFieldFn', () => {
   it('compiles and evaluates field-level fn string', () => {
     const fn = compileFieldFn<boolean>('(v, data) => v === data.expected')
-    expect(fn({ v: 'hello', data: { expected: 'hello' }, context: {}, entry: { field: 'x', type: 'text', name: 'x' } })).toBe(true)
-    expect(fn({ v: 'hello', data: { expected: 'world' }, context: {}, entry: { field: 'x', type: 'text', name: 'x' } })).toBe(false)
+    expect(
+      fn({
+        v: 'hello',
+        data: { expected: 'hello' },
+        context: {},
+        entry: { field: 'x', type: 'text', name: 'x' },
+      })
+    ).toBe(true)
+    expect(
+      fn({
+        v: 'hello',
+        data: { expected: 'world' },
+        context: {},
+        entry: { field: 'x', type: 'text', name: 'x' },
+      })
+    ).toBe(false)
   })
 
   it('has access to entry in scope', () => {
     const fn = compileFieldFn<string>('(v, data, ctx, entry) => entry.field')
     expect(
-      fn({ v: undefined, data: {}, context: {}, entry: { field: 'email', type: 'text', name: 'email' } })
+      fn({
+        v: undefined,
+        data: {},
+        context: {},
+        entry: { field: 'email', type: 'text', name: 'email' },
+      })
     ).toBe('email')
   })
 })
@@ -51,17 +70,24 @@ function makeMeta(entries: Record<string, unknown>): { get(k: string): unknown }
 
 function makeType(opts: {
   metadata?: Record<string, unknown>
-  props: Record<string, {
-    metadata?: Record<string, unknown>
-    optional?: boolean
-    tags?: string[]
-    designType?: string
-  }>
+  props: Record<
+    string,
+    {
+      metadata?: Record<string, unknown>
+      optional?: boolean
+      tags?: string[]
+      designType?: string
+    }
+  >
 }) {
   const propsMap = new Map<string, any>()
   for (const [name, prop] of Object.entries(opts.props)) {
     propsMap.set(name, {
-      type: { kind: '', tags: prop.tags ? new Set(prop.tags) : undefined, designType: prop.designType },
+      type: {
+        kind: '',
+        tags: prop.tags ? new Set(prop.tags) : undefined,
+        designType: prop.designType,
+      },
       metadata: makeMeta(prop.metadata ?? {}),
       optional: prop.optional,
     })
@@ -226,8 +252,22 @@ describe('createFoorm', () => {
     const model = createFoorm(type)
     expect(typeof model.fields[0].disabled).toBe('function')
     const fn = model.fields[0].disabled as Function
-    expect(fn({ v: undefined, data: { name: '' }, context: {}, entry: { field: 'email', type: 'text', name: 'email' } })).toBe(true)
-    expect(fn({ v: undefined, data: { name: 'John' }, context: {}, entry: { field: 'email', type: 'text', name: 'email' } })).toBe(false)
+    expect(
+      fn({
+        v: undefined,
+        data: { name: '' },
+        context: {},
+        entry: { field: 'email', type: 'text', name: 'email' },
+      })
+    ).toBe(true)
+    expect(
+      fn({
+        v: undefined,
+        data: { name: 'John' },
+        context: {},
+        entry: { field: 'email', type: 'text', name: 'email' },
+      })
+    ).toBe(false)
   })
 
   it('defaults submit text to "Submit"', () => {
@@ -317,7 +357,12 @@ describe('createFoorm', () => {
     const model = createFoorm(type)
     expect(typeof model.fields[0].options).toBe('function')
     const fn = model.fields[0].options as Function
-    const result = fn({ v: undefined, data: {}, context: { cities: [{ key: 'nyc', label: 'NYC' }] }, entry: { field: 'city', type: 'select', name: 'city' } })
+    const result = fn({
+      v: undefined,
+      data: {},
+      context: { cities: [{ key: 'nyc', label: 'NYC' }] },
+      entry: { field: 'city', type: 'select', name: 'city' },
+    })
     expect(result).toEqual([{ key: 'nyc', label: 'NYC' }])
   })
 })

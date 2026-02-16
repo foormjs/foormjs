@@ -13,11 +13,11 @@ function validateFnString(
   try {
     // eslint-disable-next-line no-new-func
     new Function('v', 'data', 'context', 'entry', `return (${fnStr})(v, data, context, entry)`)
-  } catch (e) {
+  } catch (error) {
     return [
       {
         severity: 1,
-        message: `Invalid function string: ${(e as Error).message}`,
+        message: `Invalid function string: ${(error as Error).message}`,
         range,
       },
     ]
@@ -93,7 +93,18 @@ export const annotations: TAnnotationsTree = {
       argument: {
         name: 'type',
         type: 'string',
-        values: ['text', 'password', 'number', 'select', 'textarea', 'checkbox', 'radio', 'date', 'paragraph', 'action'],
+        values: [
+          'text',
+          'password',
+          'number',
+          'select',
+          'textarea',
+          'checkbox',
+          'radio',
+          'date',
+          'paragraph',
+          'action',
+        ],
         description: 'The input type for this field',
       },
     }),
@@ -182,7 +193,8 @@ export const annotations: TAnnotationsTree = {
 
     // ── Validation annotation ────────────────────────────────
     validate: new AnnotationSpec({
-      description: 'Custom JS validator function string. Returns true for pass, or an error message string.',
+      description:
+        'Custom JS validator function string. Returns true for pass, or an error message string.',
       nodeType: ['prop'],
       multiple: true,
       mergeStrategy: 'append',
@@ -216,9 +228,15 @@ export const annotations: TAnnotationsTree = {
       disabled: fnAnnotation('Computed disabled state: (value, data, context, entry) => boolean'),
       hidden: fnAnnotation('Computed hidden state: (value, data, context, entry) => boolean'),
       optional: fnAnnotation('Computed optional state: (value, data, context, entry) => boolean'),
-      classes: fnAnnotation('Computed CSS classes: (value, data, context, entry) => string | Record<string, boolean>'),
-      styles: fnAnnotation('Computed inline styles: (value, data, context, entry) => string | Record<string, string>'),
-      options: fnAnnotation('Computed select/radio options: (value, data, context, entry) => Array'),
+      classes: fnAnnotation(
+        'Computed CSS classes: (value, data, context, entry) => string | Record<string, boolean>'
+      ),
+      styles: fnAnnotation(
+        'Computed inline styles: (value, data, context, entry) => string | Record<string, string>'
+      ),
+      options: fnAnnotation(
+        'Computed select/radio options: (value, data, context, entry) => Array'
+      ),
     },
   },
 }

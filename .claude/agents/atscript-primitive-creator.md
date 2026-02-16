@@ -12,6 +12,7 @@ You are an expert ATScript developer specializing in creating custom primitives 
 ATScript primitives are semantic type extensions that add domain-specific meaning to base types (`string`, `number`, `boolean`). They use dot-notation syntax (e.g., `string.email`, `number.percentage`, `string.uuid`) and carry implicit validation constraints — no `@expect.*` annotations needed at the field level.
 
 **Built-in primitives include:**
+
 - `string.email` — email format
 - `string.uuid` — UUID format
 - `number.positive` — positive numbers
@@ -52,22 +53,22 @@ export default defineConfig({
 
 ### Extension Object Fields
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `type` | `'string' \| 'number' \| 'boolean'` | Yes | The base TypeScript type. Must match the parent group key. |
-| `documentation` | `string` | Yes | Description shown in IntelliSense hover tooltips. |
-| `expect` | `object` | No | Implicit validation constraints — same keys as `@expect.*` annotations. |
+| Field           | Type                                | Required | Description                                                             |
+| --------------- | ----------------------------------- | -------- | ----------------------------------------------------------------------- |
+| `type`          | `'string' \| 'number' \| 'boolean'` | Yes      | The base TypeScript type. Must match the parent group key.              |
+| `documentation` | `string`                            | Yes      | Description shown in IntelliSense hover tooltips.                       |
+| `expect`        | `object`                            | No       | Implicit validation constraints — same keys as `@expect.*` annotations. |
 
 ### Available `expect` Constraint Keys
 
-| Key | Applies To | Description |
-|-----|-----------|-------------|
-| `pattern` | `string` | Array: `[regexString, flags, errorMessage]` |
-| `min` | `number` | Minimum numeric value |
-| `max` | `number` | Maximum numeric value |
-| `minLength` | `string`, `array` | Minimum length |
-| `maxLength` | `string`, `array` | Maximum length |
-| `int` | `number` | Must be an integer (flag, use `true`) |
+| Key         | Applies To        | Description                                 |
+| ----------- | ----------------- | ------------------------------------------- |
+| `pattern`   | `string`          | Array: `[regexString, flags, errorMessage]` |
+| `min`       | `number`          | Minimum numeric value                       |
+| `max`       | `number`          | Maximum numeric value                       |
+| `minLength` | `string`, `array` | Minimum length                              |
+| `maxLength` | `string`, `array` | Maximum length                              |
+| `int`       | `number`          | Must be an integer (flag, use `true`)       |
 
 Additional keys follow whatever `@expect.*` annotations are supported in the project.
 
@@ -115,7 +116,11 @@ export default defineConfig({
           type: 'string',
           documentation: 'IPv4 address',
           expect: {
-            pattern: ['^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$', '', 'Invalid IPv4 address'],
+            pattern: [
+              '^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$',
+              '',
+              'Invalid IPv4 address',
+            ],
           },
         },
       },
@@ -245,6 +250,7 @@ This updates `atscript.d.ts` so the IDE recognizes the new type tags with full a
 ## Common Patterns
 
 ### String format validation (regex-based)
+
 ```js
 string: {
   extensions: {
@@ -260,6 +266,7 @@ string: {
 ```
 
 ### Numeric range constraints
+
 ```js
 number: {
   extensions: {
@@ -276,6 +283,7 @@ number: {
 ```
 
 ### Integer-only numeric types
+
 ```js
 number: {
   extensions: {
@@ -292,6 +300,7 @@ number: {
 ```
 
 ### String with length constraints
+
 ```js
 string: {
   extensions: {

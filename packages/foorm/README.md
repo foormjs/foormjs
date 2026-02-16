@@ -32,8 +32,8 @@ const form: TFoormModel = {
       disabled: false,
       hidden: false,
       validators: [
-        (s) => !!s.v || 'Email is required',
-        (s) => String(s.v).includes('@') || 'Must be a valid email',
+        s => !!s.v || 'Email is required',
+        s => String(s.v).includes('@') || 'Must be a valid email',
       ],
     },
     {
@@ -44,8 +44,8 @@ const form: TFoormModel = {
       disabled: false,
       hidden: false,
       validators: [
-        (s) => !!s.v || 'Age is required',
-        (s) => Number(s.v) >= 18 || 'Must be 18 or older',
+        s => !!s.v || 'Age is required',
+        s => Number(s.v) >= 18 || 'Must be 18 or older',
       ],
     },
   ],
@@ -79,15 +79,15 @@ const passwordField: TFoormField = {
   placeholder: 'Enter a strong password',
 
   // Computed: disabled until name is filled
-  disabled: (scope) => !scope.data.name,
+  disabled: scope => !scope.data.name,
 
   // Computed: hint changes based on value
-  hint: (scope) =>
+  hint: scope =>
     scope.v ? `${8 - String(scope.v).length} more characters needed` : 'At least 8 characters',
 
   validators: [
-    (s) => !!s.v || 'Password is required',
-    (s) => String(s.v).length >= 8 || 'At least 8 characters',
+    s => !!s.v || 'Password is required',
+    s => String(s.v).length >= 8 || 'At least 8 characters',
   ],
 }
 ```
@@ -96,10 +96,10 @@ Every computed function receives a `TFoormFnScope` object:
 
 ```ts
 interface TFoormFnScope {
-  v?: unknown                       // Current field value
-  data: Record<string, unknown>     // All form data
-  context: Record<string, unknown>  // External context (user info, locale, etc.)
-  entry?: TFoormFieldEvaluated      // Evaluated field metadata
+  v?: unknown // Current field value
+  data: Record<string, unknown> // All form data
+  context: Record<string, unknown> // External context (user info, locale, etc.)
+  entry?: TFoormFieldEvaluated // Evaluated field metadata
 }
 ```
 
@@ -158,6 +158,7 @@ const result = validate(formData)
 ```
 
 Validation order per field:
+
 1. Skip if field type is `action` or `paragraph`
 2. Evaluate `disabled`, `optional`, `hidden` (may be computed)
 3. Skip if disabled or hidden
@@ -184,8 +185,8 @@ Resolves a `TComputed<T>` value. If it's a function, calls it with the scope. Ot
 ```ts
 import { evalComputed } from 'foorm'
 
-evalComputed('Hello', scope)                        // => 'Hello'
-evalComputed((s) => `Hi ${s.data.name}`, scope)     // => 'Hi Alice'
+evalComputed('Hello', scope) // => 'Hello'
+evalComputed(s => `Hi ${s.data.name}`, scope) // => 'Hi Alice'
 ```
 
 ### `supportsAltAction(model, actionName)`
@@ -216,30 +217,30 @@ interface TFoormModel {
 
 A single field definition. All description and constraint properties support `TComputed<T>`:
 
-| Property | Type | Description |
-|---|---|---|
-| `field` | `string` | Field identifier (required) |
-| `type` | `string` | Input type: text, password, number, select, radio, checkbox, etc. |
-| `label` | `TComputed<string>` | Field label |
-| `description` | `TComputed<string>` | Descriptive text below the label |
-| `hint` | `TComputed<string>` | Hint text (shown when no error) |
-| `placeholder` | `TComputed<string>` | Input placeholder |
-| `optional` | `TComputed<boolean>` | Whether the field is optional |
-| `disabled` | `TComputed<boolean>` | Whether the field is disabled |
-| `hidden` | `TComputed<boolean>` | Whether the field is hidden |
-| `classes` | `TComputed<string \| Record<string, boolean>>` | CSS classes |
-| `styles` | `TComputed<string \| Record<string, string>>` | Inline styles |
-| `options` | `TComputed<TFoormEntryOptions[]>` | Options for select/radio fields |
-| `validators` | `Array<(scope) => boolean \| string>` | Validation functions |
-| `component` | `string` | Named component override |
-| `autocomplete` | `string` | HTML autocomplete attribute |
-| `altAction` | `string` | Alternate submit action name |
-| `order` | `number` | Rendering order |
-| `value` | `unknown` | Default value |
-| `maxLength` | `number` | HTML maxlength constraint |
-| `minLength` | `number` | HTML minlength constraint |
-| `min` | `number` | HTML min constraint |
-| `max` | `number` | HTML max constraint |
+| Property       | Type                                           | Description                                                       |
+| -------------- | ---------------------------------------------- | ----------------------------------------------------------------- |
+| `field`        | `string`                                       | Field identifier (required)                                       |
+| `type`         | `string`                                       | Input type: text, password, number, select, radio, checkbox, etc. |
+| `label`        | `TComputed<string>`                            | Field label                                                       |
+| `description`  | `TComputed<string>`                            | Descriptive text below the label                                  |
+| `hint`         | `TComputed<string>`                            | Hint text (shown when no error)                                   |
+| `placeholder`  | `TComputed<string>`                            | Input placeholder                                                 |
+| `optional`     | `TComputed<boolean>`                           | Whether the field is optional                                     |
+| `disabled`     | `TComputed<boolean>`                           | Whether the field is disabled                                     |
+| `hidden`       | `TComputed<boolean>`                           | Whether the field is hidden                                       |
+| `classes`      | `TComputed<string \| Record<string, boolean>>` | CSS classes                                                       |
+| `styles`       | `TComputed<string \| Record<string, string>>`  | Inline styles                                                     |
+| `options`      | `TComputed<TFoormEntryOptions[]>`              | Options for select/radio fields                                   |
+| `validators`   | `Array<(scope) => boolean \| string>`          | Validation functions                                              |
+| `component`    | `string`                                       | Named component override                                          |
+| `autocomplete` | `string`                                       | HTML autocomplete attribute                                       |
+| `altAction`    | `string`                                       | Alternate submit action name                                      |
+| `order`        | `number`                                       | Rendering order                                                   |
+| `value`        | `unknown`                                      | Default value                                                     |
+| `maxLength`    | `number`                                       | HTML maxlength constraint                                         |
+| `minLength`    | `number`                                       | HTML minlength constraint                                         |
+| `min`          | `number`                                       | HTML min constraint                                               |
+| `max`          | `number`                                       | HTML max constraint                                               |
 
 ### `TFoormEntryOptions`
 

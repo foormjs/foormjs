@@ -1,5 +1,12 @@
 import type { TAtscriptAnnotatedType, TAtscriptTypeObject } from '@atscript/typescript/utils'
-import type { TComputed, TFoormEntryOptions, TFoormField, TFoormFnScope, TFoormModel, TFoormSubmit } from 'foorm'
+import type {
+  TComputed,
+  TFoormEntryOptions,
+  TFoormField,
+  TFoormFnScope,
+  TFoormModel,
+  TFoormSubmit,
+} from 'foorm'
 
 import { compileFieldFn, compileTopFn, compileValidatorFn } from './fn-compiler'
 
@@ -12,7 +19,7 @@ const FOORM_TAGS = new Set(['action', 'paragraph', 'select', 'radio', 'checkbox'
 /** Converts a static @foorm.options annotation value to TFoormEntryOptions[]. */
 function parseStaticOptions(raw: unknown): TFoormEntryOptions[] {
   const items = Array.isArray(raw) ? raw : [raw]
-  return items.map((item) => {
+  return items.map(item => {
     // Multi-arg annotations are stored as { label, value? }
     if (typeof item === 'object' && item !== null && 'label' in item) {
       const { label, value } = item as { label: string; value?: string }
@@ -62,18 +69,14 @@ function resolveComputed<T>(
  * const validator = getFormValidator(model)
  * ```
  */
-export function createFoorm(type: TAtscriptAnnotatedType<TAtscriptTypeObject<any, any>>): TFoormModel {
+export function createFoorm(
+  type: TAtscriptAnnotatedType<TAtscriptTypeObject<any, any>>
+): TFoormModel {
   const metadata = type.metadata as unknown as TMetadataAccessor
   const props = type.type.props
 
   // Form-level metadata
-  const title = resolveComputed<string>(
-    'foorm.title',
-    'foorm.fn.title',
-    metadata,
-    compileTopFn,
-    ''
-  )
+  const title = resolveComputed<string>('foorm.title', 'foorm.fn.title', metadata, compileTopFn, '')
 
   const submitText = resolveComputed<string>(
     'foorm.submit.text',
@@ -102,7 +105,7 @@ export function createFoorm(type: TAtscriptAnnotatedType<TAtscriptTypeObject<any
 
     // Determine field type from @foorm.type, foorm primitive tags, or default
     const foormType = pm.get('foorm.type') as string | undefined
-    const foormTag = tags ? [...tags].find((t) => FOORM_TAGS.has(t)) : undefined
+    const foormTag = tags ? [...tags].find(t => FOORM_TAGS.has(t)) : undefined
     const fieldType = foormType ?? foormTag ?? 'text'
 
     // Build validators from @foorm.validate

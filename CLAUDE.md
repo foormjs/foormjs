@@ -24,12 +24,12 @@ The Vue package (`packages/vue`) uses Vite instead of rollup — run `pnpm dev` 
 
 ## Monorepo Structure
 
-| Package | Published Name | Build Tool | Description |
-|---------|---------------|------------|-------------|
-| `packages/foorm` | `foorm` | rollup | Core form model with serializer/deserializer for backend-controlled forms |
-| `packages/vue` | `@foormjs/vue` | vite | Renderless Vue components built on top of foorm core |
-| `packages/flags` | `@foormjs/flags` | rollup | Lightweight country flags for phone inputs (planned for removal) |
-| `packages/moost` | `@foormjs/moost` | — | Planned moost integration (stub, design TBD) |
+| Package          | Published Name   | Build Tool | Description                                                               |
+| ---------------- | ---------------- | ---------- | ------------------------------------------------------------------------- |
+| `packages/foorm` | `foorm`          | rollup     | Core form model with serializer/deserializer for backend-controlled forms |
+| `packages/vue`   | `@foormjs/vue`   | vite       | Renderless Vue components built on top of foorm core                      |
+| `packages/flags` | `@foormjs/flags` | rollup     | Lightweight country flags for phone inputs (planned for removal)          |
+| `packages/moost` | `@foormjs/moost` | —          | Planned moost integration (stub, design TBD)                              |
 
 Workspace managed by pnpm (`pnpm-workspace.yaml`). Path aliases in `tsconfig.json`: `foorm` → `packages/foorm/src`, `@foormjs/*` → `packages/*/src`.
 

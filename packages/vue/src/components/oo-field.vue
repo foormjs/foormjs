@@ -61,7 +61,7 @@ const _classes = computed(() => {
     }
   }
   return {
-    ...(v || {}),
+    ...v,
     disabled: _disabled.value,
     required: !_optional.value,
   }

@@ -22,7 +22,18 @@ export interface TFoormPluginOptions {
   components?: string[]
 }
 
-const BUILTIN_TYPES = ['text', 'password', 'number', 'select', 'textarea', 'checkbox', 'radio', 'date', 'paragraph', 'action']
+const BUILTIN_TYPES = [
+  'text',
+  'password',
+  'number',
+  'select',
+  'textarea',
+  'checkbox',
+  'radio',
+  'date',
+  'paragraph',
+  'action',
+]
 
 export function foormPlugin(opts?: TFoormPluginOptions): TAtscriptPlugin {
   return {

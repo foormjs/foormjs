@@ -50,7 +50,9 @@ import { createAtscriptPlugin } from '@atscript/core'
 
 export const myPlugin = createAtscriptPlugin({
   name: 'my-plugin',
-  config() { /* ... */ },
+  config() {
+    /* ... */
+  },
 })
 ```
 
@@ -75,15 +77,15 @@ The `config` hook is called iteratively across all plugins until all have been p
 
 **Key config properties a plugin can provide:**
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `primitives` | `Record<string, TPrimitiveConfig>` | Custom primitive type definitions |
-| `annotations` | `TAnnotationsTree` | Custom annotation definitions (nested `AnnotationSpec` objects) |
-| `unknownAnnotation` | `'allow' \| 'warn' \| 'error'` | How to handle undefined annotations |
-| `rootDir` | `string` | Root directory for `.as` files |
-| `entries` | `string[]` | Specific files to process |
-| `include` | `string[]` | Glob patterns to include |
-| `exclude` | `string[]` | Glob patterns to exclude |
+| Property            | Type                               | Description                                                     |
+| ------------------- | ---------------------------------- | --------------------------------------------------------------- |
+| `primitives`        | `Record<string, TPrimitiveConfig>` | Custom primitive type definitions                               |
+| `annotations`       | `TAnnotationsTree`                 | Custom annotation definitions (nested `AnnotationSpec` objects) |
+| `unknownAnnotation` | `'allow' \| 'warn' \| 'error'`     | How to handle undefined annotations                             |
+| `rootDir`           | `string`                           | Root directory for `.as` files                                  |
+| `entries`           | `string[]`                         | Specific files to process                                       |
+| `include`           | `string[]`                         | Glob patterns to include                                        |
+| `exclude`           | `string[]`                         | Glob patterns to exclude                                        |
 
 ### `resolve(id)` — Custom Module Resolution
 
@@ -142,6 +144,7 @@ render(doc, format) {
 ```
 
 **`TPluginOutput` shape:**
+
 ```typescript
 interface TPluginOutput {
   fileName: string
@@ -181,9 +184,13 @@ import { TAnnotationsTree, AnnotationSpec } from '@atscript/core'
 
 const annotations: TAnnotationsTree = {
   namespace: {
-    annotationName: new AnnotationSpec({ /* config */ }),
+    annotationName: new AnnotationSpec({
+      /* config */
+    }),
     nested: {
-      deepAnnotation: new AnnotationSpec({ /* config */ }),
+      deepAnnotation: new AnnotationSpec({
+        /* config */
+      }),
     },
   },
 }
@@ -195,12 +202,12 @@ This creates annotations like `@namespace.annotationName` and `@namespace.nested
 
 ```typescript
 interface TAnnotationSpecConfig {
-  description?: string                           // IntelliSense hover text
-  nodeType?: TNodeEntity[]                       // Valid targets: 'interface', 'type', 'prop'
-  defType?: SemanticPrimitiveNode['type'][]      // Restrict to specific underlying types
-  multiple?: boolean                             // Allow multiple instances on same node
-  mergeStrategy?: 'append' | 'replace'           // Inheritance merge behavior (default: 'replace')
-  argument?: TAnnotationArgument | TAnnotationArgument[]  // Annotation arguments
+  description?: string // IntelliSense hover text
+  nodeType?: TNodeEntity[] // Valid targets: 'interface', 'type', 'prop'
+  defType?: SemanticPrimitiveNode['type'][] // Restrict to specific underlying types
+  multiple?: boolean // Allow multiple instances on same node
+  mergeStrategy?: 'append' | 'replace' // Inheritance merge behavior (default: 'replace')
+  argument?: TAnnotationArgument | TAnnotationArgument[] // Annotation arguments
 
   // Advanced hooks (for plugins)
   validate?: (mainToken: Token, args: Token[], doc: AtscriptDoc) => TMessages | undefined
@@ -216,11 +223,12 @@ interface TAnnotationArgument {
   type: 'string' | 'number' | 'boolean'
   optional?: boolean
   description?: string
-  values?: string[]                    // Allowed values (shown in IntelliSense, validated at parse time)
+  values?: string[] // Allowed values (shown in IntelliSense, validated at parse time)
 }
 ```
 
 **Key details:**
+
 - `argument` can be a single object or an array for multi-argument annotations.
 - `values` restricts the argument to an enumerated set — validated at parse time with error messages.
 - `defType` restricts the annotation to properties of specific underlying types (e.g., `['string']`, `['number']`, `['array']`).
@@ -272,7 +280,7 @@ modify(token, args, doc) {
 
 ```typescript
 type TMessages = Array<{
-  severity: 1 | 2 | 3 | 4    // 1=Error, 2=Warning, 3=Info, 4=Hint
+  severity: 1 | 2 | 3 | 4 // 1=Error, 2=Warning, 3=Info, 4=Hint
   message: string
   range: { start: { line: number; character: number }; end: { line: number; character: number } }
   tags?: number[]
@@ -289,10 +297,10 @@ Primitives are defined as `Record<string, TPrimitiveConfig>`. Each key is a base
 
 ```typescript
 interface TPrimitiveConfig {
-  type?: string                                 // Base TS type: 'string', 'number', 'boolean', 'null', 'void'
-  documentation?: string                        // IntelliSense documentation
-  expect?: Record<string, any>                  // Implicit validation constraints
-  extensions?: Record<string, Partial<TPrimitiveConfig>>  // Dot-notation subtypes
+  type?: string // Base TS type: 'string', 'number', 'boolean', 'null', 'void'
+  documentation?: string // IntelliSense documentation
+  expect?: Record<string, any> // Implicit validation constraints
+  extensions?: Record<string, Partial<TPrimitiveConfig>> // Dot-notation subtypes
 }
 ```
 
@@ -356,15 +364,15 @@ This creates types like `number.int`, `number.int.positive`, `number.int.negativ
 
 The `expect` object mirrors `@expect.*` annotations:
 
-| Key | Type | Applies To | Description |
-|-----|------|-----------|-------------|
-| `pattern` | `RegExp` or `[string, flags?, message?]` | string | Regex pattern validation |
-| `min` | `number` | number | Minimum numeric value |
-| `max` | `number` | number | Maximum numeric value |
-| `minLength` | `number` | string, array | Minimum length |
-| `maxLength` | `number` | string, array | Maximum length |
-| `int` | `boolean` | number | Must be integer |
-| `message` | `string` | any | Custom error message for pattern |
+| Key         | Type                                     | Applies To    | Description                      |
+| ----------- | ---------------------------------------- | ------------- | -------------------------------- |
+| `pattern`   | `RegExp` or `[string, flags?, message?]` | string        | Regex pattern validation         |
+| `min`       | `number`                                 | number        | Minimum numeric value            |
+| `max`       | `number`                                 | number        | Maximum numeric value            |
+| `minLength` | `number`                                 | string, array | Minimum length                   |
+| `maxLength` | `number`                                 | string, array | Maximum length                   |
+| `int`       | `boolean`                                | number        | Must be integer                  |
+| `message`   | `string`                                 | any           | Custom error message for pattern |
 
 **Note:** In plugin code, `pattern` can use actual `RegExp` objects (not just string arrays like in `atscript.config.js`). The config-level `expect.pattern` accepts `[regexString, flags, errorMessage]` arrays.
 
@@ -383,7 +391,7 @@ export interface TMyPluginOptions {
   prefix?: string
 }
 
-export const myPlugin: (opts?: TMyPluginOptions) => TAtscriptPlugin = (opts) => {
+export const myPlugin: (opts?: TMyPluginOptions) => TAtscriptPlugin = opts => {
   return {
     name: 'my-plugin',
 
@@ -594,10 +602,12 @@ export const apiPlugin: () => TAtscriptPlugin = () => {
     render(doc, format) {
       if (format === 'openapi') {
         // Generate OpenAPI spec from annotated interfaces
-        return [{
-          fileName: `${doc.name}.openapi.json`,
-          content: generateOpenApiSpec(doc),
-        }]
+        return [
+          {
+            fileName: `${doc.name}.openapi.json`,
+            content: generateOpenApiSpec(doc),
+          },
+        ]
       }
     },
   }
@@ -610,7 +620,12 @@ export const apiPlugin: () => TAtscriptPlugin = () => {
 
 ```typescript
 // Plugin types
-import { TAtscriptPlugin, createAtscriptPlugin, TPluginOutput, TAtscriptRenderFormat } from '@atscript/core'
+import {
+  TAtscriptPlugin,
+  createAtscriptPlugin,
+  TPluginOutput,
+  TAtscriptRenderFormat,
+} from '@atscript/core'
 
 // Config types
 import { TAtscriptConfig, TAnnotationsTree, defineConfig } from '@atscript/core'
@@ -620,15 +635,15 @@ import { AnnotationSpec, isAnnotationSpec, resolveAnnotation } from '@atscript/c
 
 // Node type guards (for validate/modify hooks)
 import {
-  isInterface,    // SemanticInterfaceNode
-  isStructure,    // SemanticStructureNode (inline object type)
-  isPrimitive,    // SemanticPrimitiveNode
-  isRef,          // SemanticRefNode (type reference)
-  isProp,         // SemanticPropNode
-  isGroup,        // SemanticGroup (union/intersection/tuple)
-  isType,         // SemanticTypeNode (type alias)
-  isAnnotate,     // SemanticAnnotateNode
-  isArray,        // Array type check
+  isInterface, // SemanticInterfaceNode
+  isStructure, // SemanticStructureNode (inline object type)
+  isPrimitive, // SemanticPrimitiveNode
+  isRef, // SemanticRefNode (type reference)
+  isProp, // SemanticPropNode
+  isGroup, // SemanticGroup (union/intersection/tuple)
+  isType, // SemanticTypeNode (type alias)
+  isAnnotate, // SemanticAnnotateNode
+  isArray, // Array type check
 } from '@atscript/core'
 
 // AST types
@@ -645,20 +660,20 @@ import type { TOutput } from '@atscript/core'
 
 The `AtscriptDoc` instance passed to plugin hooks provides:
 
-| Property/Method | Description |
-|----------------|-------------|
-| `doc.id` | Document URI (e.g., `file:///path/to/file.as`) |
-| `doc.name` | File name (last segment of path) |
-| `doc.nodes` | Top-level parsed semantic nodes |
-| `doc.exports` | Map of exported nodes by identifier |
-| `doc.imports` | Map of imported definitions by URI |
-| `doc.dependencies` | Set of documents this doc depends on |
-| `doc.dependants` | Set of documents that depend on this doc |
-| `doc.config.primitives` | Map of available primitives |
-| `doc.config.annotations` | Annotation tree |
-| `doc.unwindType(name, chain?)` | Resolves a type reference to its final definition |
-| `doc.resolveAnnotation(name)` | Finds an `AnnotationSpec` by dot-path name |
-| `doc.render(format)` | Triggers rendering via the plugin manager |
+| Property/Method                    | Description                                               |
+| ---------------------------------- | --------------------------------------------------------- |
+| `doc.id`                           | Document URI (e.g., `file:///path/to/file.as`)            |
+| `doc.name`                         | File name (last segment of path)                          |
+| `doc.nodes`                        | Top-level parsed semantic nodes                           |
+| `doc.exports`                      | Map of exported nodes by identifier                       |
+| `doc.imports`                      | Map of imported definitions by URI                        |
+| `doc.dependencies`                 | Set of documents this doc depends on                      |
+| `doc.dependants`                   | Set of documents that depend on this doc                  |
+| `doc.config.primitives`            | Map of available primitives                               |
+| `doc.config.annotations`           | Annotation tree                                           |
+| `doc.unwindType(name, chain?)`     | Resolves a type reference to its final definition         |
+| `doc.resolveAnnotation(name)`      | Finds an `AnnotationSpec` by dot-path name                |
+| `doc.render(format)`               | Triggers rendering via the plugin manager                 |
 | `doc.evalAnnotationsForNode(node)` | Collects all annotations (including inherited) for a node |
 
 ---
@@ -667,12 +682,12 @@ The `AtscriptDoc` instance passed to plugin hooks provides:
 
 The `AtscriptRepo` instance available in `buildEnd`:
 
-| Property/Method | Description |
-|----------------|-------------|
-| `repo.root` | Root directory path |
-| `repo.getUsedAnnotations()` | Returns all annotations used across all documents |
-| `repo.getPrimitivesTags()` | Returns all primitive tags used across all documents |
-| `repo.openDocument(id, text?)` | Opens or updates a cached document |
+| Property/Method                | Description                                          |
+| ------------------------------ | ---------------------------------------------------- |
+| `repo.root`                    | Root directory path                                  |
+| `repo.getUsedAnnotations()`    | Returns all annotations used across all documents    |
+| `repo.getPrimitivesTags()`     | Returns all primitive tags used across all documents |
+| `repo.openDocument(id, text?)` | Opens or updates a cached document                   |
 
 ---
 
@@ -688,7 +703,13 @@ import { myPlugin } from './my-plugin'
 
 export default defineConfig({
   rootDir: 'src',
-  plugins: [ts(), MongoPlugin(), myPlugin({ /* options */ })],
+  plugins: [
+    ts(),
+    MongoPlugin(),
+    myPlugin({
+      /* options */
+    }),
+  ],
 })
 ```
 
@@ -707,8 +728,8 @@ npx asc -f dts
 Always export plugins as factory functions (optionally accepting options), not plain objects:
 
 ```typescript
-export const myPlugin: (opts?: TMyPluginOptions) => TAtscriptPlugin = (opts) => {
-  return { name: 'my-plugin', /* ... */ }
+export const myPlugin: (opts?: TMyPluginOptions) => TAtscriptPlugin = opts => {
+  return { name: 'my-plugin' /* ... */ }
 }
 ```
 
@@ -734,6 +755,7 @@ my-plugin/
 ### 4. Using validate/modify Sparingly
 
 `validate` and `modify` hooks in `AnnotationSpec` operate on low-level AST tokens. Use them when:
+
 - You need to enforce constraints that can't be expressed with `nodeType`/`defType`/`argument` alone
 - You need to auto-generate properties or modify the AST (like Mongo's virtual `_id`)
 

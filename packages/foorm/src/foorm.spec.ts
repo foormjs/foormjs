@@ -57,23 +57,66 @@ describe('validate', () => {
 describe('createFormData', () => {
   it('must create data from field defaults', () => {
     const fields: TFoormField[] = [
-      { field: 'name', type: 'text', label: 'Name', value: 'Alice', optional: false, disabled: false, hidden: false, validators: [] },
-      { field: 'age', type: 'number', label: 'Age', value: 30, optional: false, disabled: false, hidden: false, validators: [] },
+      {
+        field: 'name',
+        type: 'text',
+        label: 'Name',
+        value: 'Alice',
+        optional: false,
+        disabled: false,
+        hidden: false,
+        validators: [],
+      },
+      {
+        field: 'age',
+        type: 'number',
+        label: 'Age',
+        value: 30,
+        optional: false,
+        disabled: false,
+        hidden: false,
+        validators: [],
+      },
     ]
     expect(createFormData(fields)).toEqual({ name: 'Alice', age: 30 })
   })
 
   it('must skip action fields', () => {
     const fields: TFoormField[] = [
-      { field: 'name', type: 'text', label: 'Name', value: 'Alice', optional: false, disabled: false, hidden: false, validators: [] },
-      { field: 'submit', type: 'action', label: 'Submit', optional: false, disabled: false, hidden: false, validators: [] },
+      {
+        field: 'name',
+        type: 'text',
+        label: 'Name',
+        value: 'Alice',
+        optional: false,
+        disabled: false,
+        hidden: false,
+        validators: [],
+      },
+      {
+        field: 'submit',
+        type: 'action',
+        label: 'Submit',
+        optional: false,
+        disabled: false,
+        hidden: false,
+        validators: [],
+      },
     ]
     expect(createFormData(fields)).toEqual({ name: 'Alice' })
   })
 
   it('must set undefined for fields without default value', () => {
     const fields: TFoormField[] = [
-      { field: 'email', type: 'text', label: 'Email', optional: false, disabled: false, hidden: false, validators: [] },
+      {
+        field: 'email',
+        type: 'text',
+        label: 'Email',
+        optional: false,
+        disabled: false,
+        hidden: false,
+        validators: [],
+      },
     ]
     expect(createFormData(fields)).toEqual({ email: undefined })
   })
@@ -86,7 +129,15 @@ describe('getFormValidator', () => {
 
   it('must pass when all required fields are filled', () => {
     const model = makeModel([
-      { field: 'name', type: 'text', label: 'Name', optional: false, disabled: false, hidden: false, validators: [] },
+      {
+        field: 'name',
+        type: 'text',
+        label: 'Name',
+        optional: false,
+        disabled: false,
+        hidden: false,
+        validators: [],
+      },
     ])
     const validator = getFormValidator(model)
     expect(validator({ name: 'Alice' })).toEqual({ passed: true, errors: {} })
@@ -94,8 +145,24 @@ describe('getFormValidator', () => {
 
   it('must fail for empty required fields', () => {
     const model = makeModel([
-      { field: 'name', type: 'text', label: 'Name', optional: false, disabled: false, hidden: false, validators: [] },
-      { field: 'email', type: 'text', label: 'Email', optional: false, disabled: false, hidden: false, validators: [] },
+      {
+        field: 'name',
+        type: 'text',
+        label: 'Name',
+        optional: false,
+        disabled: false,
+        hidden: false,
+        validators: [],
+      },
+      {
+        field: 'email',
+        type: 'text',
+        label: 'Email',
+        optional: false,
+        disabled: false,
+        hidden: false,
+        validators: [],
+      },
     ])
     const validator = getFormValidator(model)
     expect(validator({ name: 'Alice', email: '' })).toEqual({
@@ -106,7 +173,15 @@ describe('getFormValidator', () => {
 
   it('must skip optional empty fields', () => {
     const model = makeModel([
-      { field: 'name', type: 'text', label: 'Name', optional: true, disabled: false, hidden: false, validators: [] },
+      {
+        field: 'name',
+        type: 'text',
+        label: 'Name',
+        optional: true,
+        disabled: false,
+        hidden: false,
+        validators: [],
+      },
     ])
     const validator = getFormValidator(model)
     expect(validator({ name: '' })).toEqual({ passed: true, errors: {} })
@@ -114,7 +189,15 @@ describe('getFormValidator', () => {
 
   it('must skip disabled fields', () => {
     const model = makeModel([
-      { field: 'name', type: 'text', label: 'Name', optional: false, disabled: true, hidden: false, validators: [] },
+      {
+        field: 'name',
+        type: 'text',
+        label: 'Name',
+        optional: false,
+        disabled: true,
+        hidden: false,
+        validators: [],
+      },
     ])
     const validator = getFormValidator(model)
     expect(validator({ name: '' })).toEqual({ passed: true, errors: {} })
@@ -122,7 +205,15 @@ describe('getFormValidator', () => {
 
   it('must skip hidden fields', () => {
     const model = makeModel([
-      { field: 'name', type: 'text', label: 'Name', optional: false, disabled: false, hidden: true, validators: [] },
+      {
+        field: 'name',
+        type: 'text',
+        label: 'Name',
+        optional: false,
+        disabled: false,
+        hidden: true,
+        validators: [],
+      },
     ])
     const validator = getFormValidator(model)
     expect(validator({ name: '' })).toEqual({ passed: true, errors: {} })
@@ -174,7 +265,15 @@ describe('getFormValidator', () => {
 
   it('must skip action fields', () => {
     const model = makeModel([
-      { field: 'save', type: 'action', label: 'Save', optional: false, disabled: false, hidden: false, validators: [] },
+      {
+        field: 'save',
+        type: 'action',
+        label: 'Save',
+        optional: false,
+        disabled: false,
+        hidden: false,
+        validators: [],
+      },
     ])
     const validator = getFormValidator(model)
     expect(validator({})).toEqual({ passed: true, errors: {} })

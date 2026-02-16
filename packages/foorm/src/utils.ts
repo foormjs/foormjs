@@ -5,8 +5,14 @@ import type { TComputed, TFoormFnScope } from './types'
  * the scope. Otherwise returns the static value as-is.
  */
 export function evalComputed<T>(value: TComputed<T>, scope: TFoormFnScope): T
-export function evalComputed<T>(value: TComputed<T> | undefined, scope: TFoormFnScope): T | undefined
-export function evalComputed<T>(value: TComputed<T> | undefined, scope: TFoormFnScope): T | undefined {
+export function evalComputed<T>(
+  value: TComputed<T> | undefined,
+  scope: TFoormFnScope
+): T | undefined
+export function evalComputed<T>(
+  value: TComputed<T> | undefined,
+  scope: TFoormFnScope
+): T | undefined {
   if (typeof value === 'function') {
     return (value as (scope: TFoormFnScope) => T)(scope)
   }

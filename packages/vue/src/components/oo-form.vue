@@ -2,7 +2,13 @@
 import { VuilessForm } from 'vuiless-forms'
 import type { TVuilessState } from 'vuiless-forms'
 import OoField from './oo-field.vue'
-import { type TFoormModel, type TFoormFnScope, type TFoormEntryOptions, evalComputed, supportsAltAction } from 'foorm'
+import {
+  type TFoormModel,
+  type TFoormFnScope,
+  type TFoormEntryOptions,
+  evalComputed,
+  supportsAltAction,
+} from 'foorm'
 import { computed, ref, type Component } from 'vue'
 import { type TFoormComponentProps } from './types'
 
@@ -183,11 +189,7 @@ function optLabel(opt: TFoormEntryOptions): string {
             :disabled="field.disabled"
           >
             <option v-if="field.placeholder" value="" disabled>{{ field.placeholder }}</option>
-            <option
-              v-for="opt in field.options"
-              :key="optKey(opt)"
-              :value="optKey(opt)"
-            >
+            <option v-for="opt in field.options" :key="optKey(opt)" :value="optKey(opt)">
               {{ optLabel(opt) }}
             </option>
           </select>
@@ -313,7 +315,9 @@ function optLabel(opt: TFoormEntryOptions): string {
   font-size: 14px;
   color: #1d1d1f;
   background: #fff;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
   outline: none;
 }
 
@@ -408,7 +412,9 @@ function optLabel(opt: TFoormEntryOptions): string {
   font-weight: 500;
   color: #374151;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .oo-default-field.oo-action-field button:hover {

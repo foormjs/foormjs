@@ -5,6 +5,7 @@
 ATScript is a universal type and metadata description language designed for multi-language code generation. It extends TypeScript's type system with rich metadata capabilities, runtime type information, validation, and serialization.
 
 **Key Capabilities:**
+
 - Type definitions with runtime metadata
 - Annotation-driven validation
 - Serialization/deserialization
@@ -24,10 +25,10 @@ ATScript files use the `.as` extension and contain type definitions with annotat
 
 ```typescript
 export interface User {
-    id: string.uuid
-    email: string.email
-    name: string
-    age: number.int.positive
+  id: string.uuid
+  email: string.email
+  name: string
+  age: number.int.positive
 }
 ```
 
@@ -98,29 +99,29 @@ Primitives can be extended using dot notation for type refinement and implicit v
 #### String Extensions
 
 ```typescript
-string.email       // Email format validation
-string.phone       // Phone number format validation
-string.date        // Common date formats
-string.isoDate     // ISO 8601 date format
-string.uuid        // UUID format
+string.email // Email format validation
+string.phone // Phone number format validation
+string.date // Common date formats
+string.isoDate // ISO 8601 date format
+string.uuid // UUID format
 ```
 
 #### Number Extensions
 
 ```typescript
-number.int         // Integer values
-number.positive    // Values >= 0
-number.negative    // Values <= 0
-number.single      // Single-precision float
-number.double      // Double-precision float
-number.timestamp   // Unix timestamp
+number.int // Integer values
+number.positive // Values >= 0
+number.negative // Values <= 0
+number.single // Single-precision float
+number.double // Double-precision float
+number.timestamp // Unix timestamp
 ```
 
 #### Boolean Extensions
 
 ```typescript
-boolean.true       // Must be true
-boolean.false      // Must be false
+boolean.true // Must be true
+boolean.false // Must be false
 ```
 
 ### Combining Extensions
@@ -150,7 +151,7 @@ Annotations provide metadata for types, interfaces, and properties.
 @expect.pattern "^[A-Z]", "i"     // Multiple arguments
 ```
 
-### Built-in Meta Annotations (@meta.*)
+### Built-in Meta Annotations (@meta.\*)
 
 ```typescript
 @meta.label 'string'         // Human-readable label
@@ -161,7 +162,7 @@ Annotations provide metadata for types, interfaces, and properties.
 @meta.readonly               // Read-only field
 ```
 
-### Built-in Validation Annotations (@expect.*)
+### Built-in Validation Annotations (@expect.\*)
 
 ```typescript
 @expect.minLength number     // Minimum string/array length
@@ -194,10 +195,10 @@ import { User } from './models/user.as'
 Every generated ATScript interface has static properties:
 
 ```typescript
-Product.type          // Type structure (TAtscriptTypeDef)
-Product.metadata      // Top-level annotations (TMetadataMap)
-Product.validator()   // Creates validator instance
-Product.optional      // Optional flag (if applicable)
+Product.type // Type structure (TAtscriptTypeDef)
+Product.metadata // Top-level annotations (TMetadataMap)
+Product.validator() // Creates validator instance
+Product.optional // Optional flag (if applicable)
 ```
 
 ### Runtime Type Structure
@@ -205,8 +206,8 @@ Product.optional      // Optional flag (if applicable)
 ```typescript
 interface TAtscriptAnnotatedType<T = TAtscriptTypeDef, DataType = InferDataType<T>> {
   __is_atscript_annotated_type: true
-  type: T                    // Type definition
-  metadata: TMetadataMap     // Annotation values
+  type: T // Type definition
+  metadata: TMetadataMap // Annotation values
   validator: (opts?) => Validator
   optional?: boolean
 }
@@ -264,34 +265,34 @@ Types are distinguished by their `kind` property:
 import { forAnnotatedType } from '@atscript/typescript/utils'
 
 const description = forAnnotatedType(someType, {
-  final: (def) => {
+  final: def => {
     // Handle primitives, literals, references
     return `primitive: ${def.type.designType}`
   },
 
-  object: (def) => {
+  object: def => {
     // Handle object types
     const props = def.type.props
     return `object with ${props.size} properties`
   },
 
-  array: (def) => {
+  array: def => {
     // Handle array types
     const elementType = def.type.itemType
     return `array of ${elementType.type.designType}`
   },
 
-  union: (def) => {
+  union: def => {
     // Handle union types
     return `union of ${def.type.items.length} types`
   },
 
-  intersection: (def) => {
+  intersection: def => {
     // Handle intersection types
     return `intersection of ${def.type.items.length} types`
   },
 
-  tuple: (def) => {
+  tuple: def => {
     // Handle tuple types
     return `tuple of ${def.type.items.length} items`
   },
@@ -342,8 +343,8 @@ try {
   // data passed validation
   console.log('Valid product:', data)
 } catch (error) {
-  console.error(error.message)  // First error message
-  console.error(error.errors)   // All errors
+  console.error(error.message) // First error message
+  console.error(error.errors) // All errors
 }
 ```
 
@@ -377,11 +378,11 @@ function handleRequest(body: unknown) {
 
 ```typescript
 const validator = Product.validator({
-  partial: true,           // Control required property validation
-  unknownProps: 'strip',   // Handle undefined properties: 'strip' | 'allow' | 'error'
-  errorLimit: 10,          // Maximum validation errors
-  skipList: ['metadata'],  // Skip specific property validations
-  replace: {}              // Dynamic type overriding
+  partial: true, // Control required property validation
+  unknownProps: 'strip', // Handle undefined properties: 'strip' | 'allow' | 'error'
+  errorLimit: 10, // Maximum validation errors
+  skipList: ['metadata'], // Skip specific property validations
+  replace: {}, // Dynamic type overriding
 })
 ```
 
@@ -431,10 +432,7 @@ export interface Product {
 ### Basic Serialization/Deserialization
 
 ```typescript
-import {
-  serializeAnnotatedType,
-  deserializeAnnotatedType
-} from '@atscript/typescript/utils'
+import { serializeAnnotatedType, deserializeAnnotatedType } from '@atscript/typescript/utils'
 
 // Serialize to JSON-safe object
 const serialized = serializeAnnotatedType(Product)
@@ -461,23 +459,25 @@ restored.validator().validate(data)
 3. **Annotation Filtering**
    ```typescript
    const schema = serializeAnnotatedType(User, {
-     ignoreAnnotations: ['mongo.collection', 'meta.sensitive']
+     ignoreAnnotations: ['mongo.collection', 'meta.sensitive'],
    })
    ```
 
 ### Practical Example: Server-Driven UI
 
 **Server-side:**
+
 ```typescript
 app.get('/api/form/user', (req, res) => {
   const schema = serializeAnnotatedType(User, {
-    ignoreAnnotations: ['mongo.collection']
+    ignoreAnnotations: ['mongo.collection'],
   })
   res.json(schema)
 })
 ```
 
 **Client-side:**
+
 ```typescript
 onMounted(async () => {
   const res = await fetch('/api/form/user')
@@ -489,7 +489,7 @@ onMounted(async () => {
       name,
       label: prop.metadata.get('meta.label') || name,
       placeholder: prop.metadata.get('meta.placeholder') || '',
-      required: !prop.optional
+      required: !prop.optional,
     })
   }
 })
@@ -516,7 +516,7 @@ function generateFormFields(type: TAtscriptAnnotatedType) {
       required: !prop.optional,
       readonly: prop.metadata.has('meta.readonly'),
       sensitive: prop.metadata.has('meta.sensitive'),
-      type: inferInputType(prop)
+      type: inferInputType(prop),
     })
   }
 
@@ -529,21 +529,18 @@ const userFields = generateFormFields(User)
 ### Validation with Error Handling
 
 ```typescript
-function validateAndSave<T>(
-  type: TAtscriptAnnotatedType<any, T>,
-  data: unknown
-): T {
+function validateAndSave<T>(type: TAtscriptAnnotatedType<any, T>, data: unknown): T {
   const validator = type.validator()
 
   if (!validator.validate(data, true)) {
     const errors = validator.errors.map(e => ({
       field: e.path,
-      message: e.message
+      message: e.message,
     }))
     throw new ValidationError('Invalid data', errors)
   }
 
-  return data  // TypeScript knows data is type T
+  return data // TypeScript knows data is type T
 }
 ```
 
@@ -556,7 +553,7 @@ async function fetchUser(id: string): Promise<User> {
 
   // Validate response matches User schema
   if (User.validator().validate(data, true)) {
-    return data  // TypeScript knows this is User
+    return data // TypeScript knows this is User
   }
 
   throw new Error('Invalid user data from API')
@@ -631,7 +628,7 @@ function processUser(data: unknown) {
 ```typescript
 // Share types between backend and frontend
 const serialized = serializeAnnotatedType(User, {
-  ignoreAnnotations: ['mongo.collection', 'internal.*']
+  ignoreAnnotations: ['mongo.collection', 'internal.*'],
 })
 ```
 
@@ -640,9 +637,9 @@ const serialized = serializeAnnotatedType(User, {
 ```typescript
 // Type-safe handling of different type structures
 const result = forAnnotatedType(myType, {
-  object: (def) => handleObject(def),
-  array: (def) => handleArray(def),
-  final: (def) => handlePrimitive(def)
+  object: def => handleObject(def),
+  array: def => handleArray(def),
+  final: def => handlePrimitive(def),
 })
 ```
 
@@ -678,7 +675,7 @@ import {
   serializeAnnotatedType,
   deserializeAnnotatedType,
   forAnnotatedType,
-  defineAnnotatedType
+  defineAnnotatedType,
 } from '@atscript/typescript/utils'
 
 // Import error types
@@ -699,6 +696,7 @@ import { ValidatorError } from '@atscript/validator'
 ## Quick Reference
 
 ### Create a Type
+
 ```typescript
 export interface MyType {
   @meta.label 'Field Name'
@@ -707,6 +705,7 @@ export interface MyType {
 ```
 
 ### Validate Data
+
 ```typescript
 if (MyType.validator().validate(data, true)) {
   // data is valid
@@ -714,20 +713,23 @@ if (MyType.validator().validate(data, true)) {
 ```
 
 ### Access Metadata
+
 ```typescript
 const label = MyType.type.props.get('field').metadata.get('meta.label')
 ```
 
 ### Serialize/Deserialize
+
 ```typescript
 const json = JSON.stringify(serializeAnnotatedType(MyType))
 const restored = deserializeAnnotatedType(JSON.parse(json))
 ```
 
 ### Walk Type Structure
+
 ```typescript
 forAnnotatedType(MyType, {
-  object: (def) => console.log('Object type'),
-  final: (def) => console.log('Primitive type')
+  object: def => console.log('Object type'),
+  final: def => console.log('Primitive type'),
 })
 ```

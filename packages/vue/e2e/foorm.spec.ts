@@ -62,7 +62,10 @@ test.describe('Computed Reactivity', () => {
   })
 
   test('computed label updates based on other field', async ({ page }) => {
-    const emailLabel = page.locator('.oo-default-field').filter({ hasText: /Email/ }).locator('label')
+    const emailLabel = page
+      .locator('.oo-default-field')
+      .filter({ hasText: /Email/ })
+      .locator('label')
     await expect(emailLabel).toHaveText('Email')
     await page.locator('input[name="firstName"]').fill('Alice')
     await expect(emailLabel).toHaveText('Alices Email')
@@ -85,7 +88,9 @@ test.describe('Computed Reactivity', () => {
   })
 
   test('computed disabled reacts to form data', async ({ page }) => {
-    const passwordField = page.locator('.oo-default-field').filter({ has: page.locator('input[name="password"]') })
+    const passwordField = page
+      .locator('.oo-default-field')
+      .filter({ has: page.locator('input[name="password"]') })
     await expect(passwordField).toHaveClass(/disabled/)
     await page.locator('input[name="firstName"]').fill('Alice')
     await page.locator('input[name="lastName"]').fill('Smith')
@@ -105,9 +110,7 @@ test.describe('Computed Reactivity', () => {
 test.describe('Static Annotations', () => {
   test('renders field labels', async ({ page }) => {
     for (const label of ['First Name', 'Last Name', 'Age', 'Password']) {
-      await expect(
-        page.locator('.oo-default-field label').filter({ hasText: label })
-      ).toBeVisible()
+      await expect(page.locator('.oo-default-field label').filter({ hasText: label })).toBeVisible()
     }
   })
 
@@ -126,7 +129,10 @@ test.describe('Static Annotations', () => {
   })
 
   test('renders autocomplete attribute', async ({ page }) => {
-    await expect(page.locator('input[name="firstName"]')).toHaveAttribute('autocomplete', 'given-name')
+    await expect(page.locator('input[name="firstName"]')).toHaveAttribute(
+      'autocomplete',
+      'given-name'
+    )
   })
 
   test('renders number type input', async ({ page }) => {
@@ -229,7 +235,7 @@ test.describe('Primitives and Actions', () => {
   test('action button emits action event on click', async ({ page }) => {
     const logs: string[] = []
     page.on('console', msg => {
-      if (msg.type() === 'log') logs.push(msg.text())
+      if (msg.type() === 'log') {logs.push(msg.text())}
     })
     await page.getByRole('button', { name: 'Reset Password' }).click()
     await page.waitForTimeout(100)

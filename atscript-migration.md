@@ -8,20 +8,20 @@ Migrate foormjs from programmatic, imperative form definitions (build forms in T
 
 ## What ATScript Replaces Directly
 
-| Current foormjs | ATScript Equivalent |
-|---|---|
-| `TFoormEntry.label` (static) | `@meta.label 'Label'` |
-| `TFoormEntry.description` (static) | `@meta.description 'Desc'` |
-| `TFoormEntry.placeholder` (static) | `@meta.placeholder 'Placeholder'` |
-| `TFoormEntry.optional` (static) | Native `prop?: type` optional syntax |
-| `TFoormEntry.length` (static) | `@expect.maxLength N` |
-| Manual min/max/pattern validators | `@expect.minLength`, `@expect.maxLength`, `@expect.min`, `@expect.max`, `@expect.pattern`, `@expect.int` |
-| String + email validation | `string.email` semantic primitive |
-| `serializeForm()` | `serializeAnnotatedType()` from `@atscript/typescript` |
-| `deserializeForm()` | `deserializeAnnotatedType()` from `@atscript/typescript` |
-| `Foorm` class + `TFoormEntry[]` | `.as` file with annotated `export interface` |
-| `evalParameter()` for static values | `prop.metadata.get('annotation.name')` |
-| Type system (`TFoormSerialized`, etc.) | `TAtscriptAnnotatedType` + runtime type structure |
+| Current foormjs                        | ATScript Equivalent                                                                                      |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `TFoormEntry.label` (static)           | `@meta.label 'Label'`                                                                                    |
+| `TFoormEntry.description` (static)     | `@meta.description 'Desc'`                                                                               |
+| `TFoormEntry.placeholder` (static)     | `@meta.placeholder 'Placeholder'`                                                                        |
+| `TFoormEntry.optional` (static)        | Native `prop?: type` optional syntax                                                                     |
+| `TFoormEntry.length` (static)          | `@expect.maxLength N`                                                                                    |
+| Manual min/max/pattern validators      | `@expect.minLength`, `@expect.maxLength`, `@expect.min`, `@expect.max`, `@expect.pattern`, `@expect.int` |
+| String + email validation              | `string.email` semantic primitive                                                                        |
+| `serializeForm()`                      | `serializeAnnotatedType()` from `@atscript/typescript`                                                   |
+| `deserializeForm()`                    | `deserializeAnnotatedType()` from `@atscript/typescript`                                                 |
+| `Foorm` class + `TFoormEntry[]`        | `.as` file with annotated `export interface`                                                             |
+| `evalParameter()` for static values    | `prop.metadata.get('annotation.name')`                                                                   |
+| Type system (`TFoormSerialized`, etc.) | `TAtscriptAnnotatedType` + runtime type structure                                                        |
 
 ## What Needs a Custom Plugin
 
@@ -36,12 +36,12 @@ Migrate foormjs from programmatic, imperative form definitions (build forms in T
 
 ## Dependency Changes
 
-| Remove | Keep | Add |
-|---|---|---|
-| `@prostojs/serialize-fn` | `@prostojs/deserialize-fn` (FNPool for safe fn compilation) | `@atscript/core` (dev) |
-| | | `@atscript/typescript` (runtime) |
-| | | `unplugin-atscript` (dev, bundler integration) |
-| | | `@foormjs/atscript` (new package) |
+| Remove                   | Keep                                                        | Add                                            |
+| ------------------------ | ----------------------------------------------------------- | ---------------------------------------------- |
+| `@prostojs/serialize-fn` | `@prostojs/deserialize-fn` (FNPool for safe fn compilation) | `@atscript/core` (dev)                         |
+|                          |                                                             | `@atscript/typescript` (runtime)               |
+|                          |                                                             | `unplugin-atscript` (dev, bundler integration) |
+|                          |                                                             | `@foormjs/atscript` (new package)              |
 
 ### Why keep `@prostojs/deserialize-fn`
 
@@ -55,26 +55,26 @@ Alternative: reimplement a minimal fn pool within foormjs if we want to drop the
 
 ### Form-Level Annotations (`nodeType: ['interface']`)
 
-| Annotation | Arg Type | Description |
-|---|---|---|
-| `@foorm.title` | `string` | Static form title |
-| `@foorm.submit.text` | `string` | Static submit button text |
-| `@foorm.fn.title` | `string` | Computed title: `(data, ctx) => string` |
-| `@foorm.fn.submit.text` | `string` | Computed submit text: `(data, ctx) => string` |
+| Annotation                  | Arg Type | Description                                        |
+| --------------------------- | -------- | -------------------------------------------------- |
+| `@foorm.title`              | `string` | Static form title                                  |
+| `@foorm.submit.text`        | `string` | Static submit button text                          |
+| `@foorm.fn.title`           | `string` | Computed title: `(data, ctx) => string`            |
+| `@foorm.fn.submit.text`     | `string` | Computed submit text: `(data, ctx) => string`      |
 | `@foorm.fn.submit.disabled` | `string` | Computed submit disabled: `(data, ctx) => boolean` |
 
 ### Field-Level Static Annotations (`nodeType: ['prop']`)
 
-| Annotation | Arg Type | Description |
-|---|---|---|
-| `@foorm.type` | `string` | Field type: `'text'`, `'password'`, `'number'`, `'select'`, `'textarea'`, `'paragraph'`, `'action'` |
-| `@foorm.component` | `string` | Named component override |
-| `@foorm.autocomplete` | `string` | HTML autocomplete attribute |
-| `@foorm.altAction` | `string` | Alternate submit action name |
-| `@foorm.value` | `string` | Default value (as string, parsed by type at runtime) |
-| `@foorm.order` | `number` | Explicit rendering order |
-| `@foorm.hidden` | _(no arg)_ | Statically hidden field |
-| `@foorm.disabled` | _(no arg)_ | Statically disabled field |
+| Annotation            | Arg Type   | Description                                                                                         |
+| --------------------- | ---------- | --------------------------------------------------------------------------------------------------- |
+| `@foorm.type`         | `string`   | Field type: `'text'`, `'password'`, `'number'`, `'select'`, `'textarea'`, `'paragraph'`, `'action'` |
+| `@foorm.component`    | `string`   | Named component override                                                                            |
+| `@foorm.autocomplete` | `string`   | HTML autocomplete attribute                                                                         |
+| `@foorm.altAction`    | `string`   | Alternate submit action name                                                                        |
+| `@foorm.value`        | `string`   | Default value (as string, parsed by type at runtime)                                                |
+| `@foorm.order`        | `number`   | Explicit rendering order                                                                            |
+| `@foorm.hidden`       | _(no arg)_ | Statically hidden field                                                                             |
+| `@foorm.disabled`     | _(no arg)_ | Statically disabled field                                                                           |
 
 Note: `@foorm.length` is NOT needed — use `@expect.maxLength` instead. The Vue layer reads `prop.metadata.get('expect.maxLength')` for the HTML `maxlength` attribute.
 
@@ -82,28 +82,29 @@ Note: `@foorm.length` is NOT needed — use `@expect.maxLength` instead. The Vue
 
 These hold JS function strings evaluated at runtime with `(value, data, context, entry)` arguments. Compiled via `FNPool` from `@prostojs/deserialize-fn`.
 
-| Annotation | Description |
-|---|---|
-| `@foorm.fn.label` | Computed label: `(v, data, ctx, entry) => string` |
-| `@foorm.fn.description` | Computed description |
-| `@foorm.fn.hint` | Computed hint |
-| `@foorm.fn.placeholder` | Computed placeholder |
-| `@foorm.fn.disabled` | Computed disabled state: `(v, data, ctx, entry) => boolean` |
-| `@foorm.fn.hidden` | Computed hidden state |
-| `@foorm.fn.optional` | Computed optional state |
-| `@foorm.fn.classes` | Computed CSS classes |
-| `@foorm.fn.styles` | Computed inline styles |
-| `@foorm.fn.options` | Computed select/radio options |
+| Annotation              | Description                                                 |
+| ----------------------- | ----------------------------------------------------------- |
+| `@foorm.fn.label`       | Computed label: `(v, data, ctx, entry) => string`           |
+| `@foorm.fn.description` | Computed description                                        |
+| `@foorm.fn.hint`        | Computed hint                                               |
+| `@foorm.fn.placeholder` | Computed placeholder                                        |
+| `@foorm.fn.disabled`    | Computed disabled state: `(v, data, ctx, entry) => boolean` |
+| `@foorm.fn.hidden`      | Computed hidden state                                       |
+| `@foorm.fn.optional`    | Computed optional state                                     |
+| `@foorm.fn.classes`     | Computed CSS classes                                        |
+| `@foorm.fn.styles`      | Computed inline styles                                      |
+| `@foorm.fn.options`     | Computed select/radio options                               |
 
 ### Validation Annotation (`nodeType: ['prop']`, `multiple: true`, `mergeStrategy: 'append'`)
 
-| Annotation | Description |
-|---|---|
+| Annotation        | Description                                                                                                                            |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `@foorm.validate` | JS validator function as string: `(v, data, ctx) => boolean \| string`. Repeatable. Returns `true` for pass, string for error message. |
 
 ### Plugin `validate` Hook for `@foorm.fn.*` and `@foorm.validate`
 
 The ATScript plugin's `validate` hook on each `@foorm.fn.*` and `@foorm.validate` annotation will:
+
 1. Read the annotation string value
 2. Attempt `new Function(fnStr)` to check it compiles
 3. Return a diagnostic error if it fails (syntax error surfaces in IDE via VSCode extension)
@@ -114,12 +115,13 @@ This doesn't provide type checking inside the function string, but catches synta
 
 ## Custom Primitives
 
-| Primitive | Base Type | Description |
-|---|---|---|
-| `foorm.action` | `string` | Form action button (not a data field, excluded from `createFormData()`) |
-| `foorm.paragraph` | `string` | Read-only paragraph text (not an input) |
+| Primitive         | Base Type | Description                                                             |
+| ----------------- | --------- | ----------------------------------------------------------------------- |
+| `foorm.action`    | `string`  | Form action button (not a data field, excluded from `createFormData()`) |
+| `foorm.paragraph` | `string`  | Read-only paragraph text (not an input)                                 |
 
 Usage in `.as` files:
+
 ```atscript
 export interface MyForm {
     @meta.label 'Terms and conditions apply...'
@@ -140,24 +142,24 @@ export interface MyForm {
 ```ts
 const form = new Foorm()
 form.setTitle('Registration')
-form.setSubmit({ text: 'Register', disabled: (data) => !data.firstName })
+form.setSubmit({ text: 'Register', disabled: data => !data.firstName })
 
 form.addEntry({
   field: 'firstName',
   label: 'First Name',
   type: 'text',
-  validators: [(v) => v.length >= 2 || 'Too short'],
+  validators: [v => v.length >= 2 || 'Too short'],
 })
 
 form.addEntry({
   field: 'email',
-  label: (v, data, ctx) => ctx.locale === 'en' ? 'Email' : 'Correo',
+  label: (v, data, ctx) => (ctx.locale === 'en' ? 'Email' : 'Correo'),
   type: 'text',
   disabled: (v, data) => !data.firstName,
-  validators: [(v) => v.includes('@') || 'Invalid email'],
+  validators: [v => v.includes('@') || 'Invalid email'],
 })
 
-const serialized = serializeForm(form)     // @prostojs/serialize-fn
+const serialized = serializeForm(form) // @prostojs/serialize-fn
 const restored = deserializeForm(serialized) // @prostojs/deserialize-fn
 ```
 
@@ -195,6 +197,7 @@ const type = deserializeAnnotatedType(await res.json())
 ```
 
 Key improvements:
+
 - `@expect.minLength 2` replaces manual `(v) => v.length >= 2 || 'Too short'`
 - `string.email` provides built-in email format validation
 - Static `@meta.label` is separate from computed `@foorm.fn.label`
@@ -237,6 +240,7 @@ if (validator.validate(formData, true)) {
 ### Vue Component Flow
 
 `OoForm` accepts `TAtscriptAnnotatedType` instead of `Foorm`:
+
 1. Reads interface-level annotations for title/submit
 2. Iterates `type.props` for field entries
 3. For each prop: reads `@meta.*` for static values, `@foorm.fn.*` for computed
@@ -254,6 +258,7 @@ if (validator.validate(formData, true)) {
 New package: `packages/atscript/`
 
 **Deliverables:**
+
 - `src/plugin.ts` — `TAtscriptPlugin` factory function with all custom annotations and primitives
 - `src/annotations.ts` — `TAnnotationsTree` with all `@foorm.*` annotation specs
 - `src/primitives.ts` — `foorm.action`, `foorm.paragraph` primitives
@@ -302,10 +307,10 @@ The plugin's `validate` hook on `@foorm.fn.*` and `@foorm.validate` annotations 
 
 ## Risk Assessment
 
-| Risk | Severity | Mitigation |
-|---|---|---|
-| Fn strings lack TypeScript type checking | Medium | Plugin `validate` hook checks compilation; most fields use static `@meta.*` annotations |
-| Breaking change for existing users | High | Major version bump; migration guide; consider backward-compat adapter |
-| `new Function()` and CSP | Low | Same as current `@prostojs/deserialize-fn` behavior; document CSP requirements |
-| Deep annotation nesting (`@foorm.fn.submit.disabled`) | Low | ATScript supports arbitrary nesting via `TAnnotationsTree` |
-| ATScript is relatively new | Medium | Same author ecosystem; strong alignment with project goals |
+| Risk                                                  | Severity | Mitigation                                                                              |
+| ----------------------------------------------------- | -------- | --------------------------------------------------------------------------------------- |
+| Fn strings lack TypeScript type checking              | Medium   | Plugin `validate` hook checks compilation; most fields use static `@meta.*` annotations |
+| Breaking change for existing users                    | High     | Major version bump; migration guide; consider backward-compat adapter                   |
+| `new Function()` and CSP                              | Low      | Same as current `@prostojs/deserialize-fn` behavior; document CSP requirements          |
+| Deep annotation nesting (`@foorm.fn.submit.disabled`) | Low      | ATScript supports arbitrary nesting via `TAnnotationsTree`                              |
+| ATScript is relatively new                            | Medium   | Same author ecosystem; strong alignment with project goals                              |

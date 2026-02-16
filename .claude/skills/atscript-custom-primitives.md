@@ -72,24 +72,24 @@ export default defineConfig({
 
 ## Extension Object Fields
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `type` | `'string' \| 'number' \| 'boolean'` | Yes | The base TypeScript type. Must match the parent group key. |
-| `documentation` | `string` | Yes | Description shown in IntelliSense hover tooltips. |
-| `expect` | `object` | No | Implicit validation constraints — same keys as `@expect.*` annotations. |
+| Field           | Type                                | Required | Description                                                             |
+| --------------- | ----------------------------------- | -------- | ----------------------------------------------------------------------- |
+| `type`          | `'string' \| 'number' \| 'boolean'` | Yes      | The base TypeScript type. Must match the parent group key.              |
+| `documentation` | `string`                            | Yes      | Description shown in IntelliSense hover tooltips.                       |
+| `expect`        | `object`                            | No       | Implicit validation constraints — same keys as `@expect.*` annotations. |
 
 ---
 
 ## Available `expect` Constraint Keys
 
-| Key | Applies To | Description |
-|-----|-----------|-------------|
-| `pattern` | `string` | Array: `[regexString, flags, errorMessage]` |
-| `min` | `number` | Minimum numeric value |
-| `max` | `number` | Maximum numeric value |
-| `minLength` | `string`, `array` | Minimum length |
-| `maxLength` | `string`, `array` | Maximum length |
-| `int` | `number` | Must be an integer (flag, use `true`) |
+| Key         | Applies To        | Description                                 |
+| ----------- | ----------------- | ------------------------------------------- |
+| `pattern`   | `string`          | Array: `[regexString, flags, errorMessage]` |
+| `min`       | `number`          | Minimum numeric value                       |
+| `max`       | `number`          | Maximum numeric value                       |
+| `minLength` | `string`, `array` | Minimum length                              |
+| `maxLength` | `string`, `array` | Maximum length                              |
+| `int`       | `number`          | Must be an integer (flag, use `true`)       |
 
 Additional keys follow whatever `@expect.*` annotations are supported in the project.
 
@@ -140,14 +140,22 @@ export default defineConfig({
           type: 'string',
           documentation: 'IPv4 address',
           expect: {
-            pattern: ['^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$', '', 'Invalid IPv4 address'],
+            pattern: [
+              '^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$',
+              '',
+              'Invalid IPv4 address',
+            ],
           },
         },
         jwt: {
           type: 'string',
           documentation: 'JSON Web Token',
           expect: {
-            pattern: ['^[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+$', '', 'Invalid JWT format'],
+            pattern: [
+              '^[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+$',
+              '',
+              'Invalid JWT format',
+            ],
           },
         },
         base64: {
@@ -300,7 +308,7 @@ const validator = ServerConfig.validator()
 validator.validate({
   host: '10.0.0.1',
   port: 99999,
-  baseUrl: 'https://example.com'
+  baseUrl: 'https://example.com',
 })
 // ValidatorError: Expected maximum 65535
 
@@ -308,7 +316,7 @@ validator.validate({
 validator.validate({
   host: '10.0.0.1',
   port: 8080,
-  baseUrl: 'not-a-url'
+  baseUrl: 'not-a-url',
 })
 // ValidatorError: Invalid URL format
 
@@ -316,7 +324,7 @@ validator.validate({
 validator.validate({
   host: '999.999.999.999',
   port: 8080,
-  baseUrl: 'https://example.com'
+  baseUrl: 'https://example.com',
 })
 // ValidatorError: Invalid IPv4 address
 
@@ -324,7 +332,7 @@ validator.validate({
 validator.validate({
   host: '192.168.1.1',
   port: 8080,
-  baseUrl: 'https://example.com'
+  baseUrl: 'https://example.com',
 })
 ```
 
@@ -374,6 +382,7 @@ This updates `atscript.d.ts` so the IDE recognizes the new type tags with full a
 ### 2. Define Validation Constraints
 
 Express validation rules using `@expect.*` keys:
+
 - For strings: Use `pattern` for regex validation, `minLength`/`maxLength` for length
 - For numbers: Use `min`/`max` for ranges, `int` for integers
 - Combine multiple constraints as needed
@@ -875,14 +884,26 @@ export interface ApiResponse {
 
 ```js
 // Good
-url: { /* ... */ }
-percentage: { /* ... */ }
-latitude: { /* ... */ }
+url: {
+  /* ... */
+}
+percentage: {
+  /* ... */
+}
+latitude: {
+  /* ... */
+}
 
 // Avoid
-u: { /* ... */ }
-pct: { /* ... */ }
-lat: { /* ... */ }
+u: {
+  /* ... */
+}
+pct: {
+  /* ... */
+}
+lat: {
+  /* ... */
+}
 ```
 
 ### 2. Write Helpful Documentation
@@ -965,11 +986,13 @@ string: {
 **Problem:** Constraints not being enforced
 
 **Possible causes:**
+
 1. Config not properly saved
 2. Type declarations not regenerated
 3. Typo in constraint keys
 
 **Solution:**
+
 1. Save `atscript.config.js`
 2. Run `npx asc -f dts`
 3. Verify constraint key names match `@expect.*` annotations
@@ -979,6 +1002,7 @@ string: {
 **Problem:** Regex pattern not matching expected input
 
 **Solution:**
+
 - Test regex separately
 - Properly escape backslashes (`\\d` not `\d`)
 - Verify regex syntax

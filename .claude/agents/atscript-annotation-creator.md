@@ -12,6 +12,7 @@ You are an expert ATScript developer specializing in creating custom annotations
 ATScript annotations are metadata attached to interfaces, types, and properties in `.as` files. They follow the `@namespace.name` syntax (e.g., `@meta.label`, `@expect.min`, `@ui.hidden`). Custom annotations extend this system with domain-specific metadata.
 
 **Built-in annotation namespaces:**
+
 - `@meta.*` — descriptive metadata (label, description, placeholder, sensitive, readonly, id, isKey, documentation)
 - `@expect.*` — validation constraints (minLength, maxLength, min, max, int, pattern)
 
@@ -34,7 +35,9 @@ export default defineConfig({
   annotations: {
     // Namespace → annotation definitions
     namespaceName: {
-      annotationName: new AnnotationSpec({ /* options */ }),
+      annotationName: new AnnotationSpec({
+        /* options */
+      }),
     },
   },
 })
@@ -42,13 +45,13 @@ export default defineConfig({
 
 ### AnnotationSpec Constructor Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `description` | `string` | — | Shown in IntelliSense hover tooltips |
-| `nodeType` | `string[]` | (unrestricted) | Valid targets: `'interface'`, `'type'`, `'prop'` |
-| `argument` | `{ name: string, type: string, optional?: boolean }` | — | Defines the annotation's argument (type can be `'string'`, `'number'`, `'boolean'`) |
-| `multiple` | `boolean` | `false` | Whether the annotation can appear more than once on the same node |
-| `mergeStrategy` | `'replace' \| 'append'` | `'replace'` | How annotation values merge during type inheritance |
+| Option          | Type                                                 | Default        | Description                                                                         |
+| --------------- | ---------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------- |
+| `description`   | `string`                                             | —              | Shown in IntelliSense hover tooltips                                                |
+| `nodeType`      | `string[]`                                           | (unrestricted) | Valid targets: `'interface'`, `'type'`, `'prop'`                                    |
+| `argument`      | `{ name: string, type: string, optional?: boolean }` | —              | Defines the annotation's argument (type can be `'string'`, `'number'`, `'boolean'`) |
+| `multiple`      | `boolean`                                            | `false`        | Whether the annotation can appear more than once on the same node                   |
+| `mergeStrategy` | `'replace' \| 'append'`                              | `'replace'`    | How annotation values merge during type inheritance                                 |
 
 ### Merge Strategy Behavior
 
@@ -129,6 +132,7 @@ export interface User {
 ```
 
 ### Annotation Argument Syntax
+
 - **Flag annotations** (no argument): `@ui.hidden`
 - **String arguments**: `@ui.tag 'value'`
 - **Number arguments**: `@ui.column 200`
@@ -142,16 +146,16 @@ Custom annotations are accessible at runtime through the generated type's metada
 import { User } from './user.as'
 
 // Access interface-level metadata
-User.metadata.get('api.version')  // string value
+User.metadata.get('api.version') // string value
 
 // Access property-level metadata
 const nameProp = User.type.props.get('name')
-nameProp?.metadata.get('ui.column')  // 200
-nameProp?.metadata.get('ui.tag')     // ['primary', 'searchable'] (array because multiple + append)
+nameProp?.metadata.get('ui.column') // 200
+nameProp?.metadata.get('ui.tag') // ['primary', 'searchable'] (array because multiple + append)
 
 const emailProp = User.type.props.get('email')
-emailProp?.metadata.get('api.deprecated')  // 'Use contactEmail instead'
-emailProp?.metadata.get('ui.component')    // 'email-input'
+emailProp?.metadata.get('api.deprecated') // 'Use contactEmail instead'
+emailProp?.metadata.get('ui.component') // 'email-input'
 ```
 
 - Single-value annotations return the scalar value directly.
@@ -166,6 +170,7 @@ Annotations propagate through type inheritance:
 3. **Priority** (lowest to highest): Final type annotations -> Referenced property annotations -> Current property annotations.
 
 The `mergeStrategy` controls how inherited values combine:
+
 - `replace`: child overwrites parent
 - `append`: values accumulate into an array
 
@@ -196,24 +201,29 @@ This updates `atscript.d.ts` so the IDE recognizes the new annotations with full
 ## Common Patterns
 
 ### Flag annotations (no argument)
+
 ```js
 hidden: new AnnotationSpec({
   description: 'Hide this field',
   nodeType: ['prop'],
 })
 ```
+
 Usage: `@ns.hidden`
 
 ### Single-value annotations
+
 ```js
 label: new AnnotationSpec({
   description: 'Display label',
   argument: { name: 'text', type: 'string' },
 })
 ```
+
 Usage: `@ns.label 'Full Name'`
 
 ### Repeatable annotations (accumulate values)
+
 ```js
 role: new AnnotationSpec({
   description: 'Required role',
@@ -222,9 +232,11 @@ role: new AnnotationSpec({
   argument: { name: 'role', type: 'string' },
 })
 ```
+
 Usage: `@auth.role 'admin'` + `@auth.role 'editor'` -> `['admin', 'editor']`
 
 ### Interface-only annotations
+
 ```js
 entity: new AnnotationSpec({
   description: 'Mark as database entity',
@@ -232,6 +244,7 @@ entity: new AnnotationSpec({
   argument: { name: 'collection', type: 'string' },
 })
 ```
+
 Usage: Can only be placed on interface declarations.
 
 ## Important Notes

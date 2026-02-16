@@ -1,4 +1,8 @@
-import type { TAtscriptAnnotatedType, TAtscriptTypeObject, InferDataType } from '@atscript/typescript/utils'
+import type {
+  TAtscriptAnnotatedType,
+  TAtscriptTypeObject,
+  InferDataType,
+} from '@atscript/typescript/utils'
 import { createFoorm } from '@foormjs/atscript'
 import { createFormData } from 'foorm'
 import { reactive } from 'vue'

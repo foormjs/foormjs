@@ -38,7 +38,9 @@ export default defineConfig({
   annotations: {
     // Namespace → annotation definitions
     namespaceName: {
-      annotationName: new AnnotationSpec({ /* options */ }),
+      annotationName: new AnnotationSpec({
+        /* options */
+      }),
     },
   },
 })
@@ -48,13 +50,13 @@ export default defineConfig({
 
 ## AnnotationSpec Constructor Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `description` | `string` | — | Shown in IntelliSense hover tooltips |
-| `nodeType` | `string[]` | (unrestricted) | Valid targets: `'interface'`, `'type'`, `'prop'` |
-| `argument` | `{ name: string, type: string, optional?: boolean }` | — | Defines the annotation's argument (type can be `'string'`, `'number'`, `'boolean'`) |
-| `multiple` | `boolean` | `false` | Whether the annotation can appear more than once on the same node |
-| `mergeStrategy` | `'replace' \| 'append'` | `'replace'` | How annotation values merge during type inheritance |
+| Option          | Type                                                 | Default        | Description                                                                         |
+| --------------- | ---------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------- |
+| `description`   | `string`                                             | —              | Shown in IntelliSense hover tooltips                                                |
+| `nodeType`      | `string[]`                                           | (unrestricted) | Valid targets: `'interface'`, `'type'`, `'prop'`                                    |
+| `argument`      | `{ name: string, type: string, optional?: boolean }` | —              | Defines the annotation's argument (type can be `'string'`, `'number'`, `'boolean'`) |
+| `multiple`      | `boolean`                                            | `false`        | Whether the annotation can appear more than once on the same node                   |
+| `mergeStrategy` | `'replace' \| 'append'`                              | `'replace'`    | How annotation values merge during type inheritance                                 |
 
 ### Merge Strategy Behavior
 
@@ -71,6 +73,7 @@ export default defineConfig({
 ### Argument Types
 
 The `argument.type` must be one of:
+
 - `'string'` — String values
 - `'number'` — Numeric values
 - `'boolean'` — Boolean values
@@ -205,19 +208,19 @@ Custom annotations are accessible at runtime through the generated type's metada
 import { User } from './user.as'
 
 // Access interface-level metadata
-User.metadata.get('db.collection')  // 'users'
-User.metadata.get('api.version')    // '2.0'
+User.metadata.get('db.collection') // 'users'
+User.metadata.get('api.version') // '2.0'
 
 // Access property-level metadata
 const nameProp = User.type.props.get('name')
-nameProp?.metadata.get('ui.column')   // 200
-nameProp?.metadata.get('ui.tag')      // ['primary', 'searchable'] (array because multiple + append)
-nameProp?.metadata.get('db.index')    // ['text']
+nameProp?.metadata.get('ui.column') // 200
+nameProp?.metadata.get('ui.tag') // ['primary', 'searchable'] (array because multiple + append)
+nameProp?.metadata.get('db.index') // ['text']
 
 const emailProp = User.type.props.get('email')
-emailProp?.metadata.get('api.deprecated')  // 'Use contactEmail instead'
-emailProp?.metadata.get('ui.component')    // 'email-input'
-emailProp?.metadata.has('db.unique')       // true
+emailProp?.metadata.get('api.deprecated') // 'Use contactEmail instead'
+emailProp?.metadata.get('ui.component') // 'email-input'
+emailProp?.metadata.has('db.unique') // true
 
 const permissionsProp = User.type.props.get('permissions')
 permissionsProp?.metadata.get('auth.role') // ['admin', 'editor']
@@ -253,6 +256,7 @@ Annotations propagate through type inheritance:
 3. **Priority** (lowest to highest): Final type annotations → Referenced property annotations → Current property annotations
 
 The `mergeStrategy` controls how inherited values combine:
+
 - `replace`: child overwrites parent
 - `append`: values accumulate into an array
 
@@ -274,12 +278,14 @@ export interface User extends BaseEntity {
 ```
 
 With `mergeStrategy: 'append'`, the `id` property in `User` has:
+
 ```typescript
 User.type.props.get('id')?.metadata.get('ui.tag')
 // ['base', 'entity', 'user']
 ```
 
 With `mergeStrategy: 'replace'`, only the last value is kept:
+
 ```typescript
 User.type.props.get('id')?.metadata.get('ui.tag')
 // 'user'
@@ -292,6 +298,7 @@ User.type.props.get('id')?.metadata.get('ui.tag')
 ### Flag Annotations (No Argument)
 
 **Definition:**
+
 ```js
 hidden: new AnnotationSpec({
   description: 'Hide this field in the UI',
@@ -300,14 +307,16 @@ hidden: new AnnotationSpec({
 ```
 
 **Usage:**
+
 ```atscript
 @ui.hidden
 password: string
 ```
 
 **Runtime Access:**
+
 ```typescript
-prop.metadata.has('ui.hidden')  // true/false
+prop.metadata.has('ui.hidden') // true/false
 ```
 
 ---
@@ -315,6 +324,7 @@ prop.metadata.has('ui.hidden')  // true/false
 ### Single-Value Annotations
 
 **Definition:**
+
 ```js
 label: new AnnotationSpec({
   description: 'Display label for this field',
@@ -323,14 +333,16 @@ label: new AnnotationSpec({
 ```
 
 **Usage:**
+
 ```atscript
 @ui.label 'Full Name'
 name: string
 ```
 
 **Runtime Access:**
+
 ```typescript
-prop.metadata.get('ui.label')  // 'Full Name'
+prop.metadata.get('ui.label') // 'Full Name'
 ```
 
 ---
@@ -338,6 +350,7 @@ prop.metadata.get('ui.label')  // 'Full Name'
 ### Numeric Annotations
 
 **Definition:**
+
 ```js
 priority: new AnnotationSpec({
   description: 'Display priority (higher = more important)',
@@ -346,14 +359,16 @@ priority: new AnnotationSpec({
 ```
 
 **Usage:**
+
 ```atscript
 @ui.priority 10
 importantField: string
 ```
 
 **Runtime Access:**
+
 ```typescript
-prop.metadata.get('ui.priority')  // 10
+prop.metadata.get('ui.priority') // 10
 ```
 
 ---
@@ -361,6 +376,7 @@ prop.metadata.get('ui.priority')  // 10
 ### Repeatable Annotations (Accumulate Values)
 
 **Definition:**
+
 ```js
 role: new AnnotationSpec({
   description: 'Required role to access this field',
@@ -371,6 +387,7 @@ role: new AnnotationSpec({
 ```
 
 **Usage:**
+
 ```atscript
 @auth.role 'admin'
 @auth.role 'editor'
@@ -378,8 +395,9 @@ sensitiveData: string
 ```
 
 **Runtime Access:**
+
 ```typescript
-prop.metadata.get('auth.role')  // ['admin', 'editor']
+prop.metadata.get('auth.role') // ['admin', 'editor']
 ```
 
 ---
@@ -387,6 +405,7 @@ prop.metadata.get('auth.role')  // ['admin', 'editor']
 ### Optional Argument Annotations
 
 **Definition:**
+
 ```js
 deprecated: new AnnotationSpec({
   description: 'Mark field as deprecated',
@@ -395,6 +414,7 @@ deprecated: new AnnotationSpec({
 ```
 
 **Usage:**
+
 ```atscript
 @api.deprecated
 oldField: string
@@ -404,8 +424,9 @@ anotherOldField: string
 ```
 
 **Runtime Access:**
+
 ```typescript
-prop.metadata.get('api.deprecated')  // true or 'Use newField instead'
+prop.metadata.get('api.deprecated') // true or 'Use newField instead'
 ```
 
 ---
@@ -413,6 +434,7 @@ prop.metadata.get('api.deprecated')  // true or 'Use newField instead'
 ### Interface-Only Annotations
 
 **Definition:**
+
 ```js
 entity: new AnnotationSpec({
   description: 'Mark as database entity',
@@ -422,6 +444,7 @@ entity: new AnnotationSpec({
 ```
 
 **Usage:**
+
 ```atscript
 @db.entity 'users'
 export interface User {
@@ -436,6 +459,7 @@ This annotation can ONLY be placed on interface declarations. Using it on proper
 ### Property-Only Annotations
 
 **Definition:**
+
 ```js
 computed: new AnnotationSpec({
   description: 'Field is computed and should not be stored',
@@ -444,6 +468,7 @@ computed: new AnnotationSpec({
 ```
 
 **Usage:**
+
 ```atscript
 export interface Product {
   price: number
@@ -483,6 +508,7 @@ This updates `atscript.d.ts` so the IDE recognizes the new annotations with full
 ### 2. Choose a Namespace
 
 Group related annotations under a meaningful namespace:
+
 - `ui.*` — UI-related metadata (labels, components, visibility)
 - `api.*` — API versioning, deprecation, documentation
 - `db.*` — Database mappings, indexes, constraints
@@ -498,10 +524,10 @@ Create an `AnnotationSpec` with appropriate options:
 ```js
 annotationName: new AnnotationSpec({
   description: 'Clear description for IntelliSense',
-  nodeType: ['prop'],  // Optional: restrict to specific nodes
-  argument: { name: 'value', type: 'string' },  // Optional
-  multiple: false,     // Can it appear multiple times?
-  mergeStrategy: 'replace'  // How to merge during inheritance
+  nodeType: ['prop'], // Optional: restrict to specific nodes
+  argument: { name: 'value', type: 'string' }, // Optional
+  multiple: false, // Can it appear multiple times?
+  mergeStrategy: 'replace', // How to merge during inheritance
 })
 ```
 
@@ -513,7 +539,9 @@ export default defineConfig({
   plugins: [ts()],
   annotations: {
     yourNamespace: {
-      yourAnnotation: new AnnotationSpec({ /* ... */ }),
+      yourAnnotation: new AnnotationSpec({
+        /* ... */
+      }),
     },
   },
 })
@@ -552,6 +580,7 @@ const value = prop?.metadata.get('yourNamespace.yourAnnotation')
 **Goal:** Create annotations for dynamic form generation
 
 **Configuration:**
+
 ```js
 annotations: {
   ui: {
@@ -584,6 +613,7 @@ annotations: {
 ```
 
 **Usage:**
+
 ```atscript
 export interface UserForm {
   @ui.hidden
@@ -603,6 +633,7 @@ export interface UserForm {
 ```
 
 **Runtime Usage:**
+
 ```typescript
 function generateForm(type: TAtscriptAnnotatedType) {
   const fields = []
@@ -631,6 +662,7 @@ function generateForm(type: TAtscriptAnnotatedType) {
 **Goal:** Map ATScript types to database schemas
 
 **Configuration:**
+
 ```js
 annotations: {
   db: {
@@ -664,6 +696,7 @@ annotations: {
 ```
 
 **Usage:**
+
 ```atscript
 @db.collection 'users'
 export interface User {
@@ -689,6 +722,7 @@ export interface User {
 **Goal:** Generate OpenAPI/Swagger documentation
 
 **Configuration:**
+
 ```js
 annotations: {
   api: {
@@ -719,6 +753,7 @@ annotations: {
 ```
 
 **Usage:**
+
 ```atscript
 @api.endpoint '/api/users'
 @api.summary 'User management endpoint'
@@ -757,7 +792,7 @@ export interface User {
    - Set `unknownAnnotation: 'allow'` or `'warn'` in config during prototyping:
      ```js
      export default defineConfig({
-       unknownAnnotation: 'warn',  // or 'allow'
+       unknownAnnotation: 'warn', // or 'allow'
        // ...
      })
      ```
@@ -865,6 +900,7 @@ label: new AnnotationSpec({
 **Problem:** Using an annotation not defined in config
 
 **Solution:**
+
 1. Add the annotation to `atscript.config.js`
 2. Or set `unknownAnnotation: 'allow'` in config temporarily
 
@@ -873,11 +909,13 @@ label: new AnnotationSpec({
 **Problem:** `metadata.get()` returns `undefined`
 
 **Possible causes:**
+
 1. Typo in annotation name
 2. Annotation not applied in `.as` file
 3. Wrong property/interface accessed
 
 **Solution:**
+
 ```typescript
 // Check if annotation exists first
 if (prop.metadata.has('ui.label')) {
@@ -896,6 +934,7 @@ if (prop.metadata.has('ui.label')) {
 ## Quick Reference
 
 ### Define Annotation
+
 ```js
 // atscript.config.js
 annotations: {
@@ -912,18 +951,21 @@ annotations: {
 ```
 
 ### Use in .as File
+
 ```atscript
 @namespace.name 'value'
 field: string
 ```
 
 ### Access at Runtime
+
 ```typescript
-prop.metadata.get('namespace.name')  // 'value'
-prop.metadata.has('namespace.name')  // true
+prop.metadata.get('namespace.name') // 'value'
+prop.metadata.has('namespace.name') // true
 ```
 
 ### Update IntelliSense
+
 ```bash
 npx asc -f dts
 ```

@@ -60,12 +60,7 @@ function handleSubmit(data: typeof formData) {
 </script>
 
 <template>
-  <OoForm
-    :form="form"
-    :form-data="formData"
-    first-validation="on-blur"
-    @submit="handleSubmit"
-  />
+  <OoForm :form="form" :form-data="formData" first-validation="on-blur" @submit="handleSubmit" />
 </template>
 ```
 
@@ -104,12 +99,7 @@ const formContext = {
 </script>
 
 <template>
-  <OoForm
-    :form="form"
-    :form-data="formData"
-    :form-context="formContext"
-    @submit="handleSubmit"
-  />
+  <OoForm :form="form" :form-data="formData" :form-context="formContext" @submit="handleSubmit" />
 </template>
 ```
 
@@ -204,12 +194,7 @@ export interface WizardStep {
 
 ```vue
 <template>
-  <OoForm
-    :form="form"
-    :form-data="formData"
-    @submit="handleSubmit"
-    @action="handleAction"
-  />
+  <OoForm :form="form" :form-data="formData" @submit="handleSubmit" @action="handleAction" />
 </template>
 
 <script setup lang="ts">
@@ -227,12 +212,7 @@ Pass external errors (e.g., from an API response) via the `errors` prop:
 
 ```vue
 <template>
-  <OoForm
-    :form="form"
-    :form-data="formData"
-    :errors="serverErrors"
-    @submit="handleSubmit"
-  />
+  <OoForm :form="form" :form-data="formData" :errors="serverErrors" @submit="handleSubmit" />
 </template>
 
 <script setup lang="ts">
@@ -264,69 +244,70 @@ const { form, formData } = useFoorm(MyForm)
 ```
 
 Returns:
+
 - `form` -- `TFoormModel` object with fields, title, and submit config
 - `formData` -- Vue `reactive()` object initialized from field defaults
 
 ### `OoForm` Props
 
-| Prop | Type | Description |
-|---|---|---|
-| `form` | `TFoormModel` | Form model (required) |
-| `formData` | `object` | Reactive form data (auto-created if omitted) |
-| `formContext` | `object` | External context for computed functions |
-| `firstValidation` | `'on-blur' \| 'on-submit'` | When to trigger first validation |
-| `components` | `Record<string, Component>` | Named component map for `@foorm.component` |
-| `types` | `Record<string, Component>` | Type-based component map |
-| `errors` | `Record<string, string>` | External validation errors |
+| Prop              | Type                        | Description                                  |
+| ----------------- | --------------------------- | -------------------------------------------- |
+| `form`            | `TFoormModel`               | Form model (required)                        |
+| `formData`        | `object`                    | Reactive form data (auto-created if omitted) |
+| `formContext`     | `object`                    | External context for computed functions      |
+| `firstValidation` | `'on-blur' \| 'on-submit'`  | When to trigger first validation             |
+| `components`      | `Record<string, Component>` | Named component map for `@foorm.component`   |
+| `types`           | `Record<string, Component>` | Type-based component map                     |
+| `errors`          | `Record<string, string>`    | External validation errors                   |
 
 ### `OoForm` Events
 
-| Event | Payload | Description |
-|---|---|---|
-| `submit` | `formData` | Emitted when the form passes validation and is submitted |
-| `action` | `name, formData` | Emitted when an action button is clicked |
+| Event                | Payload          | Description                                                    |
+| -------------------- | ---------------- | -------------------------------------------------------------- |
+| `submit`             | `formData`       | Emitted when the form passes validation and is submitted       |
+| `action`             | `name, formData` | Emitted when an action button is clicked                       |
 | `unsupported-action` | `name, formData` | Emitted when an action is clicked but not defined in the model |
 
 ### `OoForm` Slots
 
-| Slot | Props | Description |
-|---|---|---|
-| `form.header` | `title, clearErrors, reset, formContext, disabled` | Before all fields (default: `<h2>` with title) |
-| `form.before` | `clearErrors, reset` | After header, before fields |
-| `field:{type}` | All field props (see below) | Override renderer for a field type |
-| `form.after` | `clearErrors, reset, disabled, formContext` | After fields, before submit |
-| `form.submit` | `disabled, text, clearErrors, reset, formContext` | Submit button |
-| `form.footer` | `disabled, clearErrors, reset, formContext` | After submit button |
+| Slot           | Props                                              | Description                                    |
+| -------------- | -------------------------------------------------- | ---------------------------------------------- |
+| `form.header`  | `title, clearErrors, reset, formContext, disabled` | Before all fields (default: `<h2>` with title) |
+| `form.before`  | `clearErrors, reset`                               | After header, before fields                    |
+| `field:{type}` | All field props (see below)                        | Override renderer for a field type             |
+| `form.after`   | `clearErrors, reset, disabled, formContext`        | After fields, before submit                    |
+| `form.submit`  | `disabled, text, clearErrors, reset, formContext`  | Submit button                                  |
+| `form.footer`  | `disabled, clearErrors, reset, formContext`        | After submit button                            |
 
 ### Field Slot Props
 
 Every field slot (`#field:text`, `#field:select`, etc.) receives:
 
-| Prop | Type | Description |
-|---|---|---|
-| `model` | `{ value: V }` | Two-way binding (use `v-model="field.model.value"`) |
-| `onBlur` | `Function` | Call on blur to trigger validation |
-| `error` | `string \| undefined` | Current validation error |
-| `label` | `string` | Evaluated label |
-| `description` | `string` | Evaluated description |
-| `hint` | `string` | Evaluated hint |
-| `placeholder` | `string` | Evaluated placeholder |
-| `options` | `TFoormEntryOptions[]` | Options for select/radio |
-| `classes` | `Record<string, boolean>` | CSS class object (includes `error`, `disabled`, `required`) |
-| `styles` | `string \| Record` | Inline styles |
-| `disabled` | `boolean` | Evaluated disabled state |
-| `hidden` | `boolean` | Evaluated hidden state |
-| `optional` | `boolean` | Evaluated optional state |
-| `required` | `boolean` | Inverse of optional |
-| `type` | `string` | Field type |
-| `vName` | `string` | HTML `name` attribute |
-| `field` | `string` | Field identifier |
-| `altAction` | `string` | Action name (for action fields) |
-| `autocomplete` | `string` | HTML autocomplete value |
-| `maxLength` | `number` | Max length constraint |
-| `formData` | `object` | Full form data |
-| `formContext` | `object` | Form context |
-| `attrs` | `Record` | Additional evaluated attributes |
+| Prop           | Type                      | Description                                                 |
+| -------------- | ------------------------- | ----------------------------------------------------------- |
+| `model`        | `{ value: V }`            | Two-way binding (use `v-model="field.model.value"`)         |
+| `onBlur`       | `Function`                | Call on blur to trigger validation                          |
+| `error`        | `string \| undefined`     | Current validation error                                    |
+| `label`        | `string`                  | Evaluated label                                             |
+| `description`  | `string`                  | Evaluated description                                       |
+| `hint`         | `string`                  | Evaluated hint                                              |
+| `placeholder`  | `string`                  | Evaluated placeholder                                       |
+| `options`      | `TFoormEntryOptions[]`    | Options for select/radio                                    |
+| `classes`      | `Record<string, boolean>` | CSS class object (includes `error`, `disabled`, `required`) |
+| `styles`       | `string \| Record`        | Inline styles                                               |
+| `disabled`     | `boolean`                 | Evaluated disabled state                                    |
+| `hidden`       | `boolean`                 | Evaluated hidden state                                      |
+| `optional`     | `boolean`                 | Evaluated optional state                                    |
+| `required`     | `boolean`                 | Inverse of optional                                         |
+| `type`         | `string`                  | Field type                                                  |
+| `vName`        | `string`                  | HTML `name` attribute                                       |
+| `field`        | `string`                  | Field identifier                                            |
+| `altAction`    | `string`                  | Action name (for action fields)                             |
+| `autocomplete` | `string`                  | HTML autocomplete value                                     |
+| `maxLength`    | `number`                  | Max length constraint                                       |
+| `formData`     | `object`                  | Full form data                                              |
+| `formContext`  | `object`                  | Form context                                                |
+| `attrs`        | `Record`                  | Additional evaluated attributes                             |
 
 ### `OoField`
 
@@ -347,14 +328,14 @@ defineProps<TFoormComponentProps<string, MyFormData, MyContext>>()
 
 `OoForm` includes default renderers for all standard field types:
 
-| Type | Renders as | Notes |
-|---|---|---|
-| `text`, `password`, `number` | `<input>` | With label, description, error/hint |
-| `select` | `<select>` | With placeholder as disabled first option |
-| `radio` | Radio group | Vertical layout with labels |
-| `checkbox` | `<input type="checkbox">` | Label beside the checkbox |
-| `paragraph` | `<p>` | Description text, no input |
-| `action` | `<button>` | Emits action event on click |
+| Type                         | Renders as                | Notes                                     |
+| ---------------------------- | ------------------------- | ----------------------------------------- |
+| `text`, `password`, `number` | `<input>`                 | With label, description, error/hint       |
+| `select`                     | `<select>`                | With placeholder as disabled first option |
+| `radio`                      | Radio group               | Vertical layout with labels               |
+| `checkbox`                   | `<input type="checkbox">` | Label beside the checkbox                 |
+| `paragraph`                  | `<p>`                     | Description text, no input                |
+| `action`                     | `<button>`                | Emits action event on click               |
 
 Includes minimal CSS that you can override or replace entirely.
 

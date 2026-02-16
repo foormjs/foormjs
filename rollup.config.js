@@ -71,7 +71,10 @@ const configs = targets.flatMap(target => {
   return builds.flatMap(build => {
     const results = []
     for (const entry of build.entries) {
-      const fileName = entry.split('/').pop().replace(/\.\w+$/, '')
+      const fileName = entry
+        .split('/')
+        .pop()
+        .replace(/\.\w+$/, '')
       for (const format of build.formats) {
         results.push(createConfig(target, format, entry, fileName))
       }
