@@ -1,6 +1,6 @@
 {
   "name": "@foormjs/atscript",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "ATScript plugin for foormjs — form annotations, primitives, and validation",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",

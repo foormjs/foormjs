@@ -1,3 +1,12 @@
+## [0.2.3](https://github.com/foormjs/foormjs/compare/v0.2.2...v0.2.3) (2026-02-16)
+
+
+### Bug Fixes
+
+* make phantom props to use phantomValue ([77b83c3](https://github.com/foormjs/foormjs/commit/77b83c33488455ddc5ffe34f8f3e44d938a84615))
+
+
+
 ## [0.2.2](https://github.com/foormjs/foormjs/compare/v0.2.1...v0.2.2) (2026-02-16)
 
 
