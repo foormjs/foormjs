@@ -26,12 +26,25 @@ const NON_DATA_TYPES = new Set(['action', 'paragraph'])
 /**
  * Creates initial form data from field default values.
  * Skips non-data field types (action, paragraph).
+ * Evaluates computed default values with empty scope.
  */
 export function createFormData<T = Record<string, unknown>>(fields: TFoormField[]): T {
   const data = {} as Record<string, unknown>
   for (const f of fields) {
     if (!NON_DATA_TYPES.has(f.type)) {
-      data[f.field] = f.value ?? undefined
+      // Evaluate default value with minimal scope (data will be populated as we go)
+      const scope: TFoormFnScope = {
+        v: undefined,
+        data,
+        context: {},
+        entry: {
+          field: f.field,
+          type: f.type,
+          component: f.component,
+          name: f.name || f.field,
+        },
+      }
+      data[f.field] = evalComputed(f.value, scope) ?? undefined
     }
   }
   return data as T
@@ -73,6 +86,8 @@ export function getFormValidator(
       entry.disabled = evalComputed(f.disabled, scope)
       entry.optional = evalComputed(f.optional, scope)
       entry.hidden = evalComputed(f.hidden, scope)
+      entry.readonly = evalComputed(f.readonly, scope)
+      entry.options = evalComputed(f.options, scope)
 
       // Skip disabled and hidden fields
       if (entry.disabled || entry.hidden) {

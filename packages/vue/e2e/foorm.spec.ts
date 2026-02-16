@@ -350,3 +350,82 @@ test.describe('Checkbox Fields', () => {
     await expect(checkbox).not.toBeChecked()
   })
 })
+
+// ── Custom Attributes ─────────────────────────────────────────────
+
+test.describe('Custom Attributes', () => {
+  test('renders static custom attrs', async ({ page }) => {
+    const usernameInput = page.locator('input[name="username"]')
+    await expect(usernameInput).toHaveAttribute('data-testid', 'username-input')
+    await expect(usernameInput).toHaveAttribute('aria-label', 'Username field')
+    await expect(usernameInput).toHaveAttribute('maxlength', '50')
+  })
+
+  test('computed attrs react to field value', async ({ page }) => {
+    const phoneInput = page.locator('input[name="phone"]')
+
+    // Initially empty, should be invalid
+    await expect(phoneInput).toHaveAttribute('data-valid', 'false')
+    await expect(phoneInput).toHaveAttribute('aria-invalid', 'true')
+
+    // Fill with short value
+    await phoneInput.fill('12345')
+    await expect(phoneInput).toHaveAttribute('data-valid', 'false')
+    await expect(phoneInput).toHaveAttribute('aria-invalid', 'true')
+
+    // Fill with valid length value
+    await phoneInput.fill('1234567890')
+    await expect(phoneInput).toHaveAttribute('data-valid', 'true')
+    await expect(phoneInput).toHaveAttribute('aria-invalid', 'false')
+  })
+
+  test('fn.attr overrides static attr with same name', async ({ page }) => {
+    const membershipInput = page.locator('input[name="membershipLevel"]')
+
+    // Initially checkbox is unchecked, should use computed value 'basic'
+    await expect(membershipInput).toHaveAttribute('data-tier', 'basic')
+    await expect(membershipInput).toHaveAttribute('data-static', 'always-present')
+
+    // Check the agreeToTerms checkbox
+    const checkbox = page.locator('input[name="agreeToTerms"]')
+    await checkbox.check()
+
+    // Now data-tier should be 'premium' (computed overrides static)
+    await expect(membershipInput).toHaveAttribute('data-tier', 'premium')
+    await expect(membershipInput).toHaveAttribute('data-static', 'always-present')
+  })
+
+  test('computed attrs react to other form fields', async ({ page }) => {
+    const membershipInput = page.locator('input[name="membershipLevel"]')
+    const checkbox = page.locator('input[name="agreeToTerms"]')
+
+    await expect(membershipInput).toHaveAttribute('data-tier', 'basic')
+
+    // Toggle checkbox multiple times
+    await checkbox.check()
+    await expect(membershipInput).toHaveAttribute('data-tier', 'premium')
+
+    await checkbox.uncheck()
+    await expect(membershipInput).toHaveAttribute('data-tier', 'basic')
+  })
+
+  test('readonly field with fn.value reacts to form data changes', async ({ page }) => {
+    const membershipInput = page.locator('input[name="membershipLevel"]')
+    const checkbox = page.locator('input[name="agreeToTerms"]')
+
+    // Initially unchecked → value should be 'basic'
+    await expect(membershipInput).toHaveValue('basic')
+
+    // Check the checkbox → value should update to 'premium'
+    await checkbox.check()
+    await expect(membershipInput).toHaveValue('premium')
+
+    // Uncheck → value should revert to 'basic'
+    await checkbox.uncheck()
+    await expect(membershipInput).toHaveValue('basic')
+
+    // Check again → value should update to 'premium'
+    await checkbox.check()
+    await expect(membershipInput).toHaveValue('premium')
+  })
+})

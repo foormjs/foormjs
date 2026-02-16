@@ -122,4 +122,34 @@ export interface E2eTestForm {
     @foorm.altAction 'reset-password'
     @foorm.order 15
     resetAction: foorm.action
+
+    // Static custom attrs
+    @meta.label 'Username'
+    @meta.placeholder 'Enter username'
+    @foorm.type 'text'
+    @foorm.attr 'data-testid', 'username-input'
+    @foorm.attr 'aria-label', 'Username field'
+    @foorm.attr 'maxlength', '50'
+    @foorm.order 16
+    username?: string
+
+    // Computed custom attrs
+    @meta.label 'Phone Number'
+    @meta.placeholder '+1 (555) 123-4567'
+    @foorm.type 'text'
+    @foorm.fn.attr 'data-valid', '(v) => v && v.length >= 10 ? "true" : "false"'
+    @foorm.fn.attr 'aria-invalid', '(v) => !v || v.length < 10 ? "true" : "false"'
+    @foorm.order 17
+    phone?: string
+
+    // Mixed attrs (fn.attr overrides static)
+    @meta.label 'Membership Level'
+    @foorm.type 'text'
+    @foorm.attr 'data-tier', 'basic'
+    @foorm.fn.attr 'data-tier', '(v, data) => data.agreeToTerms ? "premium" : "basic"'
+    @foorm.attr 'data-static', 'always-present'
+    @foorm.order 18
+    @foorm.readonly
+    @foorm.fn.value '(v, data) => data.agreeToTerms ? "premium" : "basic"'
+    membershipLevel?: string
 }

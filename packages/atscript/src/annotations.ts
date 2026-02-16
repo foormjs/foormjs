@@ -169,6 +169,11 @@ export const annotations: TAnnotationsTree = {
       nodeType: ['prop'],
     }),
 
+    readonly: new AnnotationSpec({
+      description: 'Statically mark this field as readonly',
+      nodeType: ['prop'],
+    }),
+
     // ── Options annotation ──────────────────────────────────
     options: new AnnotationSpec({
       description:
@@ -187,6 +192,27 @@ export const annotations: TAnnotationsTree = {
           type: 'string',
           optional: true,
           description: 'Value/key for the option (defaults to label if omitted)',
+        },
+      ],
+    }),
+
+    // ── Custom attributes/props annotation ──────────────────
+    attr: new AnnotationSpec({
+      description:
+        'Custom attribute or component prop. Repeat for each attr. Passed to rendered component via v-bind.',
+      nodeType: ['prop'],
+      multiple: true,
+      mergeStrategy: 'replace',
+      argument: [
+        {
+          name: 'name',
+          type: 'string',
+          description: 'Attribute/prop name (e.g., "data-testid", "variant", "size")',
+        },
+        {
+          name: 'value',
+          type: 'string',
+          description: 'Static value (string, number, boolean, or undefined)',
         },
       ],
     }),
@@ -227,7 +253,9 @@ export const annotations: TAnnotationsTree = {
       placeholder: fnAnnotation('Computed placeholder: (value, data, context, entry) => string'),
       disabled: fnAnnotation('Computed disabled state: (value, data, context, entry) => boolean'),
       hidden: fnAnnotation('Computed hidden state: (value, data, context, entry) => boolean'),
+      readonly: fnAnnotation('Computed readonly state: (value, data, context, entry) => boolean'),
       optional: fnAnnotation('Computed optional state: (value, data, context, entry) => boolean'),
+      value: fnAnnotation('Computed default value: (value, data, context, entry) => any'),
       classes: fnAnnotation(
         'Computed CSS classes: (value, data, context, entry) => string | Record<string, boolean>'
       ),
@@ -237,6 +265,31 @@ export const annotations: TAnnotationsTree = {
       options: fnAnnotation(
         'Computed select/radio options: (value, data, context, entry) => Array'
       ),
+      attr: new AnnotationSpec({
+        description:
+          'Computed custom attribute/prop. Name is the attribute/prop name, fn returns the value.',
+        nodeType: ['prop'],
+        multiple: true,
+        mergeStrategy: 'replace',
+        argument: [
+          {
+            name: 'name',
+            type: 'string',
+            description: 'Attribute/prop name (e.g., "data-testid", "variant", "size")',
+          },
+          {
+            name: 'fn',
+            type: 'string',
+            description: 'JS function string: (value, data, context, entry) => any',
+          },
+        ],
+        validate(_token, args) {
+          if (args[1]) {
+            return validateFnString(args[1].text, args[1].range)
+          }
+          return undefined
+        },
+      }),
     },
   },
 }

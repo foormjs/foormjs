@@ -32,6 +32,8 @@ export interface TFoormFieldEvaluated {
   disabled?: boolean
   optional?: boolean
   hidden?: boolean
+  readonly?: boolean
+  options?: TFoormEntryOptions[]
 }
 
 export type TFoormEntryOptions = { key: string; label: string } | string
@@ -58,6 +60,7 @@ export interface TFoormField {
   optional: TComputed<boolean>
   disabled: TComputed<boolean>
   hidden: TComputed<boolean>
+  readonly: TComputed<boolean>
 
   // Appearance (static or computed)
   classes?: TComputed<string | Record<string, boolean>>
@@ -69,8 +72,8 @@ export interface TFoormField {
   // Additional HTML attributes
   attrs?: Record<string, TComputed<unknown>>
 
-  // Default value
-  value?: unknown
+  // Default value (static or computed)
+  value?: TComputed<unknown>
 
   // Validators: each returns true for pass, or error message string
   validators: Array<(scope: TFoormFnScope) => boolean | string>

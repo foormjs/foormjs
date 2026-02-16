@@ -52,12 +52,12 @@ describe('compileTopFn', () => {
 describe('compileValidatorFn', () => {
   it('returns true on pass', () => {
     const fn = compileValidatorFn('(v) => v.length >= 2 || "Too short"')
-    expect(fn({ v: 'ab', data: {}, context: {} })).toBe(true)
+    expect(fn({ v: 'ab', data: {}, context: {}, entry: undefined })).toBe(true)
   })
 
   it('returns error message on fail', () => {
     const fn = compileValidatorFn('(v) => v.length >= 2 || "Too short"')
-    expect(fn({ v: 'a', data: {}, context: {} })).toBe('Too short')
+    expect(fn({ v: 'a', data: {}, context: {}, entry: undefined })).toBe('Too short')
   })
 })
 
@@ -206,9 +206,9 @@ describe('createFoorm', () => {
 
     const model = createFoorm(type)
     expect(model.fields[0].validators).toHaveLength(1)
-    const result = model.fields[0].validators[0]({ v: 'test', data: {}, context: {} })
+    const result = model.fields[0].validators[0]({ v: 'test', data: {}, context: {}, entry: undefined })
     expect(result).toBe('Invalid')
-    const pass = model.fields[0].validators[0]({ v: 'a@b', data: {}, context: {} })
+    const pass = model.fields[0].validators[0]({ v: 'a@b', data: {}, context: {}, entry: undefined })
     expect(pass).toBe(true)
   })
 
@@ -364,5 +364,210 @@ describe('createFoorm', () => {
       entry: { field: 'city', type: 'select', name: 'city' },
     })
     expect(result).toEqual([{ key: 'nyc', label: 'NYC' }])
+  })
+
+  it('parses static attrs from foorm.attr annotation', () => {
+    const type = makeType({
+      props: {
+        email: {
+          metadata: {
+            'foorm.attr': [
+              { name: 'data-testid', value: 'email-input' },
+              { name: 'aria-label', value: 'Email address' },
+            ],
+          },
+        },
+      },
+    })
+    const model = createFoorm(type)
+    expect(model.fields[0].attrs).toEqual({
+      'data-testid': 'email-input',
+      'aria-label': 'Email address',
+    })
+  })
+
+  it('parses computed attrs from foorm.fn.attr annotation', () => {
+    const type = makeType({
+      props: {
+        password: {
+          metadata: {
+            'foorm.fn.attr': [
+              { name: 'data-strength', fn: '(v) => v.length > 8 ? "strong" : "weak"' },
+              { name: 'aria-invalid', fn: '(v, data, ctx, entry) => !entry.optional && !v' },
+            ],
+          },
+        },
+      },
+    })
+    const model = createFoorm(type)
+    expect(model.fields[0].attrs).toBeDefined()
+    expect(typeof model.fields[0].attrs?.['data-strength']).toBe('function')
+    expect(typeof model.fields[0].attrs?.['aria-invalid']).toBe('function')
+
+    const strengthFn = model.fields[0].attrs?.['data-strength'] as Function
+    expect(
+      strengthFn({
+        v: 'short',
+        data: {},
+        context: {},
+        entry: { field: 'password', type: 'password', name: 'password' },
+      })
+    ).toBe('weak')
+    expect(
+      strengthFn({
+        v: 'very-long-password',
+        data: {},
+        context: {},
+        entry: { field: 'password', type: 'password', name: 'password' },
+      })
+    ).toBe('strong')
+  })
+
+  it('fn.attr takes precedence over static attr with same name', () => {
+    const type = makeType({
+      props: {
+        username: {
+          metadata: {
+            'foorm.attr': [{ name: 'variant', value: 'default' }],
+            'foorm.fn.attr': [{ name: 'variant', fn: '(v, data) => data.premium ? "premium" : "basic"' }],
+          },
+        },
+      },
+    })
+    const model = createFoorm(type)
+    expect(typeof model.fields[0].attrs?.variant).toBe('function')
+    const fn = model.fields[0].attrs?.variant as Function
+    expect(
+      fn({
+        v: undefined,
+        data: { premium: true },
+        context: {},
+        entry: { field: 'username', type: 'text', name: 'username' },
+      })
+    ).toBe('premium')
+    expect(
+      fn({
+        v: undefined,
+        data: { premium: false },
+        context: {},
+        entry: { field: 'username', type: 'text', name: 'username' },
+      })
+    ).toBe('basic')
+  })
+
+  it('returns undefined attrs when no attr annotations present', () => {
+    const type = makeType({
+      props: {
+        name: { metadata: {} },
+      },
+    })
+    const model = createFoorm(type)
+    expect(model.fields[0].attrs).toBeUndefined()
+  })
+
+  it('reads readonly from foorm.readonly annotation', () => {
+    const type = makeType({
+      props: {
+        locked: { metadata: { 'foorm.readonly': true } },
+      },
+    })
+    const model = createFoorm(type)
+    expect(model.fields[0].readonly).toBe(true)
+  })
+
+  it('compiles computed readonly from foorm.fn.readonly', () => {
+    const type = makeType({
+      props: {
+        email: { metadata: { 'foorm.fn.readonly': '(v, data) => data.emailVerified' } },
+      },
+    })
+    const model = createFoorm(type)
+    expect(typeof model.fields[0].readonly).toBe('function')
+    const fn = model.fields[0].readonly as Function
+    expect(
+      fn({
+        v: undefined,
+        data: { emailVerified: true },
+        context: {},
+        entry: { field: 'email', type: 'text', name: 'email' },
+      })
+    ).toBe(true)
+    expect(
+      fn({
+        v: undefined,
+        data: { emailVerified: false },
+        context: {},
+        entry: { field: 'email', type: 'text', name: 'email' },
+      })
+    ).toBe(false)
+  })
+
+  it('uses static value from foorm.value annotation', () => {
+    const type = makeType({
+      props: {
+        status: { metadata: { 'foorm.value': 'pending' } },
+      },
+    })
+    const model = createFoorm(type)
+    expect(model.fields[0].value).toBe('pending')
+  })
+
+  it('compiles computed value from foorm.fn.value', () => {
+    const type = makeType({
+      props: {
+        greeting: { metadata: { 'foorm.fn.value': '(v, data) => "Hello " + (data.name || "Guest")' } },
+      },
+    })
+    const model = createFoorm(type)
+    expect(typeof model.fields[0].value).toBe('function')
+    const fn = model.fields[0].value as Function
+    expect(
+      fn({
+        v: undefined,
+        data: { name: 'Alice' },
+        context: {},
+        entry: { field: 'greeting', type: 'text', name: 'greeting' },
+      })
+    ).toBe('Hello Alice')
+    expect(
+      fn({
+        v: undefined,
+        data: {},
+        context: {},
+        entry: { field: 'greeting', type: 'text', name: 'greeting' },
+      })
+    ).toBe('Hello Guest')
+  })
+
+  it('fn.value takes precedence over static value', () => {
+    const type = makeType({
+      props: {
+        counter: {
+          metadata: {
+            'foorm.value': '0',
+            'foorm.fn.value': '(v, data) => data.initialCount || 10',
+          },
+        },
+      },
+    })
+    const model = createFoorm(type)
+    expect(typeof model.fields[0].value).toBe('function')
+    const fn = model.fields[0].value as Function
+    expect(
+      fn({
+        v: undefined,
+        data: { initialCount: 5 },
+        context: {},
+        entry: { field: 'counter', type: 'number', name: 'counter' },
+      })
+    ).toBe(5)
+    expect(
+      fn({
+        v: undefined,
+        data: {},
+        context: {},
+        entry: { field: 'counter', type: 'number', name: 'counter' },
+      })
+    ).toBe(10)
   })
 })

@@ -29,6 +29,9 @@ export declare class E2eTestForm {
   agreeToTerms: boolean /* checkbox */
   city?: string /* select */
   // resetAction: foorm.action
+  username?: string
+  phone?: string
+  membershipLevel?: string
   static __is_atscript_annotated_type: true
   static type: TAtscriptTypeObject<keyof E2eTestForm, E2eTestForm>
   static metadata: TMetadataMap<AtscriptMetadata>

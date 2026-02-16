@@ -168,6 +168,8 @@ function optLabel(opt: TFoormEntryOptions): string {
             :name="field.vName"
             :type="field.type"
             :disabled="field.disabled"
+            :readonly="field.readonly"
+            v-bind="field.attrs"
           />
           <div class="oo-error-slot">{{ field.error || field.hint }}</div>
         </div>
@@ -187,6 +189,8 @@ function optLabel(opt: TFoormEntryOptions): string {
             @blur="field.onBlur"
             :name="field.vName"
             :disabled="field.disabled"
+            :readonly="field.readonly"
+            v-bind="field.attrs"
           >
             <option v-if="field.placeholder" value="" disabled>{{ field.placeholder }}</option>
             <option v-for="opt in field.options" :key="optKey(opt)" :value="optKey(opt)">
@@ -213,6 +217,8 @@ function optLabel(opt: TFoormEntryOptions): string {
                 @blur="field.onBlur"
                 :name="field.vName"
                 :disabled="field.disabled"
+                :readonly="field.readonly"
+                v-bind="field.attrs"
               />
               {{ optLabel(opt) }}
             </label>
@@ -233,6 +239,8 @@ function optLabel(opt: TFoormEntryOptions): string {
               @blur="field.onBlur"
               :name="field.vName"
               :disabled="field.disabled"
+              :readonly="field.readonly"
+              v-bind="field.attrs"
             />
             {{ field.label }}
           </label>

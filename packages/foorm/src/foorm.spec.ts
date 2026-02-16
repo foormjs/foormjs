@@ -65,6 +65,7 @@ describe('createFormData', () => {
         optional: false,
         disabled: false,
         hidden: false,
+        readonly: false,
         validators: [],
       },
       {
@@ -75,6 +76,7 @@ describe('createFormData', () => {
         optional: false,
         disabled: false,
         hidden: false,
+        readonly: false,
         validators: [],
       },
     ]
@@ -91,6 +93,7 @@ describe('createFormData', () => {
         optional: false,
         disabled: false,
         hidden: false,
+        readonly: false,
         validators: [],
       },
       {
@@ -100,6 +103,7 @@ describe('createFormData', () => {
         optional: false,
         disabled: false,
         hidden: false,
+        readonly: false,
         validators: [],
       },
     ]
@@ -115,10 +119,74 @@ describe('createFormData', () => {
         optional: false,
         disabled: false,
         hidden: false,
+        readonly: false,
         validators: [],
       },
     ]
     expect(createFormData(fields)).toEqual({ email: undefined })
+  })
+
+  it('must evaluate computed default values (fn.value)', () => {
+    const fields: TFoormField[] = [
+      {
+        field: 'isPremium',
+        type: 'checkbox',
+        label: 'Premium',
+        value: true,
+        optional: false,
+        disabled: false,
+        hidden: false,
+        readonly: false,
+        validators: [],
+      },
+      {
+        field: 'tier',
+        type: 'text',
+        label: 'Tier',
+        optional: false,
+        disabled: false,
+        hidden: false,
+        readonly: false,
+        // Computed value: depends on isPremium field (defined above)
+        value: (scope: TFoormFnScope) =>
+          (scope.data as Record<string, unknown>).isPremium ? 'premium' : 'basic',
+        validators: [],
+      },
+    ]
+    const data = createFormData(fields)
+    // tier should be computed based on isPremium = true
+    expect(data).toEqual({ isPremium: true, tier: 'premium' })
+  })
+
+  it('must evaluate computed values with access to partially-built data', () => {
+    const fields: TFoormField[] = [
+      {
+        field: 'firstName',
+        type: 'text',
+        label: 'First',
+        value: 'John',
+        optional: false,
+        disabled: false,
+        hidden: false,
+        readonly: false,
+        validators: [],
+      },
+      {
+        field: 'fullName',
+        type: 'text',
+        label: 'Full',
+        optional: false,
+        disabled: false,
+        hidden: false,
+        readonly: false,
+        // Computed value: depends on firstName (evaluated earlier)
+        value: (scope: TFoormFnScope) =>
+          `${(scope.data as Record<string, unknown>).firstName || 'Unknown'} Doe`,
+        validators: [],
+      },
+    ]
+    const data = createFormData(fields)
+    expect(data).toEqual({ firstName: 'John', fullName: 'John Doe' })
   })
 })
 
@@ -136,6 +204,7 @@ describe('getFormValidator', () => {
         optional: false,
         disabled: false,
         hidden: false,
+        readonly: false,
         validators: [],
       },
     ])
@@ -152,6 +221,7 @@ describe('getFormValidator', () => {
         optional: false,
         disabled: false,
         hidden: false,
+        readonly: false,
         validators: [],
       },
       {
@@ -161,6 +231,7 @@ describe('getFormValidator', () => {
         optional: false,
         disabled: false,
         hidden: false,
+        readonly: false,
         validators: [],
       },
     ])
@@ -180,6 +251,7 @@ describe('getFormValidator', () => {
         optional: true,
         disabled: false,
         hidden: false,
+        readonly: false,
         validators: [],
       },
     ])
@@ -196,6 +268,7 @@ describe('getFormValidator', () => {
         optional: false,
         disabled: true,
         hidden: false,
+        readonly: false,
         validators: [],
       },
     ])
@@ -212,6 +285,7 @@ describe('getFormValidator', () => {
         optional: false,
         disabled: false,
         hidden: true,
+        readonly: false,
         validators: [],
       },
     ])
@@ -228,6 +302,7 @@ describe('getFormValidator', () => {
         optional: false,
         disabled: (scope: TFoormFnScope) => !(scope.data as Record<string, unknown>).name,
         hidden: false,
+        readonly: false,
         validators: [],
       },
     ])
@@ -250,6 +325,7 @@ describe('getFormValidator', () => {
         optional: false,
         disabled: false,
         hidden: false,
+        readonly: false,
         validators: [
           (s: TFoormFnScope) => (typeof s.v === 'string' && s.v.length > 3) || 'Too short',
         ],
@@ -272,6 +348,7 @@ describe('getFormValidator', () => {
         optional: false,
         disabled: false,
         hidden: false,
+        readonly: false,
         validators: [],
       },
     ])
@@ -288,6 +365,7 @@ describe('getFormValidator', () => {
         optional: false,
         disabled: false,
         hidden: false,
+        readonly: false,
         validators: [
           (s: TFoormFnScope) =>
             s.v === (s.context as { expected: string }).expected || 'Wrong code',
@@ -300,5 +378,64 @@ describe('getFormValidator', () => {
       errors: { code: 'Wrong code' },
     })
     expect(validator({ code: 'abc' })).toEqual({ passed: true, errors: {} })
+  })
+
+  it('must evaluate options and pass to validators via entry', () => {
+    const model = makeModel([
+      {
+        field: 'country',
+        type: 'select',
+        label: 'Country',
+        optional: false,
+        disabled: false,
+        hidden: false,
+        readonly: false,
+        options: [
+          { key: 'us', label: 'United States' },
+          { key: 'ca', label: 'Canada' },
+          { key: 'uk', label: 'United Kingdom' },
+        ],
+        validators: [
+          (s: TFoormFnScope) => {
+            const opts = s.entry?.options || []
+            const validKeys = opts.map(o => (typeof o === 'string' ? o : o.key))
+            return validKeys.includes(s.v as string) || 'Invalid country code'
+          },
+        ],
+      },
+    ])
+    const validator = getFormValidator(model)
+    expect(validator({ country: 'us' })).toEqual({ passed: true, errors: {} })
+    expect(validator({ country: 'fr' })).toEqual({
+      passed: false,
+      errors: { country: 'Invalid country code' },
+    })
+  })
+
+  it('must evaluate computed options for validators', () => {
+    const model = makeModel([
+      {
+        field: 'city',
+        type: 'select',
+        label: 'City',
+        optional: false,
+        disabled: false,
+        hidden: false,
+        readonly: false,
+        options: (s: TFoormFnScope) => (s.context as { cities: string[] }).cities || [],
+        validators: [
+          (s: TFoormFnScope) => {
+            const opts = s.entry?.options || []
+            return opts.includes(s.v as string) || 'Invalid city'
+          },
+        ],
+      },
+    ])
+    const validator = getFormValidator(model, { cities: ['NYC', 'LA', 'Chicago'] })
+    expect(validator({ city: 'NYC' })).toEqual({ passed: true, errors: {} })
+    expect(validator({ city: 'Miami' })).toEqual({
+      passed: false,
+      errors: { city: 'Invalid city' },
+    })
   })
 })

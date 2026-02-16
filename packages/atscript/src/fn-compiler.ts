@@ -37,12 +37,12 @@ export function compileTopFn<R = unknown>(fnStr: string): (scope: TFoormFnScope)
  * Compiles a validator function string from a @foorm.validate annotation.
  *
  * The function string should be:
- *   "(v, data, ctx) => boolean | string"
+ *   "(v, data, ctx, entry) => boolean | string"
  *
  * The compiled function receives a single TFoormFnScope object:
- *   { v, data, context }
+ *   { v, data, context, entry }
  */
 export function compileValidatorFn(fnStr: string): (scope: TFoormFnScope) => boolean | string {
-  const code = `return (${fnStr})(v, data, context)`
+  const code = `return (${fnStr})(v, data, context, entry)`
   return pool.getFn(code) as (scope: TFoormFnScope) => boolean | string
 }

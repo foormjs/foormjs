@@ -2,7 +2,7 @@
 import { evalAttrs } from '../utils'
 import { VuilessField, type TVuilessState } from 'vuiless-forms'
 import { type TFoormField, type TFoormFnScope, evalComputed } from 'foorm'
-import { computed, inject, type ComputedRef } from 'vue'
+import { computed, inject, watch, type ComputedRef } from 'vue'
 
 type Props = TFoormField & {
   error?: string
@@ -26,6 +26,7 @@ const baseCtx = computed<TFoormFnScope>(() => ({
 const _optional = computed(() => evalComputed(props.optional, baseCtx.value))
 const _disabled = computed(() => evalComputed(props.disabled, baseCtx.value))
 const _hidden = computed(() => evalComputed(props.hidden, baseCtx.value))
+const _readonly = computed(() => evalComputed(props.readonly, baseCtx.value))
 
 // Full scope with evaluated entry (for description, appearance, validators)
 const ctx = computed<TFoormFnScope>(() => ({
@@ -38,6 +39,7 @@ const ctx = computed<TFoormFnScope>(() => ({
     disabled: _disabled.value,
     optional: _optional.value,
     hidden: _hidden.value,
+    readonly: _readonly.value,
   },
 }))
 
@@ -72,6 +74,25 @@ const _styles = computed(
 )
 
 const _attrs = computed(() => evalAttrs(props.attrs, ctx.value))
+
+// Computed value for readonly fields with fn.value
+const _computedValue = computed(() => {
+  if (_readonly.value && typeof props.value === 'function') {
+    return evalComputed(props.value, ctx.value)
+  }
+  return undefined
+})
+
+// Sync computed value back to formData for readonly fields
+watch(
+  _computedValue,
+  (newVal) => {
+    if (newVal !== undefined && _readonly.value) {
+      vuiless.value.formData[props.field as keyof TFormData] = newVal as any
+    }
+  },
+  { immediate: true }
+)
 
 // Wrap validators into vuiless-forms rule format: (v, data, context) => boolean | string
 const rules = computed(() => {
@@ -111,6 +132,7 @@ const rules = computed(() => {
       :optional="_optional"
       :disabled="_disabled"
       :hidden="_hidden"
+      :readonly="_readonly"
       :type="type"
       :alt-action="altAction"
       :component="component"

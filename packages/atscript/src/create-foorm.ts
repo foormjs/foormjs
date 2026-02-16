@@ -31,26 +31,138 @@ function parseStaticOptions(raw: unknown): TFoormEntryOptions[] {
 }
 
 /**
- * Resolves a static annotation or a @foorm.fn.* computed annotation.
- * If the fn annotation exists, compiles it. Otherwise falls back to the
- * static annotation or the default value.
+ * Generic property resolver for static and computed annotations.
+ *
+ * Handles all patterns: boolean constraints, strings with defaults, optional computed properties,
+ * transformed values (like options), and custom compilers.
+ *
+ * @param fnKey - The @foorm.fn.* annotation key
+ * @param staticKey - The static annotation key (undefined to skip static check)
+ * @param metadata - Metadata accessor
+ * @param options - Resolution options
+ * @returns TComputed<T> (function or static value) or undefined
+ *
+ * @example
+ * // Boolean constraint (presence = true)
+ * resolveProperty('foorm.fn.disabled', 'foorm.disabled', pm, { staticAsBoolean: true, defaultValue: false })
+ *
+ * // String with default
+ * resolveProperty('foorm.fn.label', 'meta.label', pm, { defaultValue: name })
+ *
+ * // Optional computed (no static)
+ * resolveProperty('foorm.fn.classes', undefined, pm)
+ *
+ * // With transform
+ * resolveProperty('foorm.fn.options', 'foorm.options', pm, { transform: parseStaticOptions })
+ *
+ * // Custom compiler
+ * resolveProperty('foorm.fn.title', 'foorm.title', metadata, { compiler: compileTopFn, defaultValue: '' })
  */
-function resolveComputed<T>(
-  staticKey: string,
+// Overload: with defaultValue, never returns undefined
+function resolveProperty<T>(
   fnKey: string,
+  staticKey: string | undefined,
   metadata: TMetadataAccessor,
-  compileFn: (fnStr: string) => (scope: TFoormFnScope) => T,
-  defaultValue: T
-): TComputed<T> {
+  options: {
+    transform?: (raw: unknown) => T
+    defaultValue: T
+    staticAsBoolean?: boolean
+    compiler?: (fnStr: string) => (scope: TFoormFnScope) => T
+  }
+): TComputed<T>
+// Overload: without defaultValue, may return undefined
+function resolveProperty<T>(
+  fnKey: string,
+  staticKey: string | undefined,
+  metadata: TMetadataAccessor,
+  options?: {
+    transform?: (raw: unknown) => T
+    staticAsBoolean?: boolean
+    compiler?: (fnStr: string) => (scope: TFoormFnScope) => T
+  }
+): TComputed<T> | undefined
+// Implementation
+function resolveProperty<T>(
+  fnKey: string,
+  staticKey: string | undefined,
+  metadata: TMetadataAccessor,
+  options?: {
+    transform?: (raw: unknown) => T
+    defaultValue?: T
+    staticAsBoolean?: boolean
+    compiler?: (fnStr: string) => (scope: TFoormFnScope) => T
+  }
+): TComputed<T> | undefined {
+  const {
+    transform,
+    defaultValue,
+    staticAsBoolean = false,
+    compiler = compileFieldFn,
+  } = options ?? {}
+
+  // Check for computed annotation first
   const fnStr = metadata.get(fnKey)
   if (typeof fnStr === 'string') {
-    return compileFn(fnStr)
+    return compiler(fnStr)
   }
-  const staticVal = metadata.get(staticKey)
-  if (staticVal !== undefined) {
-    return staticVal as T
+
+  // Check for static annotation
+  if (staticKey !== undefined) {
+    const staticVal = metadata.get(staticKey)
+    if (staticVal !== undefined) {
+      if (staticAsBoolean) {
+        return true as T
+      }
+      if (transform) {
+        return transform(staticVal)
+      }
+      return staticVal as T
+    }
   }
+
+  // Return default or undefined
   return defaultValue
+}
+
+/**
+ * Parses @foorm.attr and @foorm.fn.attr annotations into a Record<string, TComputed<unknown>>.
+ * Static attrs are direct key-value pairs, computed attrs are compiled functions.
+ */
+function parseAttrs(
+  metadata: TMetadataAccessor
+): Record<string, TComputed<unknown>> | undefined {
+  const staticAttrs = metadata.get('foorm.attr')
+  const fnAttrs = metadata.get('foorm.fn.attr')
+
+  if (!staticAttrs && !fnAttrs) {
+    return undefined
+  }
+
+  const result: Record<string, TComputed<unknown>> = {}
+
+  // Process static @foorm.attr annotations
+  if (staticAttrs) {
+    const items = Array.isArray(staticAttrs) ? staticAttrs : [staticAttrs]
+    for (const item of items) {
+      if (typeof item === 'object' && item !== null && 'name' in item && 'value' in item) {
+        const { name, value } = item as { name: string; value: string }
+        result[name] = value
+      }
+    }
+  }
+
+  // Process computed @foorm.fn.attr annotations (override static if same name)
+  if (fnAttrs) {
+    const items = Array.isArray(fnAttrs) ? fnAttrs : [fnAttrs]
+    for (const item of items) {
+      if (typeof item === 'object' && item !== null && 'name' in item && 'fn' in item) {
+        const { name, fn } = item as { name: string; fn: string }
+        result[name] = compileFieldFn<unknown>(fn)
+      }
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined
 }
 
 /**
@@ -76,23 +188,25 @@ export function createFoorm(
   const props = type.type.props
 
   // Form-level metadata
-  const title = resolveComputed<string>('foorm.title', 'foorm.fn.title', metadata, compileTopFn, '')
+  const title = resolveProperty<string>('foorm.fn.title', 'foorm.title', metadata, {
+    compiler: compileTopFn,
+    defaultValue: '',
+  })
 
-  const submitText = resolveComputed<string>(
-    'foorm.submit.text',
-    'foorm.fn.submit.text',
+  const submitText = resolveProperty<string>('foorm.fn.submit.text', 'foorm.submit.text', metadata, {
+    compiler: compileTopFn,
+    defaultValue: 'Submit',
+  })
+
+  const submitDisabled = resolveProperty<boolean>(
+    'foorm.fn.submit.disabled',
+    'foorm.submit.disabled',
     metadata,
-    compileTopFn,
-    'Submit'
-  )
-
-  const submitDisabled: TComputed<boolean> = (() => {
-    const fnStr = metadata.get('foorm.fn.submit.disabled')
-    if (typeof fnStr === 'string') {
-      return compileTopFn<boolean>(fnStr)
+    {
+      compiler: compileTopFn,
+      defaultValue: false,
     }
-    return false
-  })()
+  )
 
   const submit: TFoormSubmit = { text: submitText, disabled: submitDisabled }
 
@@ -129,78 +243,43 @@ export function createFoorm(
       order: pm.get('foorm.order') as number | undefined,
       name: name,
 
-      label: resolveComputed<string>('meta.label', 'foorm.fn.label', pm, compileFieldFn, name),
-      description: resolveComputed<string>(
-        'meta.description',
-        'foorm.fn.description',
-        pm,
-        compileFieldFn,
-        ''
-      ),
-      hint: resolveComputed<string>('meta.hint', 'foorm.fn.hint', pm, compileFieldFn, ''),
-      placeholder: resolveComputed<string>(
-        'meta.placeholder',
-        'foorm.fn.placeholder',
-        pm,
-        compileFieldFn,
-        ''
-      ),
+      label: resolveProperty<string>('foorm.fn.label', 'meta.label', pm, { defaultValue: name }),
+      description: resolveProperty<string>('foorm.fn.description', 'meta.description', pm, {
+        defaultValue: '',
+      }),
+      hint: resolveProperty<string>('foorm.fn.hint', 'meta.hint', pm, { defaultValue: '' }),
+      placeholder: resolveProperty<string>('foorm.fn.placeholder', 'meta.placeholder', pm, {
+        defaultValue: '',
+      }),
 
-      optional: (() => {
-        const fnStr = pm.get('foorm.fn.optional')
-        if (typeof fnStr === 'string') {
-          return compileFieldFn<boolean>(fnStr)
-        }
-        return prop.optional ?? false
-      })(),
+      optional: resolveProperty<boolean>('foorm.fn.optional', undefined, pm, {
+        defaultValue: prop.optional ?? false,
+      }),
+      disabled: resolveProperty<boolean>('foorm.fn.disabled', 'foorm.disabled', pm, {
+        staticAsBoolean: true,
+        defaultValue: false,
+      }),
+      hidden: resolveProperty<boolean>('foorm.fn.hidden', 'foorm.hidden', pm, {
+        staticAsBoolean: true,
+        defaultValue: false,
+      }),
+      readonly: resolveProperty<boolean>('foorm.fn.readonly', 'foorm.readonly', pm, {
+        staticAsBoolean: true,
+        defaultValue: false,
+      }),
 
-      disabled: (() => {
-        const fnStr = pm.get('foorm.fn.disabled')
-        if (typeof fnStr === 'string') {
-          return compileFieldFn<boolean>(fnStr)
-        }
-        return pm.get('foorm.disabled') !== undefined
-      })(),
+      classes: resolveProperty<string | Record<string, boolean>>('foorm.fn.classes', undefined, pm),
+      styles: resolveProperty<string | Record<string, string>>('foorm.fn.styles', undefined, pm),
 
-      hidden: (() => {
-        const fnStr = pm.get('foorm.fn.hidden')
-        if (typeof fnStr === 'string') {
-          return compileFieldFn<boolean>(fnStr)
-        }
-        return pm.get('foorm.hidden') !== undefined
-      })(),
-
-      classes: (() => {
-        const fnStr = pm.get('foorm.fn.classes')
-        if (typeof fnStr === 'string') {
-          return compileFieldFn<string | Record<string, boolean>>(fnStr)
-        }
-        return undefined
-      })(),
-
-      styles: (() => {
-        const fnStr = pm.get('foorm.fn.styles')
-        if (typeof fnStr === 'string') {
-          return compileFieldFn<string | Record<string, string>>(fnStr)
-        }
-        return undefined
-      })(),
-
-      options: (() => {
-        const fnStr = pm.get('foorm.fn.options')
-        if (typeof fnStr === 'string') {
-          return compileFieldFn<TFoormEntryOptions[]>(fnStr)
-        }
-        const staticOpts = pm.get('foorm.options')
-        if (staticOpts) {
-          return parseStaticOptions(staticOpts)
-        }
-        return undefined
-      })(),
-
-      value: pm.get('foorm.value'),
+      options: resolveProperty<TFoormEntryOptions[]>('foorm.fn.options', 'foorm.options', pm, {
+        transform: parseStaticOptions,
+      }),
+      value: resolveProperty<unknown>('foorm.fn.value', 'foorm.value', pm),
 
       validators,
+
+      // Custom attributes/props
+      attrs: parseAttrs(pm),
 
       // ATScript @expect constraints
       maxLength: pm.get('expect.maxLength') as number | undefined,
