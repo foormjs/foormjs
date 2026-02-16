@@ -63,11 +63,11 @@
     "pub": "pnpm publish --access public --no-git-checks"
   },
   "dependencies": {
-    "@atscript/core": "^0.1.7",
+    "@atscript/core": "^0.1.8",
     "@prostojs/deserialize-fn": "^0.0.5",
     "foorm": "workspace:^"
   },
   "peerDependencies": {
-    "@atscript/typescript": "^0.1.7"
+    "@atscript/typescript": "^0.1.8"
   }
 }
