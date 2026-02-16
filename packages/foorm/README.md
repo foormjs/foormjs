@@ -73,7 +73,9 @@ const passwordField: TFoormField = {
   type: 'password',
   label: 'Password',
   optional: false,
+  disabled: false,
   hidden: false,
+  readonly: false,
 
   // Static placeholder
   placeholder: 'Enter a strong password',
@@ -84,6 +86,12 @@ const passwordField: TFoormField = {
   // Computed: hint changes based on value
   hint: scope =>
     scope.v ? `${8 - String(scope.v).length} more characters needed` : 'At least 8 characters',
+
+  // Custom attributes for testing or accessibility
+  attrs: {
+    'data-testid': 'password-input',
+    'aria-describedby': scope => scope.data.name ? 'password-requirements' : undefined,
+  },
 
   validators: [
     s => !!s.v || 'Password is required',
@@ -228,15 +236,18 @@ A single field definition. All description and constraint properties support `TC
 | `optional`     | `TComputed<boolean>`                           | Whether the field is optional                                     |
 | `disabled`     | `TComputed<boolean>`                           | Whether the field is disabled                                     |
 | `hidden`       | `TComputed<boolean>`                           | Whether the field is hidden                                       |
+| `readonly`     | `TComputed<boolean>`                           | Whether the field is read-only (visible but not editable)         |
 | `classes`      | `TComputed<string \| Record<string, boolean>>` | CSS classes                                                       |
 | `styles`       | `TComputed<string \| Record<string, string>>`  | Inline styles                                                     |
 | `options`      | `TComputed<TFoormEntryOptions[]>`              | Options for select/radio fields                                   |
+| `value`        | `TComputed<unknown>`                           | Default or computed value                                         |
+| `attrs`        | `Record<string, TComputed<unknown>>`           | Custom attributes passed to field components                      |
 | `validators`   | `Array<(scope) => boolean \| string>`          | Validation functions                                              |
 | `component`    | `string`                                       | Named component override                                          |
 | `autocomplete` | `string`                                       | HTML autocomplete attribute                                       |
 | `altAction`    | `string`                                       | Alternate submit action name                                      |
 | `order`        | `number`                                       | Rendering order                                                   |
-| `value`        | `unknown`                                      | Default value                                                     |
+| `name`         | `string`                                       | Field name (defaults to field identifier)                         |
 | `maxLength`    | `number`                                       | HTML maxlength constraint                                         |
 | `minLength`    | `number`                                       | HTML minlength constraint                                         |
 | `min`          | `number`                                       | HTML min constraint                                               |

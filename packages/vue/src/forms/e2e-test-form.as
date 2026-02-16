@@ -26,13 +26,13 @@ export interface E2eTestForm {
     @foorm.order 2
     lastName: string
 
-    // Number field: default value, multiple validators
+    // Number field: default value, @expect.min validation
     @meta.label 'Age'
     @foorm.type 'number'
     @foorm.value '25'
-    @foorm.validate '(v) => !!v || "Age is required"'
-    @foorm.validate '(v) => (Number(v) >= 18) || "Must be 18 or older"'
     @foorm.order 3
+    @foorm.validate '(v) => !!v || "Age is required"'
+    @expect.min 18, 'Must be 18 or older'
     age: number
 
     // Text field: computed label, computed description
@@ -41,7 +41,7 @@ export interface E2eTestForm {
     @foorm.type 'text'
     @foorm.autocomplete 'email'
     @foorm.order 4
-    email?: string
+    email?: string.email
 
     // Text field: computed hint
     @meta.label 'Nickname'

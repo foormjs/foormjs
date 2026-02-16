@@ -118,13 +118,34 @@ export interface SignupForm {
     @foorm.order 2
     lastName: string
 
+    @meta.label 'Full Name'
+    @meta.description 'This is computed from your first and last name'
+    @foorm.readonly
+    @foorm.fn.value '(v, data) => (data.firstName || "") + " " + (data.lastName || "")'
+    @foorm.order 3
+    fullName: string
+
     @meta.label 'Password'
     @foorm.type 'password'
     @foorm.fn.disabled '(v, data) => !data.firstName || !data.lastName'
     @foorm.validate '(v) => !!v || "Required"'
     @foorm.validate '(v) => v.length >= 8 || "At least 8 characters"'
-    @foorm.order 3
+    @foorm.order 4
     password: string
+}
+```
+
+### Custom attributes example
+
+Pass custom attributes to your components for testing, accessibility, or framework-specific props:
+
+```
+export interface AdvancedForm {
+    @meta.label 'Email'
+    @foorm.attr 'data-testid', 'email-input'
+    @foorm.attr 'autocorrect', 'off'
+    @foorm.fn.attr 'aria-label', '(v, data) => "Email for " + (data.name || "user")'
+    email: string
 }
 ```
 
@@ -215,6 +236,16 @@ Paragraphs render as static text. Actions render as buttons that emit events ins
 | `@foorm.order N`              | Rendering order (lower = earlier)                     |
 | `@foorm.hidden`               | Mark field as statically hidden                       |
 | `@foorm.disabled`             | Mark field as statically disabled                     |
+| `@foorm.readonly`             | Mark field as read-only (visible but not editable)    |
+
+### Custom Attributes
+
+Pass custom HTML attributes or Vue props to field components:
+
+| Annotation                           | Description                                 |
+| ------------------------------------ | ------------------------------------------- |
+| `@foorm.attr 'name', 'value'`        | Static custom attribute (repeat for each)   |
+| `@foorm.fn.attr 'name', '(v, ...) => ...'` | Computed custom attribute (repeat for each) |
 
 ### Options Annotation
 
@@ -242,7 +273,9 @@ All field-level computed functions receive `(value, data, context, entry)`:
 | `@foorm.fn.placeholder` | `string`               | Computed placeholder            |
 | `@foorm.fn.disabled`    | `boolean`              | Computed disabled state         |
 | `@foorm.fn.hidden`      | `boolean`              | Computed hidden state           |
+| `@foorm.fn.readonly`    | `boolean`              | Computed readonly state         |
 | `@foorm.fn.optional`    | `boolean`              | Computed optional state         |
+| `@foorm.fn.value`       | `unknown`              | Computed field value            |
 | `@foorm.fn.classes`     | `string \| Record`     | Computed CSS classes            |
 | `@foorm.fn.styles`      | `string \| Record`     | Computed inline styles          |
 | `@foorm.fn.options`     | `TFoormEntryOptions[]` | Computed options (select/radio) |

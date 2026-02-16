@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="TFormData = any, TFormContext = any">
 import { evalAttrs } from '../utils'
 import { VuilessField, type TVuilessState } from 'vuiless-forms'
-import { type TFoormField, type TFoormFnScope, evalComputed } from 'foorm'
+import { type TFoormField, type TFoormFnScope } from 'foorm'
 import { computed, inject, watch, type ComputedRef } from 'vue'
 
 type Props = TFoormField & {
@@ -14,97 +14,123 @@ const vuiless = inject<ComputedRef<TVuilessState<TFormData, TFormContext>>>(
   'vuiless'
 ) as ComputedRef<TVuilessState<TFormData, TFormContext>>
 
-// Base scope (without evaluated entry) for constraint evaluation
-const baseCtx = computed<TFoormFnScope>(() => ({
+// Helper to create reactive property (computed if function, static otherwise)
+function makeReactive<T>(
+  value: T | ((scope: TFoormFnScope) => T) | undefined,
+  scopeRef: ComputedRef<TFoormFnScope>,
+  defaultValue?: T
+): T | ComputedRef<T> {
+  if (typeof value === 'function') {
+    return computed(() => (value as Function)(scopeRef.value))
+  }
+  return (value ?? defaultValue) as T
+}
+
+// Helper to unwrap value (handles both static and computed)
+const unwrap = <T>(v: T | ComputedRef<T>): T =>
+  typeof v === 'object' && v !== null && 'value' in v ? (v as ComputedRef<T>).value : v as T
+
+// Base scope for constraints (no entry)
+const baseScope = computed<TFoormFnScope>(() => ({
   v: vuiless.value.formData[props.field as keyof TFormData],
   data: vuiless.value.formData as Record<string, unknown>,
   context: (vuiless.value.formContext ?? {}) as Record<string, unknown>,
   entry: undefined,
 }))
 
-// Constraints (evaluated first, before full scope)
-const _optional = computed(() => evalComputed(props.optional, baseCtx.value))
-const _disabled = computed(() => evalComputed(props.disabled, baseCtx.value))
-const _hidden = computed(() => evalComputed(props.hidden, baseCtx.value))
-const _readonly = computed(() => evalComputed(props.readonly, baseCtx.value))
+// Constraints - only computed if function
+const optional = makeReactive(props.optional, baseScope, false)
+const disabled = makeReactive(props.disabled, baseScope, false)
+const hidden = makeReactive(props.hidden, baseScope, false)
+const readonly = makeReactive(props.readonly, baseScope, false)
 
-// Full scope with evaluated entry (for description, appearance, validators)
-const ctx = computed<TFoormFnScope>(() => ({
-  ...baseCtx.value,
+// Derived computed values
+const required = computed(() => !unwrap(optional))
+
+// Full scope with entry
+const scope = computed<TFoormFnScope>(() => ({
+  v: vuiless.value.formData[props.field as keyof TFormData],
+  data: vuiless.value.formData as Record<string, unknown>,
+  context: (vuiless.value.formContext ?? {}) as Record<string, unknown>,
   entry: {
     field: props.field,
     type: props.type,
     component: props.component,
     name: props.name || props.field,
-    disabled: _disabled.value,
-    optional: _optional.value,
-    hidden: _hidden.value,
-    readonly: _readonly.value,
+    optional: unwrap(optional),
+    disabled: unwrap(disabled),
+    hidden: unwrap(hidden),
+    readonly: unwrap(readonly),
   },
 }))
 
-// Description
-const _label = computed(() => evalComputed(props.label, ctx.value))
-const _description = computed(() => evalComputed(props.description, ctx.value))
-const _hint = computed(() => evalComputed(props.hint, ctx.value))
-const _placeholder = computed(() => evalComputed(props.placeholder, ctx.value))
+// Field properties - only computed if function
+const label = makeReactive(props.label, scope, undefined)
+const description = makeReactive(props.description, scope, undefined)
+const hint = makeReactive(props.hint, scope, undefined)
+const placeholder = makeReactive(props.placeholder, scope, undefined)
+const options = makeReactive(props.options, scope, undefined)
+const styles = makeReactive(props.styles, scope, undefined)
 
-// Options
-const _options = computed(() => evalComputed(props.options, ctx.value))
+// Classes - always computed (merges multiple values)
+const classesBase = computed(() => {
+  const classValue = typeof props.classes === 'function'
+    ? props.classes(scope.value)
+    : props.classes
 
-// Appearance
-const _classes = computed(() => {
-  const v = evalComputed(props.classes, ctx.value)
-  if (typeof v === 'string') {
-    return {
-      [v]: true,
-      disabled: _disabled.value,
-      required: !_optional.value,
-    }
-  }
+  return typeof classValue === 'string'
+    ? {
+        [classValue]: true,
+        disabled: unwrap(disabled),
+        required: !unwrap(optional),
+      }
+    : {
+        ...classValue,
+        disabled: unwrap(disabled),
+        required: !unwrap(optional),
+      }
+})
+
+// Function to merge classes with error flag
+function getClasses(error: string | undefined, vuilessError: string | undefined) {
   return {
-    ...v,
-    disabled: _disabled.value,
-    required: !_optional.value,
+    ...classesBase.value,
+    error: !!error || !!vuilessError,
   }
-})
+}
 
-const _styles = computed(
-  () => evalComputed(props.styles, ctx.value) as string | Record<string, string> | undefined
-)
+// Attrs - always computed (evalAttrs processes the entire object)
+const attrs = computed(() => evalAttrs(props.attrs, scope.value))
 
-const _attrs = computed(() => evalAttrs(props.attrs, ctx.value))
-
-// Computed value for readonly fields with fn.value
-const _computedValue = computed(() => {
-  if (_readonly.value && typeof props.value === 'function') {
-    return evalComputed(props.value, ctx.value)
-  }
-  return undefined
-})
-
-// Sync computed value back to formData for readonly fields
-watch(
-  _computedValue,
-  (newVal) => {
-    if (newVal !== undefined && _readonly.value) {
-      vuiless.value.formData[props.field as keyof TFormData] = newVal as any
+// Conditional watcher for readonly computed values
+if (typeof props.value === 'function') {
+  const computedValue = computed(() => {
+    if (unwrap(readonly)) {
+      return (props.value as Function)(scope.value)
     }
-  },
-  { immediate: true }
-)
+    return undefined
+  })
 
-// Wrap validators into vuiless-forms rule format: (v, data, context) => boolean | string
-const rules = computed(() => {
-  return props.validators.map(
-    fn => (v: unknown, data: TFormData, context: TFormContext) =>
-      fn({
-        v,
-        data: data as Record<string, unknown>,
-        context: (context ?? {}) as Record<string, unknown>,
-        entry: ctx.value.entry,
-      })
+  watch(
+    computedValue,
+    (newVal) => {
+      if (newVal !== undefined && unwrap(readonly)) {
+        vuiless.value.formData[props.field as keyof TFormData] = newVal as any
+      }
+    },
+    { immediate: true }
   )
+}
+
+// Validator wrappers - must access scope.value inside to maintain reactivity
+const rules = props.validators.map(fn => {
+  return (v: unknown, data: TFormData, context: TFormContext) =>
+    fn({
+      v,
+      data: data as Record<string, unknown>,
+      context: (context ?? {}) as Record<string, unknown>,
+      entry: scope.value.entry,
+    })
 })
 </script>
 
@@ -120,29 +146,26 @@ const rules = computed(() => {
       :model="vuilessField.model"
       :form-data="vuiless.formData"
       :form-context="vuiless.formContext"
-      :label="_label"
-      :description="_description"
-      :hint="_hint"
-      :placeholder="_placeholder"
-      :classes="{
-        ..._classes,
-        error: !!error || !!vuilessField.error,
-      }"
-      :styles="_styles"
-      :optional="_optional"
-      :disabled="_disabled"
-      :hidden="_hidden"
-      :readonly="_readonly"
+      :label="label"
+      :description="description"
+      :hint="hint"
+      :placeholder="placeholder"
+      :classes="getClasses(error, vuilessField.error)"
+      :styles="styles"
+      :optional="optional"
+      :disabled="disabled"
+      :hidden="hidden"
+      :readonly="readonly"
       :type="type"
       :alt-action="altAction"
       :component="component"
       :v-name="name"
       :field="field"
-      :options="_options"
+      :options="options"
       :max-length="maxLength"
-      :required="!_optional"
+      :required="required"
       :autocomplete="autocomplete"
-      :attrs="_attrs"
+      :attrs="attrs"
     >
     </slot>
   </VuilessField>

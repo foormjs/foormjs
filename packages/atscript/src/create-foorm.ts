@@ -1,4 +1,5 @@
 import type { TAtscriptAnnotatedType, TAtscriptTypeObject } from '@atscript/typescript/utils'
+import { Validator } from '@atscript/typescript/utils'
 import type {
   TComputed,
   TFoormEntryOptions,
@@ -125,6 +126,61 @@ function resolveProperty<T>(
 }
 
 /**
+ * Batch resolves multiple boolean constraints at once to reduce overhead.
+ * Returns an object with all constraint values (functions or booleans).
+ */
+function resolveConstraints(
+  metadata: TMetadataAccessor,
+  propOptional?: boolean
+): {
+  optional: TComputed<boolean>
+  disabled: TComputed<boolean>
+  hidden: TComputed<boolean>
+  readonly: TComputed<boolean>
+} {
+  return {
+    optional:
+      resolveProperty<boolean>('foorm.fn.optional', undefined, metadata) ??
+      (propOptional ?? false),
+    disabled:
+      resolveProperty<boolean>('foorm.fn.disabled', 'foorm.disabled', metadata, {
+        staticAsBoolean: true,
+      }) ?? false,
+    hidden:
+      resolveProperty<boolean>('foorm.fn.hidden', 'foorm.hidden', metadata, {
+        staticAsBoolean: true,
+      }) ?? false,
+    readonly:
+      resolveProperty<boolean>('foorm.fn.readonly', 'foorm.readonly', metadata, {
+        staticAsBoolean: true,
+      }) ?? false,
+  }
+}
+
+/**
+ * Batch resolves multiple text properties at once.
+ * Empty strings are replaced with undefined to enable Vue optimization.
+ */
+function resolveTextProperties(
+  metadata: TMetadataAccessor,
+  fieldName: string
+): {
+  label: TComputed<string>
+  description: TComputed<string> | undefined
+  hint: TComputed<string> | undefined
+  placeholder: TComputed<string> | undefined
+} {
+  return {
+    label: resolveProperty<string>('foorm.fn.label', 'meta.label', metadata, {
+      defaultValue: fieldName,
+    }),
+    description: resolveProperty<string>('foorm.fn.description', 'meta.description', metadata),
+    hint: resolveProperty<string>('foorm.fn.hint', 'meta.hint', metadata),
+    placeholder: resolveProperty<string>('foorm.fn.placeholder', 'meta.placeholder', metadata),
+  }
+}
+
+/**
  * Parses @foorm.attr and @foorm.fn.attr annotations into a Record<string, TComputed<unknown>>.
  * Static attrs are direct key-value pairs, computed attrs are compiled functions.
  */
@@ -234,6 +290,33 @@ export function createFoorm(
       }
     }
 
+    // Add ATScript built-in validation (for @expect.* and semantic primitives like string.email)
+    // Check if field has ATScript validation requirements
+    const hasExpectConstraints =
+      pm.get('expect.pattern') !== undefined ||
+      pm.get('expect.min') !== undefined ||
+      pm.get('expect.max') !== undefined ||
+      pm.get('expect.minLength') !== undefined ||
+      pm.get('expect.maxLength') !== undefined ||
+      pm.get('expect.int') !== undefined
+    const hasTags = tags && tags.size > 0
+
+    if (hasExpectConstraints || hasTags) {
+      // Create ATScript validator for this property
+      const propValidator = new Validator(prop)
+      validators.push((scope) => {
+        // ATScript validator in safe mode: returns true (pass) or false (fail)
+        // On failure, propValidator.errors contains error details
+        const isValid = propValidator.validate(scope.v, true)
+        if (isValid) {
+          return true
+        }
+        // Extract first error message from validator.errors
+        const firstError = propValidator.errors?.[0]
+        return firstError?.message || 'Validation failed'
+      })
+    }
+
     const field: TFoormField = {
       field: name,
       type: fieldType,
@@ -243,34 +326,17 @@ export function createFoorm(
       order: pm.get('foorm.order') as number | undefined,
       name: name,
 
-      label: resolveProperty<string>('foorm.fn.label', 'meta.label', pm, { defaultValue: name }),
-      description: resolveProperty<string>('foorm.fn.description', 'meta.description', pm, {
-        defaultValue: '',
-      }),
-      hint: resolveProperty<string>('foorm.fn.hint', 'meta.hint', pm, { defaultValue: '' }),
-      placeholder: resolveProperty<string>('foorm.fn.placeholder', 'meta.placeholder', pm, {
-        defaultValue: '',
-      }),
+      // Batch resolve text properties (reduces function call overhead)
+      ...resolveTextProperties(pm, name),
 
-      optional: resolveProperty<boolean>('foorm.fn.optional', undefined, pm, {
-        defaultValue: prop.optional ?? false,
-      }),
-      disabled: resolveProperty<boolean>('foorm.fn.disabled', 'foorm.disabled', pm, {
-        staticAsBoolean: true,
-        defaultValue: false,
-      }),
-      hidden: resolveProperty<boolean>('foorm.fn.hidden', 'foorm.hidden', pm, {
-        staticAsBoolean: true,
-        defaultValue: false,
-      }),
-      readonly: resolveProperty<boolean>('foorm.fn.readonly', 'foorm.readonly', pm, {
-        staticAsBoolean: true,
-        defaultValue: false,
-      }),
+      // Batch resolve boolean constraints (reduces function call overhead)
+      ...resolveConstraints(pm, prop.optional),
 
+      // Appearance - truly optional
       classes: resolveProperty<string | Record<string, boolean>>('foorm.fn.classes', undefined, pm),
       styles: resolveProperty<string | Record<string, string>>('foorm.fn.styles', undefined, pm),
 
+      // Data properties - truly optional
       options: resolveProperty<TFoormEntryOptions[]>('foorm.fn.options', 'foorm.options', pm, {
         transform: parseStaticOptions,
       }),

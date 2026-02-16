@@ -55,12 +55,12 @@
     "vuiless-forms": "^0.0.3"
   },
   "peerDependencies": {
-    "@atscript/core": "^0.1.6",
-    "@atscript/typescript": "^0.1.6"
+    "@atscript/core": "^0.1.7",
+    "@atscript/typescript": "^0.1.7"
   },
   "devDependencies": {
-    "@atscript/core": "^0.1.6",
-    "@atscript/typescript": "^0.1.6",
+    "@atscript/core": "^0.1.7",
+    "@atscript/typescript": "^0.1.7",
     "@playwright/test": "^1.58.2",
     "@tsconfig/node20": "^20.1.9",
     "@types/node": "^20.19.33",

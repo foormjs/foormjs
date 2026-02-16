@@ -17,7 +17,7 @@ export declare class E2eTestForm {
   firstName: string
   lastName: string
   age: number
-  email?: string
+  email?: string /* email */
   nickname?: string
   password: string
   secretCode?: string

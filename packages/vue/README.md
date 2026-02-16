@@ -297,6 +297,7 @@ Every field slot (`#field:text`, `#field:select`, etc.) receives:
 | `styles`       | `string \| Record`        | Inline styles                                               |
 | `disabled`     | `boolean`                 | Evaluated disabled state                                    |
 | `hidden`       | `boolean`                 | Evaluated hidden state                                      |
+| `readonly`     | `boolean`                 | Evaluated readonly state                                    |
 | `optional`     | `boolean`                 | Evaluated optional state                                    |
 | `required`     | `boolean`                 | Inverse of optional                                         |
 | `type`         | `string`                  | Field type                                                  |
@@ -307,7 +308,7 @@ Every field slot (`#field:text`, `#field:select`, etc.) receives:
 | `maxLength`    | `number`                  | Max length constraint                                       |
 | `formData`     | `object`                  | Full form data                                              |
 | `formContext`  | `object`                  | Form context                                                |
-| `attrs`        | `Record`                  | Additional evaluated attributes                             |
+| `attrs`        | `Record`                  | Custom attributes (evaluated, can be used with `v-bind`)    |
 
 ### `OoField`
 
