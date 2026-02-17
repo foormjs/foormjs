@@ -1,11 +1,10 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "../foorm/src/**/*", "../atscript/src/**/*"],
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "../foorm/src/**/*"],
   "exclude": [
     "src/**/__tests__/*",
     "node_modules",
-    "../foorm/src/**/*.spec.ts",
-    "../atscript/src/**/*.spec.ts"
+    "../foorm/src/**/*.spec.ts"
   ],
   "compilerOptions": {
     "composite": true,
@@ -18,8 +17,7 @@
     "resolvePackageJsonImports": true,
     "paths": {
       "@/*": ["./src/*"],
-      "foorm": ["../foorm/src"],
-      "@foormjs/*": ["../*/src"]
+      "foorm": ["../foorm/src"]
     }
   }
 }

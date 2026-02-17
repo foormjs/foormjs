@@ -1,6 +1,6 @@
 {
   "name": "@foormjs/vue",
-  "version": "0.2.4",
+  "version": "0.0.1",
   "description": "@foormjs/vue",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -28,8 +28,6 @@
   "keywords": [
     "foorm",
     "foormjs",
-    "foorm",
-    "foormjs",
     "forms",
     "validations"
   ],
@@ -49,18 +47,17 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@foormjs/atscript": "workspace:^",
     "foorm": "workspace:^",
     "vue": "^3.5.28",
     "vuiless-forms": "^0.0.3"
   },
   "peerDependencies": {
-    "@atscript/core": "^0.1.8",
-    "@atscript/typescript": "^0.1.8"
+    "@atscript/core": "^0.1.12",
+    "@atscript/typescript": "^0.1.12"
   },
   "devDependencies": {
-    "@atscript/core": "^0.1.8",
-    "@atscript/typescript": "^0.1.8",
+    "@atscript/core": "^0.1.12",
+    "@atscript/typescript": "^0.1.12",
     "@playwright/test": "^1.58.2",
     "@tsconfig/node20": "^20.1.9",
     "@types/node": "^20.19.33",
@@ -68,7 +65,7 @@
     "@vue/tsconfig": "^0.5.1",
     "npm-run-all2": "^6.2.6",
     "typescript": "~5.4.5",
-    "unplugin-atscript": "^0.1.8",
+    "unplugin-atscript": "^0.1.12",
     "vite": "^5.4.21",
     "vite-plugin-dts": "^3.9.1",
     "vue-tsc": "^2.2.12"

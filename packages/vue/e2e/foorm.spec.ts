@@ -540,7 +540,7 @@ test.describe('Computed Paragraph', () => {
     await page.locator('input[name="lastName"]').fill('Smith')
 
     // Age has default value of 25
-    let summaryP = page.locator('p').filter({ hasText: 'Hello, Jane' })
+    const summaryP = page.locator('p').filter({ hasText: 'Hello, Jane' })
     await expect(summaryP).toHaveText('Hello, Jane Smith! You are 25 years old.')
 
     // Change age
@@ -552,7 +552,7 @@ test.describe('Computed Paragraph', () => {
     await page.locator('input[name="firstName"]').fill('Bob')
     await page.locator('input[name="lastName"]').fill('Johnson')
 
-    let summaryP = page.locator('p').filter({ hasText: 'Hello, Bob' })
+    const summaryP = page.locator('p').filter({ hasText: 'Hello, Bob' })
     await expect(summaryP).toBeVisible()
 
     await page.locator('input[name="firstName"]').clear()

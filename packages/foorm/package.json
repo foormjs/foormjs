@@ -1,40 +1,54 @@
 {
   "name": "foorm",
   "version": "0.2.4",
-  "description": "foorm",
+  "description": "ATScript-first form model with validation",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "exports": {
-    "./package.json": "./package.json",
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
+    },
+    "./plugin": {
+      "types": "./dist/plugin.d.ts",
+      "import": "./dist/plugin.mjs",
+      "require": "./dist/plugin.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "plugin": [
+        "dist/plugin.d.ts"
+      ],
+      "": [
+        "dist/index.d.ts"
+      ]
     }
   },
+  "build": [
+    {},
+    {
+      "entries": [
+        "src/plugin.ts"
+      ],
+      "dts": true
+    }
+  ],
   "files": [
     "dist"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/foormjs/foormjs.git",
-    "directory": "packages/foorm"
-  },
-  "keywords": [
-    "foorm",
-    "foormjs",
-    "forms",
-    "validations"
-  ],
-  "author": "Artem Maltsev",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/foormjs/foormjs/issues"
-  },
-  "homepage": "https://github.com/foormjs/foormjs/tree/main/packages/foorm#readme",
   "scripts": {
     "pub": "pnpm publish --access public --no-git-checks"
+  },
+  "dependencies": {
+    "@atscript/core": "^0.1.12",
+    "@prostojs/deserialize-fn": "^0.0.5"
+  },
+  "peerDependencies": {
+    "@atscript/typescript": "^0.1.12"
   }
 }

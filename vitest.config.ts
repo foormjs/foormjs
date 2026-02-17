@@ -5,7 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       'foorm': path.resolve(__dirname, 'packages/foorm/src'),
-      '@foormjs/': path.resolve(__dirname, 'packages/') + '/',
+      '@foormjs/': `${path.resolve(__dirname, 'packages/')}/`,
     },
   },
   test: {

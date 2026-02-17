@@ -2,6 +2,7 @@
 import type { TFoormComponentProps } from './types'
 
 // Props that match TFoormComponentProps
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 defineProps<TFoormComponentProps<string, any, any>>()
 
 // Emit for v-model
@@ -26,7 +27,7 @@ defineEmits<{
         :name="name"
         :type="type"
         :disabled="disabled"
-        :readonly="(field?.readonly as boolean)"
+        :readonly="readonly"
         :maxlength="maxLength"
         class="star-input"
       />

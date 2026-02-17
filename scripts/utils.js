@@ -1,8 +1,8 @@
 import { dye } from '@prostojs/dye'
-import fs from 'fs'
-import { createRequire } from 'module'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import fs from 'node:fs'
+import { createRequire } from 'node:module'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { PROJECT } from './constants.js'
 

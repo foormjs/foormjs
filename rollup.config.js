@@ -5,7 +5,7 @@ import { dye } from '@prostojs/dye'
 import commonJS from '@rollup/plugin-commonjs'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
 import replace from '@rollup/plugin-replace'
-import { createRequire } from 'module'
+import { createRequire } from 'node:module'
 import { dts } from 'rollup-plugin-dts'
 import typescript from 'rollup-plugin-typescript2'
 
@@ -61,7 +61,7 @@ const targets = readdirSync('packages').filter(f => {
     return false
   }
   const deps = [...Object.keys(pkg.dependencies || {}), ...Object.keys(pkg.peerDependencies || {})]
-  deps.length > 0 && external.push(...deps)
+  if (deps.length > 0) external.push(...deps)
   rmSync(`./packages/${f}/dist`, { recursive: true, force: true })
   return true
 })
@@ -149,15 +149,15 @@ function createDyeReplaceConst() {
     __DYE_COLOR_OFF__: `'${c.close}'`,
     __DYE_BG_OFF__: `'${bg.close}'`,
   }
-  dyeModifiers.forEach(v => {
+  for (const v of dyeModifiers) {
     dyeReplacements[`__DYE_${v.toUpperCase()}__`] = `'${dye(v).open}'`
     dyeReplacements[`__DYE_${v.toUpperCase()}_OFF__`] = `'${dye(v).close}'`
-  })
-  dyeColors.forEach(v => {
+  }
+  for (const v of dyeColors) {
     dyeReplacements[`__DYE_${v.toUpperCase()}__`] = `'${dye(v).open}'`
     dyeReplacements[`__DYE_BG_${v.toUpperCase()}__`] = `'${dye(`bg-${v}`).open}'`
     dyeReplacements[`__DYE_${v.toUpperCase()}_BRIGHT__`] = `'${dye(`${v}-bright`).open}'`
     dyeReplacements[`__DYE_BG_${v.toUpperCase()}_BRIGHT__`] = `'${dye(`bg-${v}-bright`).open}'`
-  })
+  }
   return dyeReplacements
 }

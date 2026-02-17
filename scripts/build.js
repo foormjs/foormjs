@@ -1,6 +1,6 @@
 import execa from 'execa'
 import minimist from 'minimist'
-import path from 'path'
+import path from 'node:path'
 
 import { out, packages, require } from './utils.js'
 
@@ -17,7 +17,7 @@ async function run() {
 }
 
 async function buildTargets(targets) {
-  await runParallel(require('os').cpus().length, targets, build)
+  await runParallel(require('node:os').cpus().length, targets, build)
 }
 
 async function runParallel(maxConcurrency, source, iteratorFn) {

@@ -6,3 +6,6 @@ dist
 temp
 .npmrc
 docs/.vitepress/cache
+playwright-report
+test-results
+coverage

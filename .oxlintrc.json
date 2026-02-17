@@ -13,7 +13,7 @@
     "prefer-const": "error",
     "prefer-template": "error",
     "object-shorthand": "error",
-    "curly": "error",
+    "curly": "off",
     "import/no-default-export": "error",
     "import/no-duplicates": "error",
     "import/no-cycle": "error",

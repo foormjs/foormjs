@@ -1,28 +1,51 @@
 # @foormjs/vue
 
-Vue 3 components for rendering foorm models with built-in validation.
-
-Most form libraries force you into their component system. `@foormjs/vue` works the other way: it gives you a form component with sensible defaults for every field type, but lets you replace any part of the rendering with your own components. Use the built-in inputs to get started, then gradually swap in your design system components -- per field, per type, or via scoped slots.
-
-Forms are defined in ATScript `.as` files (via `@foormjs/atscript`), converted to a model at runtime, and rendered by `OoForm`. Validation, computed properties, and reactive state are handled automatically.
+Renderless Vue components for ATScript-defined forms. Bring your own UI components and wrap them in `OoForm` / `OoField` to get automatic validation, computed properties, and reactive form state — all driven by `.as` schema files.
 
 ## Install
 
 ```bash
-npm install @foormjs/vue
+pnpm add @foormjs/vue foorm vue @atscript/core @atscript/typescript
 # or
-pnpm add @foormjs/vue
+npm install @foormjs/vue foorm vue @atscript/core @atscript/typescript
 ```
 
-You'll also need the ATScript tooling in your dev dependencies:
+You also need the ATScript Vite plugin for `.as` file support:
 
 ```bash
-pnpm add -D @foormjs/atscript @atscript/core @atscript/typescript unplugin-atscript
+pnpm add -D unplugin-atscript @vitejs/plugin-vue
 ```
 
 ## Quick Start
 
-### 1. Define a form in ATScript
+### 1. Configure ATScript
+
+```ts
+// atscript.config.ts
+import { defineConfig } from '@atscript/core'
+import ts from '@atscript/typescript'
+import { foormPlugin } from 'foorm/plugin'
+
+export default defineConfig({
+  rootDir: 'src',
+  plugins: [ts(), foormPlugin()],
+})
+```
+
+### 2. Configure Vite
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import atscript from 'unplugin-atscript/vite'
+
+export default defineConfig({
+  plugins: [atscript(), vue()],
+})
+```
+
+### 3. Define a form schema
 
 ```
 // src/forms/login.as
@@ -33,351 +56,338 @@ export interface LoginForm {
     @meta.placeholder 'you@example.com'
     @foorm.autocomplete 'email'
     @foorm.validate '(v) => !!v || "Email is required"'
-    email: string
+    @foorm.order 1
+    email: string.email
 
     @meta.label 'Password'
+    @meta.placeholder 'Enter password'
     @foorm.type 'password'
     @foorm.validate '(v) => !!v || "Password is required"'
+    @foorm.order 2
     password: string
-
-    @meta.label 'Remember me'
-    rememberMe?: foorm.checkbox
 }
 ```
 
-### 2. Render it
+### 4. Use in a Vue component
 
 ```vue
 <script setup lang="ts">
-import { OoForm, useFoorm } from '@foormjs/vue'
+import { OoForm } from '@foormjs/vue'
+import { useFoorm } from '@foormjs/vue'
 import { LoginForm } from './forms/login.as'
 
-const { form, formData } = useFoorm(LoginForm)
+const { def, formData } = useFoorm(LoginForm)
 
 function handleSubmit(data: typeof formData) {
-  console.log('Submitted:', data)
+  console.log('submitted', data)
 }
 </script>
 
 <template>
-  <OoForm :form="form" :form-data="formData" first-validation="on-blur" @submit="handleSubmit" />
+  <OoForm
+    :def="def"
+    :form-data="formData"
+    first-validation="on-blur"
+    @submit="handleSubmit"
+  />
 </template>
 ```
 
-That's it. The form renders with labels, placeholders, validation, and a submit button -- all derived from the `.as` file annotations.
+`OoForm` renders default HTML inputs for all standard field types out of the box. For production use, you'll want to supply your own components.
 
-## Practical Examples
+## Advanced Usage
 
-### Passing context for dynamic options
+### Custom Components by Type
 
-Backend-provided data (option lists, user info, locale) goes through the `formContext` prop and becomes available to `@foorm.fn.*` annotations:
-
-```
-// preferences.as
-export interface PreferencesForm {
-    @meta.label 'City'
-    @meta.placeholder 'Select a city'
-    @foorm.fn.options '(v, data, context) => context.cityOptions || []'
-    city?: foorm.select
-}
-```
+Map field types to your UI components:
 
 ```vue
 <script setup lang="ts">
-import { OoForm, useFoorm } from '@foormjs/vue'
-import { PreferencesForm } from './forms/preferences.as'
+import { OoForm } from '@foormjs/vue'
+import MyTextInput from './MyTextInput.vue'
+import MySelect from './MySelect.vue'
+import MyCheckbox from './MyCheckbox.vue'
 
-const { form, formData } = useFoorm(PreferencesForm)
-
-const formContext = {
-  cityOptions: [
-    { key: 'nyc', label: 'New York' },
-    { key: 'la', label: 'Los Angeles' },
-    { key: 'chi', label: 'Chicago' },
-  ],
+const typeComponents = {
+  text: MyTextInput,
+  select: MySelect,
+  checkbox: MyCheckbox,
 }
 </script>
 
 <template>
-  <OoForm :form="form" :form-data="formData" :form-context="formContext" @submit="handleSubmit" />
+  <OoForm :def="def" :form-data="formData" :types="typeComponents" @submit="onSubmit" />
 </template>
 ```
 
-### Custom components by name
+Every field with `type: 'text'` will render `MyTextInput`, every `type: 'select'` renders `MySelect`, etc.
 
-Use `@foorm.component` in your `.as` file and pass the component map:
+### Custom Components by Name
+
+Use `@foorm.component` in your schema to assign a named component to a specific field:
 
 ```
-// profile.as
-export interface ProfileForm {
-    @meta.label 'Birthday'
-    @foorm.component 'DatePicker'
-    birthday?: string
-}
+@meta.label 'Rating'
+@foorm.component 'StarRating'
+@foorm.order 5
+rating?: number
 ```
+
+Then pass named components via the `components` prop:
 
 ```vue
 <template>
   <OoForm
-    :form="form"
+    :def="def"
     :form-data="formData"
-    :components="{ DatePicker: MyDatePicker }"
-    @submit="handleSubmit"
+    :components="{ StarRating: MyStarRating }"
+    @submit="onSubmit"
   />
 </template>
 ```
 
-### Custom components by type
+Named components take priority over type-based components.
 
-Replace the default renderer for all fields of a given type:
+### Building a Custom Component
+
+Custom components receive `TFoormComponentProps` as their props:
 
 ```vue
+<script setup lang="ts">
+import type { TFoormComponentProps } from '@foormjs/vue'
+
+const props = defineProps<TFoormComponentProps<string, any, any>>()
+const emit = defineEmits<{ (e: 'action', name: string): void }>()
+</script>
+
 <template>
-  <OoForm
-    :form="form"
-    :form-data="formData"
-    :types="{ text: MyTextInput, select: MySelect }"
-    @submit="handleSubmit"
-  />
+  <div :class="{ disabled, error: !!error }">
+    <label>{{ label }}</label>
+    <input
+      :value="model.value"
+      @input="model.value = ($event.target as HTMLInputElement).value"
+      @blur="onBlur"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      :readonly="readonly"
+    />
+    <span v-if="error" class="error">{{ error }}</span>
+    <span v-else-if="hint" class="hint">{{ hint }}</span>
+  </div>
 </template>
 ```
 
-### Scoped slots
+Key props available to your component:
 
-Override rendering for specific field types or form sections:
+| Prop | Type | Description |
+|---|---|---|
+| `model` | `{ value: V }` | Reactive model — bind with `v-model="model.value"` |
+| `onBlur` | `(e: FocusEvent) => void` | Triggers validation on blur |
+| `error` | `string?` | Validation error message |
+| `label` | `string?` | Resolved field label |
+| `description` | `string?` | Resolved field description |
+| `hint` | `string?` | Resolved hint text |
+| `placeholder` | `string?` | Resolved placeholder |
+| `disabled` | `boolean?` | Whether the field is disabled |
+| `hidden` | `boolean?` | Whether the field is hidden |
+| `readonly` | `boolean?` | Whether the field is read-only |
+| `optional` | `boolean?` | Whether the field is optional |
+| `required` | `boolean?` | Whether the field is required |
+| `type` | `string` | The field input type |
+| `options` | `TFoormEntryOptions[]?` | Options for select/radio fields |
+| `formData` | `TFormData` | The full reactive form data |
+| `formContext` | `TFormContext?` | External context passed to the form |
+| `name` | `string?` | Field name |
+| `maxLength` | `number?` | Max length constraint |
+| `autocomplete` | `string?` | HTML autocomplete value |
+| `field` | `FoormFieldDef?` | Full field definition for advanced use |
+
+### Scoped Slots
+
+`OoForm` provides scoped slots for full layout control:
 
 ```vue
 <template>
-  <OoForm :form="form" :form-data="formData" @submit="handleSubmit">
-    <!-- Custom header -->
-    <template #form.header="{ title }">
-      <h1 class="my-title">{{ title }}</h1>
+  <OoForm :def="def" :form-data="formData" @submit="onSubmit">
+    <!-- Override rendering for a specific field type -->
+    <template #field:text="field">
+      <MyTextInput v-bind="field" v-model="field.model.value" />
     </template>
 
-    <!-- Custom text field renderer -->
-    <template #field:text="field">
-      <div class="my-field">
-        <label>{{ field.label }}</label>
-        <input
-          v-model="field.model.value"
-          @blur="field.onBlur"
-          :placeholder="field.placeholder"
-          :disabled="field.disabled"
-        />
-        <span v-if="field.error" class="error">{{ field.error }}</span>
-      </div>
+    <!-- Form header (rendered before fields) -->
+    <template #form.header="{ title }">
+      <h1>{{ title }}</h1>
+    </template>
+
+    <!-- Content before/after fields -->
+    <template #form.before>
+      <p>All fields are required unless marked optional.</p>
+    </template>
+
+    <template #form.after="{ disabled }">
+      <p v-if="disabled">Please fill out all required fields.</p>
     </template>
 
     <!-- Custom submit button -->
-    <template #form.submit="{ disabled, text }">
-      <button class="my-button" :disabled="disabled">{{ text }}</button>
+    <template #form.submit="{ text, disabled }">
+      <button type="submit" :disabled="disabled" class="my-btn">{{ text }}</button>
+    </template>
+
+    <!-- Footer (rendered after submit) -->
+    <template #form.footer>
+      <p>By submitting, you agree to our terms.</p>
     </template>
   </OoForm>
 </template>
 ```
 
-### Handling actions
+### Form Context
 
-Action fields emit events instead of submitting the form:
-
-```
-// wizard.as
-export interface WizardStep {
-    @meta.label 'Name'
-    name: string
-
-    @meta.label 'Reset Form'
-    @foorm.altAction 'reset'
-    resetBtn: foorm.action
-}
-```
+Pass runtime data (user session, feature flags, dynamic options) to computed functions and validators:
 
 ```vue
-<template>
-  <OoForm :form="form" :form-data="formData" @submit="handleSubmit" @action="handleAction" />
-</template>
-
 <script setup lang="ts">
-function handleAction(name: string, data: unknown) {
-  if (name === 'reset') {
-    // Reset the form
-  }
+const formContext = {
+  cityOptions: [
+    { key: 'nyc', label: 'New York' },
+    { key: 'la', label: 'Los Angeles' },
+  ],
+  user: { role: 'admin' },
 }
 </script>
+
+<template>
+  <OoForm :def="def" :form-data="formData" :form-context="formContext" @submit="onSubmit" />
+</template>
 ```
 
-### Server-side validation errors
+Context is accessible in ATScript function strings as the third argument:
 
-Pass external errors (e.g., from an API response) via the `errors` prop:
+```
+@foorm.fn.options '(v, data, ctx) => ctx.cityOptions || []'
+city?: foorm.select
+```
+
+### Server-side Errors
+
+Pass server-side validation errors directly to fields:
 
 ```vue
-<template>
-  <OoForm :form="form" :form-data="formData" :errors="serverErrors" @submit="handleSubmit" />
-</template>
-
 <script setup lang="ts">
 import { ref } from 'vue'
 
 const serverErrors = ref<Record<string, string>>({})
 
-async function handleSubmit(data: unknown) {
-  const response = await api.submit(data)
-  if (response.errors) {
-    serverErrors.value = response.errors
-    // e.g. { email: 'Email already exists' }
+async function handleSubmit(data: any) {
+  const result = await api.submit(data)
+  if (result.errors) {
+    serverErrors.value = result.errors // e.g. { email: 'Already taken' }
+  }
+}
+</script>
+
+<template>
+  <OoForm
+    :def="def"
+    :form-data="formData"
+    :errors="serverErrors"
+    @submit="handleSubmit"
+  />
+</template>
+```
+
+### Actions
+
+Define alternate submit actions using the `foorm.action` primitive:
+
+```
+@meta.label 'Reset Password'
+@foorm.altAction 'reset-password'
+resetBtn: foorm.action
+```
+
+Handle the action event:
+
+```vue
+<template>
+  <OoForm :def="def" :form-data="formData" @submit="onSubmit" @action="onAction" />
+</template>
+
+<script setup lang="ts">
+function onAction(name: string, data: any) {
+  if (name === 'reset-password') {
+    // handle reset password
   }
 }
 </script>
 ```
 
-## API
+## API Reference
 
-### `useFoorm(Type)`
+### `useFoorm(type)`
 
-Composable that creates a form model and reactive data from an ATScript type.
+Creates a reactive form definition and data object from an ATScript annotated type.
 
 ```ts
-import { useFoorm } from '@foormjs/vue'
-import { MyForm } from './my-form.as'
-
-const { form, formData } = useFoorm(MyForm)
+const { def, formData } = useFoorm(MyFormType)
 ```
 
-Returns:
+- **`def`** — `FoormDef` with ordered fields, the source type, and a flatMap
+- **`formData`** — Vue `reactive()` object with default values from the schema
 
-- `form` -- `TFoormModel` object with fields, title, and submit config
-- `formData` -- Vue `reactive()` object initialized from field defaults
+### `OoForm`
 
-### `OoForm` Props
+Renderless form wrapper component.
 
-| Prop              | Type                        | Description                                  |
-| ----------------- | --------------------------- | -------------------------------------------- |
-| `form`            | `TFoormModel`               | Form model (required)                        |
-| `formData`        | `object`                    | Reactive form data (auto-created if omitted) |
-| `formContext`     | `object`                    | External context for computed functions      |
-| `firstValidation` | `'on-blur' \| 'on-submit'`  | When to trigger first validation             |
-| `components`      | `Record<string, Component>` | Named component map for `@foorm.component`   |
-| `types`           | `Record<string, Component>` | Type-based component map                     |
-| `errors`          | `Record<string, string>`    | External validation errors                   |
+**Props:**
 
-### `OoForm` Events
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `def` | `FoormDef` | Yes | Form definition from `useFoorm()` or `createFoormDef()` |
+| `formData` | `object` | No | Reactive form data (created internally if omitted) |
+| `formContext` | `object` | No | External context for computed functions and validators |
+| `firstValidation` | `'on-blur' \| 'on-change' \| 'on-submit'` | No | When to trigger first validation |
+| `components` | `Record<string, Component>` | No | Named components (matched by `@foorm.component`) |
+| `types` | `Record<string, Component>` | No | Type-based components (matched by field type) |
+| `errors` | `Record<string, string>` | No | External error messages (e.g. server-side) |
 
-| Event                | Payload          | Description                                                    |
-| -------------------- | ---------------- | -------------------------------------------------------------- |
-| `submit`             | `formData`       | Emitted when the form passes validation and is submitted       |
-| `action`             | `name, formData` | Emitted when an action button is clicked                       |
-| `unsupported-action` | `name, formData` | Emitted when an action is clicked but not defined in the model |
+**Events:**
 
-### `OoForm` Slots
+| Event | Payload | Description |
+|---|---|---|
+| `submit` | `formData` | Emitted on valid form submission |
+| `action` | `name, formData` | Emitted when an action button is clicked (supported alt action) |
+| `unsupported-action` | `name, formData` | Emitted for unrecognized action names |
 
-| Slot           | Props                                              | Description                                    |
-| -------------- | -------------------------------------------------- | ---------------------------------------------- |
-| `form.header`  | `title, clearErrors, reset, formContext, disabled` | Before all fields (default: `<h2>` with title) |
-| `form.before`  | `clearErrors, reset`                               | After header, before fields                    |
-| `field:{type}` | All field props (see below)                        | Override renderer for a field type             |
-| `form.after`   | `clearErrors, reset, disabled, formContext`        | After fields, before submit                    |
-| `form.submit`  | `disabled, text, clearErrors, reset, formContext`  | Submit button                                  |
-| `form.footer`  | `disabled, clearErrors, reset, formContext`        | After submit button                            |
+**Slots:**
 
-### Field Slot Props
-
-Every field slot (`#field:text`, `#field:select`, etc.) receives:
-
-| Prop           | Type                      | Description                                                 |
-| -------------- | ------------------------- | ----------------------------------------------------------- |
-| `model`        | `{ value: V }`            | Two-way binding (use `v-model="field.model.value"`)         |
-| `onBlur`       | `Function`                | Call on blur to trigger validation                          |
-| `error`        | `string \| undefined`     | Current validation error                                    |
-| `label`        | `string`                  | Evaluated label                                             |
-| `description`  | `string`                  | Evaluated description                                       |
-| `hint`         | `string`                  | Evaluated hint                                              |
-| `placeholder`  | `string`                  | Evaluated placeholder                                       |
-| `options`      | `TFoormEntryOptions[]`    | Options for select/radio                                    |
-| `classes`      | `Record<string, boolean>` | CSS class object (includes `error`, `disabled`, `required`) |
-| `styles`       | `string \| Record`        | Inline styles                                               |
-| `disabled`     | `boolean`                 | Evaluated disabled state                                    |
-| `hidden`       | `boolean`                 | Evaluated hidden state                                      |
-| `readonly`     | `boolean`                 | Evaluated readonly state                                    |
-| `optional`     | `boolean`                 | Evaluated optional state                                    |
-| `required`     | `boolean`                 | Inverse of optional                                         |
-| `type`         | `string`                  | Field type                                                  |
-| `vName`        | `string`                  | HTML `name` attribute                                       |
-| `field`        | `string`                  | Field identifier                                            |
-| `altAction`    | `string`                  | Action name (for action fields)                             |
-| `autocomplete` | `string`                  | HTML autocomplete value                                     |
-| `maxLength`    | `number`                  | Max length constraint                                       |
-| `formData`     | `object`                  | Full form data                                              |
-| `formContext`  | `object`                  | Form context                                                |
-| `attrs`        | `Record`                  | Custom attributes (evaluated, can be used with `v-bind`)    |
+| Slot | Scope | Description |
+|---|---|---|
+| `field:{type}` | Field bindings | Override rendering for a specific field type |
+| `form.header` | `{ title, clearErrors, reset, formContext, disabled }` | Before fields |
+| `form.before` | `{ clearErrors, reset }` | After header, before fields |
+| `form.after` | `{ clearErrors, reset, disabled, formContext }` | After fields, before submit |
+| `form.submit` | `{ text, disabled, clearErrors, reset, formContext }` | Submit button |
+| `form.footer` | `{ disabled, clearErrors, reset, formContext }` | After submit |
 
 ### `OoField`
 
-Renderless field wrapper (used internally by `OoForm`, but available for advanced usage). Wraps `VuilessField` from `vuiless-forms`, evaluating all computed properties and exposing resolved values through its default slot.
+Renderless field wrapper (used internally by `OoForm`, can also be used standalone).
+
+**Props:**
+
+| Prop | Type | Description |
+|---|---|---|
+| `field` | `FoormFieldDef` | Field definition from `def.fields` |
+| `error` | `string?` | External error message |
+
+**Default Slot Bindings:** All `TFoormComponentProps` fields plus `classes`, `styles`, `value` (phantom), `vName`, `attrs`.
 
 ### `TFoormComponentProps`
 
-TypeScript interface for custom field components. Implement this when building reusable field components:
+TypeScript interface for custom field components. See the "Building a Custom Component" section above.
 
-```ts
-import type { TFoormComponentProps } from '@foormjs/vue'
-
-// Your component receives these props:
-defineProps<TFoormComponentProps<string, MyFormData, MyContext>>()
-```
-
-## Built-in Field Renderers
-
-`OoForm` includes default renderers for all standard field types:
-
-| Type                         | Renders as                | Notes                                     |
-| ---------------------------- | ------------------------- | ----------------------------------------- |
-| `text`, `password`, `number` | `<input>`                 | With label, description, error/hint       |
-| `select`                     | `<select>`                | With placeholder as disabled first option |
-| `radio`                      | Radio group               | Vertical layout with labels               |
-| `checkbox`                   | `<input type="checkbox">` | Label beside the checkbox                 |
-| `paragraph`                  | `<p>`                     | Description text, no input                |
-| `action`                     | `<button>`                | Emits action event on click               |
-
-Includes minimal CSS that you can override or replace entirely.
-
-## Rendering Priority
-
-For each field, `OoForm` tries renderers in this order:
-
-1. **Named component** -- `@foorm.component` + `components` prop
-2. **Type component** -- field type + `types` prop
-3. **Scoped slot** -- `#field:{type}` slot
-4. **Built-in default** -- standard HTML renderer
-5. **Error message** -- "Not supported field type" fallback
-
-## Vite Configuration
-
-Add ATScript support to your Vite config:
-
-```ts
-// vite.config.ts
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import atscript from 'unplugin-atscript'
-
-export default defineConfig({
-  plugins: [atscript.vite(), vue()],
-})
-```
-
-And configure ATScript:
-
-```ts
-// atscript.config.ts
-import { defineConfig } from '@atscript/core'
-import ts from '@atscript/typescript'
-import { foormPlugin } from '@foormjs/atscript/plugin'
-
-export default defineConfig({
-  rootDir: 'src',
-  plugins: [ts(), foormPlugin()],
-})
-```
+For ATScript documentation, see [atscript.moost.org](https://atscript.moost.org).
 
 ## License
 

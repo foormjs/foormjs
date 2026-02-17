@@ -1,273 +1,283 @@
 # foorm
 
-Core form model for building validatable, reactive forms in any JavaScript environment.
-
-Forms are more than just inputs on a screen. They have conditional logic, validation rules that depend on other fields, labels that change based on context, and fields that appear or disappear based on user input. `foorm` captures all of this in a single, portable model where every property can be either a static value or a computed function. The same model works on the server for validation and on the client for rendering, with zero framework dependencies.
+ATScript-first form model with validation. Define forms declaratively in `.as` files — fields, labels, validators, computed properties, and options — then create type-safe form definitions and validators at runtime.
 
 ## Install
 
 ```bash
-npm install foorm
+pnpm add foorm @atscript/typescript
 # or
-pnpm add foorm
+npm install foorm @atscript/typescript
 ```
+
+`@atscript/typescript` is a peer dependency required for type inference and validation utilities.
 
 ## Quick Start
 
-Define a form model and validate it:
+### 1. Configure ATScript
 
 ```ts
-import { createFormData, getFormValidator } from 'foorm'
-import type { TFoormModel } from 'foorm'
+// atscript.config.ts
+import { defineConfig } from '@atscript/core'
+import ts from '@atscript/typescript'
+import { foormPlugin } from 'foorm/plugin'
 
-const form: TFoormModel = {
-  title: 'Registration',
-  submit: { text: 'Create Account' },
-  fields: [
-    {
-      field: 'email',
-      type: 'text',
-      label: 'Email',
-      optional: false,
-      disabled: false,
-      hidden: false,
-      validators: [
-        s => !!s.v || 'Email is required',
-        s => String(s.v).includes('@') || 'Must be a valid email',
-      ],
-    },
-    {
-      field: 'age',
-      type: 'number',
-      label: 'Age',
-      optional: false,
-      disabled: false,
-      hidden: false,
-      validators: [
-        s => !!s.v || 'Age is required',
-        s => Number(s.v) >= 18 || 'Must be 18 or older',
-      ],
-    },
-  ],
-}
-
-// Create initial data from field defaults
-const data = createFormData(form.fields)
-// => { email: undefined, age: undefined }
-
-// Validate the entire form
-const validator = getFormValidator(form)
-const result = validator({ email: 'alice@example.com', age: 25 })
-// => { passed: true, errors: {} }
+export default defineConfig({
+  rootDir: 'src',
+  plugins: [ts(), foormPlugin()],
+})
 ```
 
-## Computed Properties
+### 2. Define a form schema
 
-The core idea behind foorm is `TComputed<T>` -- any field property can be either a static value or a function that reacts to form state:
-
-```ts
-import type { TFoormField } from 'foorm'
-
-const passwordField: TFoormField = {
-  field: 'password',
-  type: 'password',
-  label: 'Password',
-  optional: false,
-  disabled: false,
-  hidden: false,
-  readonly: false,
-
-  // Static placeholder
-  placeholder: 'Enter a strong password',
-
-  // Computed: disabled until name is filled
-  disabled: scope => !scope.data.name,
-
-  // Computed: hint changes based on value
-  hint: scope =>
-    scope.v ? `${8 - String(scope.v).length} more characters needed` : 'At least 8 characters',
-
-  // Custom attributes for testing or accessibility
-  attrs: {
-    'data-testid': 'password-input',
-    'aria-describedby': scope => scope.data.name ? 'password-requirements' : undefined,
-  },
-
-  validators: [
-    s => !!s.v || 'Password is required',
-    s => String(s.v).length >= 8 || 'At least 8 characters',
-  ],
-}
-```
-
-Every computed function receives a `TFoormFnScope` object:
-
-```ts
-interface TFoormFnScope {
-  v?: unknown // Current field value
-  data: Record<string, unknown> // All form data
-  context: Record<string, unknown> // External context (user info, locale, etc.)
-  entry?: TFoormFieldEvaluated // Evaluated field metadata
-}
-```
-
-The `context` object is your escape hatch for passing in external data -- user roles, locale strings, API-fetched options -- anything the form needs but doesn't own.
-
-## Using with ATScript
-
-While you can build `TFoormModel` objects by hand, the recommended approach is to use `@foormjs/atscript` to define forms declaratively in `.as` files:
+Create a `.as` file with ATScript annotations:
 
 ```
-@foorm.fn.title '(data) => "Hello, " + (data.name || "stranger")'
+@foorm.title 'Registration'
 @foorm.submit.text 'Register'
 export interface RegistrationForm {
-    @meta.label 'Name'
-    @foorm.validate '(v) => !!v || "Name is required"'
-    name: string
+    @meta.label 'First Name'
+    @meta.placeholder 'John'
+    @foorm.autocomplete 'given-name'
+    @foorm.validate '(v) => !!v || "First name is required"'
+    @foorm.order 1
+    firstName: string
+
+    @meta.label 'Email'
+    @foorm.autocomplete 'email'
+    @foorm.order 2
+    email?: string.email
 
     @meta.label 'Country'
+    @meta.placeholder 'Select a country'
     @foorm.options 'United States', 'us'
     @foorm.options 'Canada', 'ca'
+    @foorm.order 3
     country?: foorm.select
+
+    @meta.label 'I agree to terms'
+    @foorm.order 4
+    agreeToTerms: foorm.checkbox
 }
 ```
 
-Then convert it to a runtime model:
+### 3. Create a form definition and validate
 
 ```ts
-import { createFoorm } from '@foormjs/atscript'
-import { RegistrationForm } from './registration.as'
+import { createFoormDef, createFormData, getFormValidator } from 'foorm'
+import { RegistrationForm } from './registration-form.as'
 
-const form = createFoorm(RegistrationForm)
+// Create the form definition
+const def = createFoormDef(RegistrationForm)
+
+// Create reactive data with defaults
+const data = createFormData(RegistrationForm, def.fields)
+
+// Validate
+const validate = getFormValidator(def)
+const { passed, errors } = validate(data)
 ```
 
-See [`@foormjs/atscript`](../atscript) for the full annotation reference.
+## Advanced Usage
+
+### Computed Properties
+
+Any field property can be made dynamic with `@foorm.fn.*` annotations. The function receives `(value, data, context, entry)`:
+
+```
+@meta.label 'Email'
+@foorm.fn.label '(v, data) => data.firstName ? data.firstName + "s Email" : "Email"'
+@foorm.fn.disabled '(v, data) => !data.firstName'
+@foorm.fn.placeholder '(v, data) => data.firstName ? data.firstName + "@example.com" : "you@example.com"'
+email?: string.email
+```
+
+Form-level computed properties receive `(data, context)`:
+
+```
+@foorm.fn.title '(data) => "Welcome, " + (data.firstName || "stranger")'
+@foorm.fn.submit.disabled '(data) => !data.firstName || !data.email'
+export interface MyForm {
+    ...
+}
+```
+
+### Custom Validators
+
+Use `@foorm.validate` for custom validation logic. The function returns `true` for pass or an error message string:
+
+```
+@foorm.validate '(v) => !!v || "This field is required"'
+@foorm.validate '(v) => v.length >= 3 || "Must be at least 3 characters"'
+firstName: string
+```
+
+Validators can also access the full form data and context:
+
+```
+@foorm.validate '(v, data) => v !== data.firstName || "Cannot match first name"'
+lastName: string
+```
+
+ATScript's built-in `@expect.*` validators also work alongside foorm validators:
+
+```
+@expect.min 18, 'Must be 18 or older'
+@expect.maxLength 100
+age: number
+```
+
+### Form Context
+
+Pass external data to computed functions and validators via context:
+
+```ts
+const validate = getFormValidator(def, {
+  context: { maxAge: 120, allowedDomains: ['example.com'] },
+})
+```
+
+Context is available as the third argument in function strings:
+
+```
+@foorm.fn.options '(v, data, ctx) => ctx.cityOptions || []'
+city?: foorm.select
+```
+
+### Custom Attributes
+
+Pass arbitrary attributes to rendered components:
+
+```
+// Static attributes
+@foorm.attr 'data-testid', 'username-input'
+@foorm.attr 'aria-label', 'Username field'
+
+// Computed attributes
+@foorm.fn.attr 'data-valid', '(v) => v && v.length >= 3 ? "true" : "false"'
+username?: string
+```
+
+### Foorm Primitives
+
+Foorm provides special primitive types for non-data UI elements:
+
+| Primitive | Description |
+|---|---|
+| `foorm.action` | Button that triggers an alternate action (not a data field) |
+| `foorm.paragraph` | Read-only text content |
+| `foorm.select` | Dropdown select (string value) |
+| `foorm.radio` | Radio button group (string value) |
+| `foorm.checkbox` | Boolean checkbox toggle |
+
+```
+@meta.label 'Reset Password'
+@foorm.altAction 'reset-password'
+resetBtn: foorm.action
+
+@foorm.value 'Please fill out the form below.'
+info: foorm.paragraph
+```
+
+### Plugin Configuration
+
+Register extra field types and custom component names for IDE autocomplete:
+
+```ts
+foormPlugin({
+  extraTypes: ['color', 'rating', 'date-range'],
+  components: ['CustomStarInput', 'ColorPicker'],
+})
+```
+
+### Resolving Field Properties at Runtime
+
+Use resolve utilities to read metadata on demand from a field's ATScript prop:
+
+```ts
+import { resolveFieldProp, resolveOptions, resolveAttrs } from 'foorm'
+
+const scope = { v: currentValue, data: formData, context, entry }
+
+// Resolve a single property (checks fn first, then static)
+const label = resolveFieldProp<string>(field.prop, 'foorm.fn.label', 'meta.label', scope)
+
+// Resolve select/radio options
+const options = resolveOptions(field.prop, scope)
+
+// Resolve custom attributes
+const attrs = resolveAttrs(field.prop, scope)
+```
 
 ## API Reference
 
-### `createFormData(fields)`
+### Core
 
-Creates an initial data object from field definitions. Each field's `value` property becomes the default. Non-data fields (`action`, `paragraph`) are excluded.
+| Export | Description |
+|---|---|
+| `createFoormDef(type)` | Converts an ATScript annotated type into a `FoormDef` with ordered fields |
+| `createFormData(type, fields)` | Creates a data object with defaults from the schema |
+| `getFormValidator(def, opts?)` | Returns a reusable `(data) => { passed, errors }` validator function |
+| `supportsAltAction(def, action)` | Checks if any field supports a given alternate action |
 
-```ts
-const data = createFormData(form.fields)
-// => { email: undefined, name: 'Default Name', ... }
-```
+### Resolve Utilities
 
-### `getFormValidator(model, context?)`
+| Export | Description |
+|---|---|
+| `resolveFieldProp(prop, fnKey, staticKey, scope, opts?)` | Resolves a field-level metadata value (fn or static) |
+| `resolveFormProp(type, fnKey, staticKey, scope, opts?)` | Resolves a form-level metadata value (fn or static) |
+| `resolveOptions(prop, scope)` | Resolves `@foorm.options` / `@foorm.fn.options` |
+| `resolveAttrs(prop, scope)` | Resolves `@foorm.attr` / `@foorm.fn.attr` |
+| `getFieldMeta(prop, key)` | Reads a static metadata value from a field prop |
+| `hasComputedAnnotations(prop)` | Returns true if the field has any `@foorm.fn.*` annotations |
+| `parseStaticOptions(raw)` | Normalizes raw options metadata into `TFoormEntryOptions[]` |
 
-Returns a reusable validator function for the entire form. The validator evaluates computed constraints per field, skips disabled/hidden fields, enforces required checks, then runs custom validators.
+### General Utilities
 
-```ts
-const validate = getFormValidator(form, { locale: 'en' })
+| Export | Description |
+|---|---|
+| `evalComputed(value, scope)` | Resolves a `TComputed<T>` value (static or function) |
+| `getByPath(obj, path)` | Gets a nested value by dot-separated path |
+| `setByPath(obj, path, value)` | Sets a nested value by dot-separated path |
 
-const result = validate(formData)
-// => { passed: false, errors: { email: 'Email is required' } }
-```
+### Function Compilers
 
-Validation order per field:
+| Export | Description |
+|---|---|
+| `compileFieldFn(fnStr)` | Compiles a `@foorm.fn.*` function string (field-level) |
+| `compileTopFn(fnStr)` | Compiles a `@foorm.fn.*` function string (form-level) |
+| `compileValidatorFn(fnStr)` | Compiles a `@foorm.validate` function string |
 
-1. Skip if field type is `action` or `paragraph`
-2. Evaluate `disabled`, `optional`, `hidden` (may be computed)
-3. Skip if disabled or hidden
-4. If not optional and value is falsy, return `"Required"` error
-5. Run custom validators in order, stop on first failure
+### Validator Plugin
 
-### `validate(validators, scope)`
+| Export | Description |
+|---|---|
+| `foormValidatorPlugin(opts?)` | Creates an ATScript validator plugin for foorm annotations |
 
-Validates a single field by running its validators in sequence. Returns on first failure.
+### Types
 
-```ts
-import { validate } from 'foorm'
+| Export | Description |
+|---|---|
+| `FoormDef` | Complete form definition (type, fields, flatMap) |
+| `FoormFieldDef` | Single field definition (path, prop, type, phantom, name, allStatic) |
+| `TFoormFnScope` | Scope object passed to computed functions (`v`, `data`, `context`, `entry`) |
+| `TFoormFieldEvaluated` | Evaluated field snapshot passed as `entry` in scope |
+| `TFoormEntryOptions` | Option for select/radio fields (`string` or `{ key, label }`) |
+| `TComputed<T>` | A value that is either static or a function of scope |
+| `TResolveOptions<T>` | Options for resolve utilities (staticAsBoolean, transform) |
+| `TFoormPluginOptions` | Validator plugin options (skipDisabledHidden, checkRequired) |
+| `TFoormValidatorContext` | Per-call validator context (data, context) |
 
-const result = validate(field.validators, { v: 'test', data, context: {} })
-if (!result.passed) {
-  console.log(result.error) // "Too short"
-}
-```
+### Build-time Plugin
 
-### `evalComputed(value, scope)`
+| Export | Description |
+|---|---|
+| `foormPlugin(opts?)` | ATScript plugin for `@foorm.*` annotations and primitives |
+| `TFoormPluginOptions` | Plugin options (extraTypes, components) |
+| `annotations` | Raw annotation definitions tree |
+| `primitives` | Raw primitive definitions |
 
-Resolves a `TComputed<T>` value. If it's a function, calls it with the scope. Otherwise returns the static value.
-
-```ts
-import { evalComputed } from 'foorm'
-
-evalComputed('Hello', scope) // => 'Hello'
-evalComputed(s => `Hi ${s.data.name}`, scope) // => 'Hi Alice'
-```
-
-### `supportsAltAction(model, actionName)`
-
-Checks if any field in the model declares the given alternate action name.
-
-```ts
-if (supportsAltAction(form, 'save-draft')) {
-  // Show "Save Draft" button
-}
-```
-
-## Types
-
-### `TFoormModel`
-
-The complete form model:
-
-```ts
-interface TFoormModel {
-  title?: TComputed<string>
-  submit: TFoormSubmit
-  fields: TFoormField[]
-}
-```
-
-### `TFoormField`
-
-A single field definition. All description and constraint properties support `TComputed<T>`:
-
-| Property       | Type                                           | Description                                                       |
-| -------------- | ---------------------------------------------- | ----------------------------------------------------------------- |
-| `field`        | `string`                                       | Field identifier (required)                                       |
-| `type`         | `string`                                       | Input type: text, password, number, select, radio, checkbox, etc. |
-| `label`        | `TComputed<string>`                            | Field label                                                       |
-| `description`  | `TComputed<string>`                            | Descriptive text below the label                                  |
-| `hint`         | `TComputed<string>`                            | Hint text (shown when no error)                                   |
-| `placeholder`  | `TComputed<string>`                            | Input placeholder                                                 |
-| `optional`     | `TComputed<boolean>`                           | Whether the field is optional                                     |
-| `disabled`     | `TComputed<boolean>`                           | Whether the field is disabled                                     |
-| `hidden`       | `TComputed<boolean>`                           | Whether the field is hidden                                       |
-| `readonly`     | `TComputed<boolean>`                           | Whether the field is read-only (visible but not editable)         |
-| `classes`      | `TComputed<string \| Record<string, boolean>>` | CSS classes                                                       |
-| `styles`       | `TComputed<string \| Record<string, string>>`  | Inline styles                                                     |
-| `options`      | `TComputed<TFoormEntryOptions[]>`              | Options for select/radio fields                                   |
-| `value`        | `TComputed<unknown>`                           | Default or computed value                                         |
-| `attrs`        | `Record<string, TComputed<unknown>>`           | Custom attributes passed to field components                      |
-| `validators`   | `Array<(scope) => boolean \| string>`          | Validation functions                                              |
-| `component`    | `string`                                       | Named component override                                          |
-| `autocomplete` | `string`                                       | HTML autocomplete attribute                                       |
-| `altAction`    | `string`                                       | Alternate submit action name                                      |
-| `order`        | `number`                                       | Rendering order                                                   |
-| `name`         | `string`                                       | Field name (defaults to field identifier)                         |
-| `maxLength`    | `number`                                       | HTML maxlength constraint                                         |
-| `minLength`    | `number`                                       | HTML minlength constraint                                         |
-| `min`          | `number`                                       | HTML min constraint                                               |
-| `max`          | `number`                                       | HTML max constraint                                               |
-
-### `TFoormEntryOptions`
-
-Options for select and radio fields. Can be a simple string (used as both key and display label) or an object:
-
-```ts
-type TFoormEntryOptions = string | { key: string; label: string }
-```
-
-### `TComputed<T>`
-
-The union type that powers reactive properties:
-
-```ts
-type TComputed<T> = T | ((scope: TFoormFnScope) => T)
-```
+For ATScript documentation, see [atscript.moost.org](https://atscript.moost.org).
 
 ## License
 

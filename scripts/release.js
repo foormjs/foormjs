@@ -2,7 +2,7 @@ import fs from 'node:fs'
 
 import execa from 'execa'
 import minimist from 'minimist'
-import path from 'path'
+import path from 'node:path'
 import semver from 'semver'
 
 import { __dirname, out, packages, require, version as currentVersion } from './utils.js'
@@ -32,7 +32,6 @@ const versionIncrements = [
 ]
 
 const inc = i => semver.inc(currentVersion, i, preId)
-const bin = name => path.resolve(__dirname, `../node_modules/.bin/${name}`)
 const run = (bin, args, opts = {}) => execa(bin, args, { stdio: 'inherit', ...opts })
 const dryRun = (bin, args, opts = {}) => out.info(`[dryrun] ${bin} ${args.join(' ')}`, opts)
 const runIfNotDry = isDryRun ? dryRun : run
@@ -46,7 +45,7 @@ async function main() {
       type: 'select',
       name: 'release',
       message: 'Select release type',
-      choices: versionIncrements.map(i => `${i} (${inc(i)})`).concat(['custom']),
+      choices: [...versionIncrements.map(i => `${i} (${inc(i)})`), 'custom'],
     })
 
     if (release === 'custom') {
@@ -134,7 +133,7 @@ function updateVersions(version) {
   // 1. update root package.json
   updatePackage(path.resolve(__dirname, '..', 'package.json'), version)
   // 2. update all workspace packages
-  packages.forEach(p => updatePackage(p.pkgPath, version))
+  for (const p of packages) updatePackage(p.pkgPath, version)
 }
 
 function updatePackage(pkgPath, version) {

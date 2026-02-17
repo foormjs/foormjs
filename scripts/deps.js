@@ -1,7 +1,7 @@
 import { dye } from '@prostojs/dye'
 
 import { PROJECT } from './constants.js'
-import { packages, require } from './utils.js'
+import { packages } from './utils.js'
 
 const print = {
   header: dye('bold', 'bg-cyan').prefix(' '.repeat(5)).suffix(' '.repeat(5)).attachConsole(),
@@ -19,21 +19,21 @@ function run() {
     print.header(name)
     if (pkg.dependencies) {
       print.subHeader('dependencies')
-      Object.entries(pkg.dependencies)
-        .map(e => [e[0], print.gray(e[1])].join('\t'))
-        .forEach(i => (i.startsWith(`@${PROJECT}js`) ? print.item2(i) : print.item(i)))
+      for (const i of Object.entries(pkg.dependencies).map(e => [e[0], print.gray(e[1])].join('\t'))) {
+        if (i.startsWith(`@${PROJECT}js`)) { print.item2(i) } else { print.item(i) }
+      }
     }
     if (pkg.devDependencies) {
       print.subHeader('devDependencies')
-      Object.entries(pkg.devDependencies)
-        .map(e => [e[0], print.gray(e[1])].join('\t'))
-        .forEach(i => (i.startsWith(`@${PROJECT}js`) ? print.item2(i) : print.item(i)))
+      for (const i of Object.entries(pkg.devDependencies).map(e => [e[0], print.gray(e[1])].join('\t'))) {
+        if (i.startsWith(`@${PROJECT}js`)) { print.item2(i) } else { print.item(i) }
+      }
     }
     if (pkg.peerDependencies) {
       print.subHeader('peerDependencies')
-      Object.entries(pkg.peerDependencies)
-        .map(e => [e[0], print.gray(e[1])].join('\t'))
-        .forEach(i => (i.startsWith(`@${PROJECT}js`) ? print.item2(i) : print.item(i)))
+      for (const i of Object.entries(pkg.peerDependencies).map(e => [e[0], print.gray(e[1])].join('\t'))) {
+        if (i.startsWith(`@${PROJECT}js`)) { print.item2(i) } else { print.item(i) }
+      }
     }
     console.log()
   }

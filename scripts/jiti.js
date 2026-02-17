@@ -1,9 +1,9 @@
 import execa from 'execa'
 import minimist from 'minimist'
-import path from 'path'
+import path from 'node:path'
 
 import { PROJECT } from './constants.js'
-import { __dirname, packages, require } from './utils.js'
+import { __dirname, packages } from './utils.js'
 
 const args = minimist(process.argv.slice(2))
 
@@ -14,19 +14,19 @@ const alias = {
 }
 
 const origArgs = process.argv.slice(2)
-const passIndex = origArgs.findIndex(a => a == '--') + 1
+const passIndex = origArgs.indexOf('--') + 1
 let toPass = []
 if (passIndex) {
   toPass = origArgs.slice(passIndex)
 }
 
-packages.forEach(({ name, shortName }) => {
+for (const { name, shortName } of packages) {
   if (args.dev) {
     alias[name] = path.join(__dirname, '..', 'packages', shortName, 'src', 'index.ts')
   } else {
     alias[name] = path.join(__dirname, '..', 'packages', shortName, 'dist', 'index.mjs')
   }
-})
+}
 
 // const pwd = process.cwd()
 // const jiti = require('jiti')(pwd)

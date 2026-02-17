@@ -11,6 +11,7 @@ import vue from '@vitejs/plugin-vue'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     atscript.vite() as any,
     vue(),
     dts({
@@ -24,7 +25,6 @@ export default defineConfig({
           let content = readFileSync(dtsPath, 'utf-8')
           // Replace relative paths to workspace packages with module names
           content = content.replaceAll(/from ['"]\.\.\/\.\.\/\.\.\/foorm\/src['"]/g, "from 'foorm'")
-          content = content.replaceAll(/from ['"]\.\.\/\.\.\/\.\.\/atscript\/src['"]/g, "from '@foormjs/atscript'")
           content = content.replaceAll(/from ['"]@atscript\/typescript\/utils['"]/g, "from '@atscript/typescript'")
           writeFileSync(dtsPath, content)
         }
@@ -42,7 +42,6 @@ export default defineConfig({
         'vue',
         'vuiless-forms',
         'foorm',
-        '@foormjs/atscript',
         '@atscript/core',
         '@atscript/typescript',
       ],

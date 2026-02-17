@@ -3,8 +3,10 @@ import OoForm from '@/components/oo-form.vue'
 import CustomStarInput from '@/components/custom-star-input.vue'
 import { useFoorm } from '@/composables/use-foorm'
 import { E2eTestForm } from './forms/e2e-test-form.as'
+import { NestedForm } from './forms/nested-form.as'
 
-const { form, formData } = useFoorm(E2eTestForm)
+const { def, formData } = useFoorm(E2eTestForm)
+const { def: nestedDef, formData: nestedFormData } = useFoorm(NestedForm)
 
 const formContext = {
   cityOptions: [
@@ -37,13 +39,20 @@ function handleAction(name: string, d: unknown) {
   <main style="width: 100%">
     <OoForm
       class="form"
-      :form="form"
+      :def="def"
       :form-data="formData"
       :form-context="formContext"
       :components="customComponents"
       first-validation="on-blur"
       @submit="handleSubmit"
       @action="handleAction"
+    />
+    <OoForm
+      class="form"
+      :def="nestedDef"
+      :form-data="nestedFormData"
+      first-validation="on-blur"
+      @submit="handleSubmit"
     />
   </main>
 </template>
@@ -54,6 +63,7 @@ main {
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  gap: 24px;
   padding: 48px 16px;
 }
 

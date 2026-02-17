@@ -1,9 +1,6 @@
 import type { TAnnotationsTree, TAtscriptPlugin } from '@atscript/core'
 import { AnnotationSpec } from '@atscript/core'
 
-export { annotations } from './annotations'
-export { primitives } from './primitives'
-
 import { annotations } from './annotations'
 import { primitives } from './primitives'
 
@@ -35,6 +32,27 @@ const BUILTIN_TYPES = [
   'action',
 ]
 
+/**
+ * Creates an ATScript plugin that registers foorm annotations and primitives.
+ *
+ * @param opts - Optional configuration for extra field types and custom component names
+ * @returns An ATScript plugin for use in `atscript.config.ts`
+ *
+ * @example
+ * ```ts
+ * // atscript.config.ts
+ * import { foormPlugin } from 'foorm/plugin'
+ *
+ * export default {
+ *   plugins: [
+ *     foormPlugin({
+ *       extraTypes: ['color', 'rating'],
+ *       components: ['CustomStarInput', 'ColorPicker'],
+ *     }),
+ *   ],
+ * }
+ * ```
+ */
 export function foormPlugin(opts?: TFoormPluginOptions): TAtscriptPlugin {
   return {
     name: 'foorm',

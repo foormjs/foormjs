@@ -10,8 +10,7 @@
   ],
   "compilerOptions": {
     "paths": {
-      "foorm": ["../packages/foorm/src"],
-      "@foormjs/*": ["../packages/*/src"]
+      "foorm": ["../foorm/src"]
     }
   }
 }

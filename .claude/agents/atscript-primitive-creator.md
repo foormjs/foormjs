@@ -9,55 +9,32 @@ You are an expert ATScript developer specializing in creating custom primitives 
 
 ## What ATScript Primitives Are
 
-ATScript primitives are semantic type extensions that add domain-specific meaning to base types (`string`, `number`, `boolean`). They use dot-notation syntax (e.g., `string.email`, `number.percentage`, `string.uuid`) and carry implicit validation constraints — no `@expect.*` annotations needed at the field level.
+ATScript primitives are semantic type extensions that add domain-specific meaning to base types (`string`, `number`, `boolean`, `phantom`). They use dot-notation syntax (e.g., `string.email`, `number.percentage`, `string.uuid`) and carry implicit validation constraints — no `@expect.*` annotations needed at the field level.
 
 **Built-in primitives include:**
 
-- `string.email` — email format
-- `string.uuid` — UUID format
-- `number.positive` — positive numbers
-- `number.int` — integers
+- **String**: `string.email`, `string.uuid`, `string.phone`, `string.date`, `string.isoDate`
+- **Number**: `number.int`, `number.positive`, `number.negative`, `number.single`, `number.double`, `number.timestamp`
+- **Boolean**: `boolean.true`, `boolean.false`
+- **Phantom**: `phantom` — non-data elements for UI (excluded from types, validation, schema)
 
-**Custom primitives** extend these with project-specific semantic types defined in `atscript.config.js`.
+**Custom primitives** extend these with project-specific semantic types or define entirely new namespaces (including phantom families).
 
 ## How Custom Primitives Work
 
-Custom primitives are defined under the `primitives` key in `atscript.config.js`. They are organized by base type, and each extension declares its TS type, documentation, and implicit validation constraints.
-
-### Configuration Structure
-
-```js
-// atscript.config.js
-import { defineConfig } from '@atscript/core'
-import ts from '@atscript/typescript'
-
-export default defineConfig({
-  rootDir: 'src',
-  plugins: [ts()],
-  primitives: {
-    // Base type → extensions
-    baseType: {
-      extensions: {
-        extensionName: {
-          type: 'string' | 'number' | 'boolean',
-          documentation: 'Description shown in IntelliSense',
-          expect: {
-            // Implicit validation constraints (same keys as @expect.* annotations)
-          },
-        },
-      },
-    },
-  },
-})
-```
+Custom primitives are defined under the `primitives` key in `atscript.config.js`. They support inheritance, nesting, container flags, and phantom namespaces.
 
 ### Extension Object Fields
 
-| Field           | Type                                | Required | Description                                                             |
-| --------------- | ----------------------------------- | -------- | ----------------------------------------------------------------------- |
-| `type`          | `'string' \| 'number' \| 'boolean'` | Yes      | The base TypeScript type. Must match the parent group key.              |
-| `documentation` | `string`                            | Yes      | Description shown in IntelliSense hover tooltips.                       |
-| `expect`        | `object`                            | No       | Implicit validation constraints — same keys as `@expect.*` annotations. |
+| Field           | Type                                      | Required | Description                                                             |
+| --------------- | ----------------------------------------- | -------- | ----------------------------------------------------------------------- |
+| `type`          | `'string' \| 'number' \| 'boolean' \| 'phantom'` | No | Base type. **Inherited from parent** if omitted.                       |
+| `documentation` | `string`                                  | No       | IntelliSense hover text. **Inherited from parent** if omitted.          |
+| `expect`        | `object`                                  | No       | Implicit validation constraints. **Merged with parent's** `expect`.     |
+| `extensions`    | `Record<string, ...>`                     | No       | Nested sub-extensions (e.g., `number.int.positive`).                    |
+| `isContainer`   | `boolean`                                 | No       | If `true`, cannot be used directly — one of its extensions must be chosen. |
+
+**Key:** Extensions automatically inherit `type`, `documentation`, `expect`, and `tags` from their parent primitive. You only need to specify fields you want to override or add.
 
 ### Available `expect` Constraint Keys
 
@@ -70,9 +47,9 @@ export default defineConfig({
 | `maxLength` | `string`, `array` | Maximum length                              |
 | `int`       | `number`          | Must be an integer (flag, use `true`)       |
 
-Additional keys follow whatever `@expect.*` annotations are supported in the project.
+**Note:** In plugin code, `pattern` can use actual `RegExp` objects. In `atscript.config.js`, use `[regexString, flags, errorMessage]` arrays.
 
-## Complete Configuration Example
+## Configuration Structure
 
 ```js
 import { defineConfig } from '@atscript/core'
@@ -91,26 +68,130 @@ export default defineConfig({
             pattern: ['^https?://.+$', '', 'Invalid URL format'],
           },
         },
+      },
+    },
+    number: {
+      extensions: {
+        percentage: {
+          type: 'number',
+          documentation: 'Percentage value (0-100)',
+          expect: { min: 0, max: 100 },
+        },
+      },
+    },
+  },
+})
+```
+
+## Inheritance and Nesting
+
+Extensions inherit everything from their parent. You only specify overrides:
+
+```js
+primitives: {
+  number: {
+    type: 'number',
+    extensions: {
+      int: {
+        documentation: 'Integer number',
+        expect: { int: true },
+        extensions: {
+          positive: {
+            documentation: 'Positive integer',
+            expect: { min: 0 },
+            // Inherits type: 'number' and expect.int: true from parent
+          },
+          negative: {
+            documentation: 'Negative integer',
+            expect: { max: 0 },
+          },
+        },
+      },
+    },
+  },
+}
+```
+
+Creates: `number.int`, `number.int.positive`, `number.int.negative`.
+
+## Custom Phantom Namespaces
+
+Create families of non-data UI elements with `type: 'phantom'`:
+
+```js
+primitives: {
+  ui: {
+    type: 'phantom',
+    isContainer: true,  // Cannot use 'ui' directly
+    documentation: 'Non-data UI elements for form rendering',
+    extensions: {
+      action: { documentation: 'An action element (button, link)' },
+      divider: { documentation: 'A visual divider between form sections' },
+      paragraph: { documentation: 'A block of informational text' },
+    },
+  },
+}
+```
+
+**Key points:**
+- `isContainer: true` prevents using the primitive directly; must choose an extension
+- Extensions inherit `type: 'phantom'` from parent — no need to repeat
+- Individual extensions can override back to a data type (e.g., `type: 'string'`)
+
+**Phantom behavior:**
+- Excluded from generated TypeScript class (emitted as comments)
+- Skipped by validation
+- Excluded from JSON Schema and serialization
+- Present in `type.props` Map with `designType: 'phantom'` at runtime
+- Carry distinct tags your renderer can use
+
+Usage:
+
+```atscript
+export interface CheckoutForm {
+    @meta.label 'Email'
+    email: string.email
+
+    @meta.label 'Shipping Address'
+    shippingHeader: ui.divider
+
+    @meta.label 'Apply coupon'
+    @component 'button'
+    applyCoupon: ui.action
+}
+```
+
+## Complete Configuration Example
+
+```js
+import { defineConfig } from '@atscript/core'
+import ts from '@atscript/typescript'
+
+export default defineConfig({
+  rootDir: 'src',
+  plugins: [ts()],
+  primitives: {
+    string: {
+      extensions: {
+        url: {
+          type: 'string',
+          documentation: 'A valid URL (http or https)',
+          expect: { pattern: ['^https?://.+$', '', 'Invalid URL format'] },
+        },
         slug: {
           type: 'string',
           documentation: 'URL-safe slug (lowercase alphanumeric and hyphens)',
-          expect: {
-            pattern: ['^[a-z0-9-]+$', '', 'Invalid slug format'],
-          },
+          expect: { pattern: ['^[a-z0-9-]+$', '', 'Invalid slug format'] },
         },
         phone: {
           type: 'string',
           documentation: 'International phone number format',
-          expect: {
-            pattern: ['^\\+[1-9]\\d{1,14}$', '', 'Invalid phone number (E.164 format)'],
-          },
+          expect: { pattern: ['^\\+[1-9]\\d{1,14}$', '', 'Invalid phone number (E.164 format)'] },
         },
         hex: {
           type: 'string',
           documentation: 'Hexadecimal color code',
-          expect: {
-            pattern: ['^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$', '', 'Invalid hex color'],
-          },
+          expect: { pattern: ['^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$', '', 'Invalid hex color'] },
         },
         ipv4: {
           type: 'string',
@@ -118,8 +199,7 @@ export default defineConfig({
           expect: {
             pattern: [
               '^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$',
-              '',
-              'Invalid IPv4 address',
+              '', 'Invalid IPv4 address',
             ],
           },
         },
@@ -130,199 +210,87 @@ export default defineConfig({
         percentage: {
           type: 'number',
           documentation: 'Percentage value (0-100)',
-          expect: {
-            min: 0,
-            max: 100,
-          },
+          expect: { min: 0, max: 100 },
         },
         port: {
           type: 'number',
           documentation: 'Network port number (1-65535)',
-          expect: {
-            int: true,
-            min: 1,
-            max: 65535,
-          },
+          expect: { int: true, min: 1, max: 65535 },
         },
         rating: {
           type: 'number',
           documentation: 'Rating value (1-5)',
-          expect: {
-            min: 1,
-            max: 5,
-          },
+          expect: { min: 1, max: 5 },
         },
+      },
+    },
+    foorm: {
+      type: 'phantom',
+      isContainer: true,
+      documentation: 'Form-specific non-data elements',
+      extensions: {
+        action: { documentation: 'An action element (button, link)' },
+        paragraph: { documentation: 'A block of informational text' },
+        select: { type: 'string', documentation: 'A select dropdown field' },
+        radio: { type: 'string', documentation: 'A radio button group' },
+        checkbox: { type: 'boolean', documentation: 'A checkbox field' },
       },
     },
   },
 })
 ```
 
-## Usage in .as Files
-
-After defining primitives in config, use them in `.as` files with dot-notation:
-
-```atscript
-export interface ServerConfig {
-    host: string.ipv4
-    port: number.port
-    baseUrl: string.url
-}
-
-export interface Product {
-    slug: string.slug
-    rating: number.rating
-    discount: number.percentage
-    supportPhone: string.phone
-    brandColor: string.hex
-}
-```
-
-Validation constraints are enforced **automatically** — no `@expect.*` annotations needed. The constraints defined in the primitive config are implicitly applied.
-
-### Combining with Annotations
-
-Primitives and annotations work together. You can still add explicit annotations on top of a primitive type:
-
-```atscript
-export interface Page {
-    @meta.label 'Page URL'
-    @meta.placeholder 'https://example.com'
-    url: string.url
-
-    @expect.minLength 3
-    @expect.maxLength 50
-    slug: string.slug
-}
-```
-
 ## Runtime Behavior
 
 ### Validation
 
-Custom primitives automatically inject their `expect` constraints into the validator:
+Custom primitives automatically inject their `expect` constraints:
 
 ```typescript
 import { ServerConfig } from './server-config.as'
 
 const validator = ServerConfig.validator()
-
-// This will fail — port out of range
 validator.validate({ host: '10.0.0.1', port: 99999, baseUrl: 'https://example.com' })
 // ValidatorError: Expected maximum 65535
-
-// This will fail — invalid URL
-validator.validate({ host: '10.0.0.1', port: 8080, baseUrl: 'not-a-url' })
-// ValidatorError: Invalid URL format
 ```
 
 ### Type Tags
 
-Each primitive extension adds a tag to the type's `tags` set. These tags can be used for custom logic:
+Each primitive extension adds a tag to the type's `tags` set:
 
 ```typescript
-import { ServerConfig } from './server-config.as'
-
 const hostProp = ServerConfig.type.props.get('host')
-// hostProp has tag 'ipv4' in its tags set
+hostProp?.type.tags // Set containing 'ipv4', 'string'
 ```
 
 ## Post-Configuration Step
 
-After adding or modifying custom primitives, regenerate the type declaration file for IntelliSense:
+After adding or modifying custom primitives, regenerate the type declaration file:
 
 ```bash
 npx asc -f dts
 ```
 
-This updates `atscript.d.ts` so the IDE recognizes the new type tags with full autocompletion and hover documentation.
-
 ## Workflow for Creating Custom Primitives
 
-1. **Identify the need**: What semantic type is needed? What base type does it extend (`string`, `number`, `boolean`)?
-2. **Define validation constraints**: What rules should be implicitly enforced? Express them using `@expect.*` keys.
-3. **Write clear documentation**: The `documentation` string appears in IntelliSense — make it descriptive.
-4. **Add to `atscript.config.js`** under the `primitives` key, grouped by base type.
-5. **Run `npx asc -f dts`** to regenerate type declarations.
-6. **Show usage examples** in `.as` files.
-7. **Verify validation** by describing what the validator will enforce.
-
-## Common Patterns
-
-### String format validation (regex-based)
-
-```js
-string: {
-  extensions: {
-    myFormat: {
-      type: 'string',
-      documentation: 'Description of the format',
-      expect: {
-        pattern: ['^regex-here$', 'flags', 'Error message'],
-      },
-    },
-  },
-},
-```
-
-### Numeric range constraints
-
-```js
-number: {
-  extensions: {
-    myRange: {
-      type: 'number',
-      documentation: 'Description of the range',
-      expect: {
-        min: 0,
-        max: 100,
-      },
-    },
-  },
-},
-```
-
-### Integer-only numeric types
-
-```js
-number: {
-  extensions: {
-    myInt: {
-      type: 'number',
-      documentation: 'Description',
-      expect: {
-        int: true,
-        min: 0,
-      },
-    },
-  },
-},
-```
-
-### String with length constraints
-
-```js
-string: {
-  extensions: {
-    shortCode: {
-      type: 'string',
-      documentation: 'A short alphanumeric code (3-8 chars)',
-      expect: {
-        minLength: 3,
-        maxLength: 8,
-        pattern: ['^[A-Z0-9]+$', '', 'Must be uppercase alphanumeric'],
-      },
-    },
-  },
-},
-```
+1. **Identify the need**: What semantic type? What base type (`string`, `number`, `boolean`, `phantom`)?
+2. **Define validation constraints**: Express rules using `expect` keys.
+3. **Consider inheritance**: Use nested `extensions` for hierarchical types.
+4. **Consider containers**: Use `isContainer: true` for namespace-only types.
+5. **Write clear documentation**: `documentation` string appears in IntelliSense.
+6. **Add to `atscript.config.js`** under `primitives`.
+7. **Run `npx asc -f dts`** to regenerate type declarations.
+8. **Show usage examples** in `.as` files.
+9. **Verify validation** works as expected.
 
 ## Important Notes
 
-- ATScript is NOT TypeScript. Do NOT use `createPrimitive`, class-based patterns, or any TypeScript-specific constructs to define primitives.
-- Primitives are defined purely in `atscript.config.js` — no TypeScript code is needed.
-- The `type` field in an extension MUST match the parent group key (e.g., extensions under `string` must have `type: 'string'`).
-- Constraints in `expect` are **implicit** — they apply automatically without needing `@expect.*` annotations at usage sites.
-- The `pattern` constraint is an array: `[regexString, flags, errorMessage]`.
-- Always run `npx asc -f dts` after config changes for IntelliSense to update.
+- ATScript is NOT TypeScript. Do NOT use class-based patterns or any TypeScript-specific constructs.
+- Primitives are defined purely in `atscript.config.js`.
+- `type` field is inherited from parent — only specify when overriding.
+- `expect` constraints merge with parent's — child adds, not replaces.
+- `isContainer: true` requires using an extension, not the primitive directly.
+- Phantom types are excluded from TypeScript types, validation, JSON Schema, serialization.
+- `pattern` constraint: `[regexString, flags, errorMessage]` in config, `RegExp` in plugins.
+- Always run `npx asc -f dts` after config changes.
 - Custom primitives work identically to built-in ones in tooling, validation, and IntelliSense.

@@ -1,149 +1,421 @@
 <script setup lang="ts" generic="TFormData = any, TFormContext = any">
-import { evalAttrs } from '../utils'
 import { VuilessField, type TVuilessState } from 'vuiless-forms'
-import { type TFoormField, type TFoormFnScope } from 'foorm'
+import { Validator } from '@atscript/typescript/utils'
+import type { FoormFieldDef, TFoormFnScope } from 'foorm'
+import {
+  resolveFieldProp,
+  resolveOptions,
+  resolveAttrs,
+  getFieldMeta,
+  getByPath,
+  setByPath,
+  foormValidatorPlugin,
+} from 'foorm'
 import { computed, inject, watch, type ComputedRef } from 'vue'
 
-type Props = TFoormField & {
-  error?: string
-}
-
-const props = defineProps<Props>()
+const props = defineProps<{ field: FoormFieldDef; error?: string }>()
 
 const vuiless = inject<ComputedRef<TVuilessState<TFormData, TFormContext>>>(
   'vuiless'
 ) as ComputedRef<TVuilessState<TFormData, TFormContext>>
 
-// Helper to create reactive property (computed if function, static otherwise)
-function makeReactive<T>(
-  value: T | ((scope: TFoormFnScope) => T) | undefined,
-  scopeRef: ComputedRef<TFoormFnScope>,
-  defaultValue?: T
-): T | ComputedRef<T> {
-  if (typeof value === 'function') {
-    return computed(() => (value as Function)(scopeRef.value))
-  }
-  return (value ?? defaultValue) as T
-}
-
 // Helper to unwrap value (handles both static and computed)
 const unwrap = <T>(v: T | ComputedRef<T>): T =>
-  typeof v === 'object' && v !== null && 'value' in v ? (v as ComputedRef<T>).value : v as T
+  typeof v === 'object' && v !== null && 'value' in v ? (v as ComputedRef<T>).value : (v as T)
 
-// Base scope for constraints (no entry)
-const baseScope = computed<TFoormFnScope>(() => ({
-  v: vuiless.value.formData[props.field as keyof TFormData],
-  data: vuiless.value.formData as Record<string, unknown>,
-  context: (vuiless.value.formContext ?? {}) as Record<string, unknown>,
-  entry: undefined,
-}))
+const prop = props.field.prop
 
-// Constraints - only computed if function
-const optional = makeReactive(props.optional, baseScope, false)
-const disabled = makeReactive(props.disabled, baseScope, false)
-const hidden = makeReactive(props.hidden, baseScope, false)
-const readonly = makeReactive(props.readonly, baseScope, false)
+// ── Static reads (always) ──────────────────────────────────
+const autocomplete = getFieldMeta<string>(prop, 'foorm.autocomplete')
+const maxLength = getFieldMeta<number>(prop, 'expect.maxLength')
+const component = getFieldMeta<string>(prop, 'foorm.component')
+const altAction = getFieldMeta<string>(prop, 'foorm.altAction')
 
-// Derived computed values
-// Phantom fields don't need required attribute
-const required = props.phantom ? undefined : computed(() => !unwrap(optional))
+// ── Validator factory + caching ─────────────────────────────
+// Plugin + Validator created once per field, reused on every blur.
+// Per-call data/context passed via ATScript external context.
+const validatorPlugin = foormValidatorPlugin()
+let cachedValidator: InstanceType<typeof Validator> | undefined
 
-// Full scope with entry
-const scope = computed<TFoormFnScope>(() => ({
-  v: vuiless.value.formData[props.field as keyof TFormData],
-  data: vuiless.value.formData as Record<string, unknown>,
-  context: (vuiless.value.formContext ?? {}) as Record<string, unknown>,
-  entry: {
-    field: props.field,
-    type: props.type,
-    component: props.component,
-    name: props.name || props.field,
-    optional: unwrap(optional),
-    disabled: unwrap(disabled),
-    hidden: unwrap(hidden),
-    readonly: unwrap(readonly),
-  },
-}))
-
-// Field properties - only computed if function
-const label = makeReactive(props.label, scope, undefined)
-const description = makeReactive(props.description, scope, undefined)
-const hint = makeReactive(props.hint, scope, undefined)
-const placeholder = makeReactive(props.placeholder, scope, undefined)
-const options = makeReactive(props.options, scope, undefined)
-const styles = makeReactive(props.styles, scope, undefined)
-
-// Classes - always computed (merges multiple values)
-const classesBase = computed(() => {
-  const classValue = typeof props.classes === 'function'
-    ? props.classes(scope.value)
-    : props.classes
-
-  return typeof classValue === 'string'
-    ? {
-        [classValue]: true,
-        disabled: unwrap(disabled),
-        required: !unwrap(optional),
-      }
-    : {
-        ...classValue,
-        disabled: unwrap(disabled),
-        required: !unwrap(optional),
-      }
-})
-
-// Function to merge classes with error flag
-function getClasses(error: string | undefined, vuilessError: string | undefined) {
-  return {
-    ...classesBase.value,
-    error: !!error || !!vuilessError,
-  }
-}
-
-// Attrs - always computed (evalAttrs processes the entire object)
-const attrs = computed(() => evalAttrs(props.attrs, scope.value))
-
-// Phantom value - only for phantom fields (paragraph, action)
-const phantomValue = props.phantom
-  ? computed(() => (typeof props.value === 'function' ? props.value(scope.value) : props.value))
-  : undefined
-
-// Conditional watcher for readonly computed values
-// Skip phantom fields (paragraph, action) as they shouldn't be in form data
-if (typeof props.value === 'function' && !props.phantom) {
-  const computedValue = computed(() => {
-    if (unwrap(readonly)) {
-      return (props.value as Function)(scope.value)
-    }
-    return undefined
-  })
-
-  watch(
-    computedValue,
-    (newVal) => {
-      if (newVal !== undefined && unwrap(readonly)) {
-        vuiless.value.formData[props.field as keyof TFormData] = newVal as any
-      }
-    },
-    { immediate: true }
+// ── Helpers for v-model with dot-path support ──────────────
+function getModel() {
+  return getByPath(
+    vuiless.value.formData as Record<string, unknown>,
+    props.field.path
   )
 }
 
-// Validator wrappers - must access scope.value inside to maintain reactivity
-const rules = props.validators.map(fn => {
-  return (v: unknown, data: TFormData, context: TFormContext) =>
-    fn({
-      v,
-      data: data as Record<string, unknown>,
-      context: (context ?? {}) as Record<string, unknown>,
-      entry: scope.value.entry,
+function setModel(value: unknown) {
+  setByPath(
+    vuiless.value.formData as Record<string, unknown>,
+    props.field.path,
+    value
+  )
+}
+
+// ── Declare all field properties ────────────────────────────
+// These are assigned in the allStatic fast-path or the dynamic path below.
+let disabled: boolean | ComputedRef<boolean>
+let hidden: boolean | ComputedRef<boolean>
+let optional: boolean | ComputedRef<boolean>
+let readonly: boolean | ComputedRef<boolean>
+let required: boolean | ComputedRef<boolean> | undefined
+let label: string | ComputedRef<string>
+let description: string | undefined | ComputedRef<string | undefined>
+let hint: string | undefined | ComputedRef<string | undefined>
+let placeholder: string | undefined | ComputedRef<string | undefined>
+let styles: unknown
+let options: ReturnType<typeof resolveOptions> | ComputedRef<ReturnType<typeof resolveOptions>>
+let attrs: Record<string, unknown> | ComputedRef<Record<string, unknown> | undefined> | undefined
+let classesBase: Record<string, boolean> | ComputedRef<Record<string, boolean>>
+let phantomValue: unknown
+let hasCustomValidators: boolean
+
+// Empty scope for static resolve calls (options, attrs)
+const emptyScope: TFoormFnScope = {
+  v: undefined,
+  data: {} as Record<string, unknown>,
+  context: {} as Record<string, unknown>,
+  entry: undefined,
+}
+
+if (props.field.allStatic) {
+  // ══════════════════════════════════════════════════════════
+  // FAST PATH: all properties are static — no scope, no computeds
+  // ══════════════════════════════════════════════════════════
+  hasCustomValidators = false
+
+  // Constraints: static booleans
+  disabled = getFieldMeta(prop, 'foorm.disabled') !== undefined
+  hidden = getFieldMeta(prop, 'foorm.hidden') !== undefined
+  optional = props.field.prop.optional ?? false
+  readonly = getFieldMeta(prop, 'foorm.readonly') !== undefined
+
+  // Required: static boolean (skip for phantom)
+  required = props.field.phantom ? undefined : !optional
+
+  // Display: static reads
+  label = getFieldMeta<string>(prop, 'meta.label') ?? props.field.name
+  description = getFieldMeta<string>(prop, 'meta.description')
+  hint = getFieldMeta<string>(prop, 'meta.hint')
+  placeholder = getFieldMeta<string>(prop, 'meta.placeholder')
+  styles = getFieldMeta(prop, 'foorm.styles')
+  options = resolveOptions(prop, emptyScope)
+  attrs = (getFieldMeta(prop, 'foorm.attr') !== undefined)
+    ? resolveAttrs(prop, emptyScope)
+    : undefined
+
+  // Classes: plain object (no computed)
+  const staticClassValue = getFieldMeta(prop, 'foorm.classes')
+  classesBase = {
+    ...(typeof staticClassValue === 'string'
+      ? { [staticClassValue]: true }
+      : (staticClassValue as Record<string, boolean> | undefined)),
+    disabled: disabled as boolean,
+    required: !(optional as boolean),
+  }
+
+  // Phantom value: static
+  phantomValue = props.field.phantom
+    ? getFieldMeta(prop, 'foorm.value')
+    : undefined
+
+} else {
+  // ══════════════════════════════════════════════════════════
+  // DYNAMIC PATH: per-property static/dynamic detection
+  // ══════════════════════════════════════════════════════════
+  const hasFn = {
+    disabled: getFieldMeta(prop, 'foorm.fn.disabled') !== undefined,
+    hidden: getFieldMeta(prop, 'foorm.fn.hidden') !== undefined,
+    optional: getFieldMeta(prop, 'foorm.fn.optional') !== undefined,
+    readonly: getFieldMeta(prop, 'foorm.fn.readonly') !== undefined,
+    label: getFieldMeta(prop, 'foorm.fn.label') !== undefined,
+    description: getFieldMeta(prop, 'foorm.fn.description') !== undefined,
+    hint: getFieldMeta(prop, 'foorm.fn.hint') !== undefined,
+    placeholder: getFieldMeta(prop, 'foorm.fn.placeholder') !== undefined,
+    classes: getFieldMeta(prop, 'foorm.fn.classes') !== undefined,
+    styles: getFieldMeta(prop, 'foorm.fn.styles') !== undefined,
+    options: getFieldMeta(prop, 'foorm.fn.options') !== undefined,
+    value: getFieldMeta(prop, 'foorm.fn.value') !== undefined,
+    attr: getFieldMeta(prop, 'foorm.fn.attr') !== undefined,
+  }
+  hasCustomValidators = getFieldMeta(prop, 'foorm.validate') !== undefined
+
+  // ── Lazy scope construction ────────────────────────────────
+  const needsBaseScope =
+    hasFn.disabled || hasFn.hidden || hasFn.optional || hasFn.readonly
+  const needsFullScope =
+    hasFn.label ||
+    hasFn.description ||
+    hasFn.hint ||
+    hasFn.placeholder ||
+    hasFn.classes ||
+    hasFn.styles ||
+    hasFn.options ||
+    hasFn.value ||
+    hasFn.attr ||
+    hasCustomValidators
+  const needsScope = needsBaseScope || needsFullScope
+
+  // Base scope for constraints (no entry)
+  const baseScope = needsScope
+    ? computed<TFoormFnScope>(() => ({
+        v: getByPath(
+          vuiless.value.formData as Record<string, unknown>,
+          props.field.path
+        ),
+        data: vuiless.value.formData as Record<string, unknown>,
+        context: (vuiless.value.formContext ?? {}) as Record<string, unknown>,
+        entry: undefined,
+      }))
+    : undefined
+
+  // Safe alias — guaranteed non-null when hasFn.* is true (implies needsScope)
+  const bs = baseScope as ComputedRef<TFoormFnScope>
+
+  // ── Constraints (baseScope phase) ──────────────────────────
+  disabled = hasFn.disabled
+    ? computed(
+        () =>
+          resolveFieldProp<boolean>(
+            prop,
+            'foorm.fn.disabled',
+            'foorm.disabled',
+            bs.value,
+            { staticAsBoolean: true }
+          ) ?? false
+      )
+    : getFieldMeta(prop, 'foorm.disabled') !== undefined
+
+  hidden = hasFn.hidden
+    ? computed(
+        () =>
+          resolveFieldProp<boolean>(
+            prop,
+            'foorm.fn.hidden',
+            'foorm.hidden',
+            bs.value,
+            { staticAsBoolean: true }
+          ) ?? false
+      )
+    : getFieldMeta(prop, 'foorm.hidden') !== undefined
+
+  optional = hasFn.optional
+    ? computed(
+        () =>
+          resolveFieldProp<boolean>(
+            prop,
+            'foorm.fn.optional',
+            undefined,
+            bs.value
+          ) ?? (props.field.prop.optional ?? false)
+      )
+    : (props.field.prop.optional ?? false)
+
+  readonly = hasFn.readonly
+    ? computed(
+        () =>
+          resolveFieldProp<boolean>(
+            prop,
+            'foorm.fn.readonly',
+            'foorm.readonly',
+            bs.value,
+            { staticAsBoolean: true }
+          ) ?? false
+      )
+    : getFieldMeta(prop, 'foorm.readonly') !== undefined
+
+  // Derived: required (skip for phantom fields)
+  required = props.field.phantom
+    ? undefined
+    : typeof optional === 'boolean'
+      ? !optional
+      : computed(() => !unwrap(optional))
+
+  // ── Full scope with entry (derived from baseScope) ─────────
+  const scope = needsFullScope
+    ? computed<TFoormFnScope>(() => ({
+        ...bs.value,
+        entry: {
+          field: props.field.path,
+          type: props.field.type,
+          component,
+          name: props.field.name,
+          optional: unwrap(optional),
+          disabled: unwrap(disabled),
+          hidden: unwrap(hidden),
+          readonly: unwrap(readonly),
+        },
+      }))
+    : undefined
+
+  // Safe alias — guaranteed non-null when hasFn.* is true (implies needsFullScope)
+  const fs = scope as ComputedRef<TFoormFnScope>
+
+  // ── Display props (full scope phase) ───────────────────────
+  label = hasFn.label
+    ? computed(
+        () =>
+          resolveFieldProp<string>(
+            prop,
+            'foorm.fn.label',
+            'meta.label',
+            fs.value
+          ) ?? props.field.name
+      )
+    : (getFieldMeta<string>(prop, 'meta.label') ?? props.field.name)
+
+  description = hasFn.description
+    ? computed(() =>
+        resolveFieldProp<string>(
+          prop,
+          'foorm.fn.description',
+          'meta.description',
+          fs.value
+        )
+      )
+    : getFieldMeta<string>(prop, 'meta.description')
+
+  hint = hasFn.hint
+    ? computed(() =>
+        resolveFieldProp<string>(
+          prop,
+          'foorm.fn.hint',
+          'meta.hint',
+          fs.value
+        )
+      )
+    : getFieldMeta<string>(prop, 'meta.hint')
+
+  placeholder = hasFn.placeholder
+    ? computed(() =>
+        resolveFieldProp<string>(
+          prop,
+          'foorm.fn.placeholder',
+          'meta.placeholder',
+          fs.value
+        )
+      )
+    : getFieldMeta<string>(prop, 'meta.placeholder')
+
+  styles = hasFn.styles
+    ? computed(() =>
+        resolveFieldProp(prop, 'foorm.fn.styles', 'foorm.styles', fs.value)
+      )
+    : getFieldMeta(prop, 'foorm.styles')
+
+  options = hasFn.options
+    ? computed(() => resolveOptions(prop, fs.value))
+    : resolveOptions(prop, emptyScope)
+
+  attrs =
+    hasFn.attr || getFieldMeta(prop, 'foorm.attr') !== undefined
+      ? hasFn.attr
+        ? computed(() => resolveAttrs(prop, fs.value))
+        : resolveAttrs(prop, emptyScope)
+      : undefined
+
+  // ── Classes — conditional computed ─────────────────────────
+  classesBase = (hasFn.classes || typeof disabled !== 'boolean' || typeof optional !== 'boolean')
+    ? computed(() => {
+        const classValue = hasFn.classes
+          ? resolveFieldProp(
+              prop,
+              'foorm.fn.classes',
+              undefined,
+              fs.value
+            )
+          : getFieldMeta(prop, 'foorm.classes')
+
+        return {
+          ...(typeof classValue === 'string'
+            ? { [classValue]: true }
+            : (classValue as Record<string, boolean> | undefined)),
+          disabled: unwrap(disabled),
+          required: !unwrap(optional),
+        }
+      })
+    : (() => {
+        const staticClassValue = getFieldMeta(prop, 'foorm.classes')
+        return {
+          ...(typeof staticClassValue === 'string'
+            ? { [staticClassValue]: true }
+            : (staticClassValue as Record<string, boolean> | undefined)),
+          disabled: disabled as boolean,
+          required: !(optional as boolean),
+        }
+      })()
+
+  // ── Phantom value (paragraph, action display) ──────────────
+  phantomValue = props.field.phantom
+    ? hasFn.value
+      ? computed(() =>
+          resolveFieldProp(prop, 'foorm.fn.value', 'foorm.value', fs.value)
+        )
+      : getFieldMeta(prop, 'foorm.value')
+    : undefined
+
+  // ── Readonly watcher (computed derived fields) ─────────────
+  if (hasFn.value && !props.field.phantom) {
+    const computedValue = computed(() => {
+      if (unwrap(readonly))
+        return resolveFieldProp(
+          prop,
+          'foorm.fn.value',
+          'foorm.value',
+          fs.value
+        )
+      return undefined
     })
-})
+
+    watch(
+      computedValue,
+      (newVal) => {
+        if (newVal !== undefined && unwrap(readonly))
+          setByPath(
+            vuiless.value.formData as Record<string, unknown>,
+            props.field.path,
+            newVal
+          )
+      },
+      { immediate: true }
+    )
+  }
+}
+
+// ── Validation rule (shared by both paths) ──────────────────
+function vuilessRule(v: unknown) {
+  cachedValidator ??= new Validator(prop, { plugins: [validatorPlugin] })
+  const isValid = cachedValidator.validate(v, true,
+    hasCustomValidators
+      ? {
+          data: vuiless.value.formData as Record<string, unknown>,
+          context: (vuiless.value.formContext ?? {}) as Record<string, unknown>,
+        }
+      : undefined
+  )
+  if (!isValid) return cachedValidator.errors?.[0]?.message || 'Invalid value'
+  return true
+}
+
+const rules = [vuilessRule]
+
+// Function to merge classes with error flag
+function getClasses(
+  error: string | undefined,
+  vuilessError: string | undefined
+) {
+  return {
+    ...unwrap(classesBase),
+    error: !!error || !!vuilessError,
+  }
+}
 </script>
 
 <template>
   <VuilessField
-    v-model="vuiless.formData[props.field as keyof TFormData]"
+    :model-value="getModel()"
+    @update:model-value="setModel($event)"
     :rules="rules"
     v-slot="vuilessField"
   >
@@ -164,10 +436,10 @@ const rules = props.validators.map(fn => {
       :disabled="disabled"
       :hidden="hidden"
       :readonly="readonly"
-      :type="type"
+      :type="field.type"
       :alt-action="altAction"
       :component="component"
-      :v-name="name"
+      :v-name="field.name"
       :field="field"
       :options="options"
       :max-length="maxLength"

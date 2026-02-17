@@ -1,13 +1,13 @@
-import fs from 'fs'
+import fs from 'node:fs'
 import minimist from 'minimist'
-import path from 'path'
+import path from 'node:path'
 
 import { PROJECT } from './constants.js'
 import { out, packages, packagesDir, version } from './utils.js'
 
 const args = minimist(process.argv.slice(2))
 
-packages.forEach(({ shortName, name, pkg, pkgPath }) => {
+for (const { shortName, name, pkg, pkgPath } of packages) {
   if (pkg?.private) {
     return
   }
@@ -76,4 +76,4 @@ packages.forEach(({ shortName, name, pkg, pkgPath }) => {
   } else {
     out.log(`- src/index.ts already exists`)
   }
-})
+}

@@ -2,22 +2,19 @@
 import { VuilessForm } from 'vuiless-forms'
 import type { TVuilessState } from 'vuiless-forms'
 import OoField from './oo-field.vue'
-import {
-  type TFoormModel,
-  type TFoormFnScope,
-  type TFoormEntryOptions,
-  evalComputed,
-  supportsAltAction,
-} from 'foorm'
+import type { FoormDef, TFoormFnScope, TFoormEntryOptions } from 'foorm'
+import { resolveFormProp, supportsAltAction } from 'foorm'
 import { computed, ref, type Component } from 'vue'
 import { type TFoormComponentProps } from './types'
 
 export interface Props<TF, TC> {
-  form: TFoormModel
+  def: FoormDef
   formData?: TF
   formContext?: TC
   firstValidation?: TVuilessState<TF, TC>['firstValidation']
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components?: Record<string, Component<TFoormComponentProps<any, TF, TC>>>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   types?: Record<string, Component<TFoormComponentProps<any, TF, TC>>>
   errors?: Record<string, string | undefined>
 }
@@ -34,12 +31,30 @@ const ctx = computed<TFoormFnScope>(() => ({
   entry: undefined,
 }))
 
-const _title = computed(() => evalComputed(props.form.title, ctx.value))
-const _submitText = computed(() => evalComputed(props.form.submit.text, ctx.value))
-const _submitDisabled = computed(() => evalComputed(props.form.submit.disabled, ctx.value))
+const _title = computed(() =>
+  resolveFormProp<string>(props.def.type, 'foorm.fn.title', 'foorm.title', ctx.value)
+)
+const _submitText = computed(
+  () =>
+    resolveFormProp<string>(
+      props.def.type,
+      'foorm.fn.submit.text',
+      'foorm.submit.text',
+      ctx.value
+    ) ?? 'Submit'
+)
+const _submitDisabled = computed(
+  () =>
+    resolveFormProp<boolean>(
+      props.def.type,
+      'foorm.fn.submit.disabled',
+      'foorm.submit.disabled',
+      ctx.value
+    ) ?? false
+)
 
 function handleAction(name: string) {
-  if (supportsAltAction(props.form, name)) {
+  if (supportsAltAction(props.def, name)) {
     emit('action', name, data.value)
   } else {
     emit('unsupported-action', name, data.value)
@@ -81,16 +96,16 @@ function optLabel(opt: TFoormEntryOptions): string {
     </slot>
     <slot name="form.before" :clear-errors="form.clearErrors" :reset="form.reset"></slot>
     <OoField
-      v-for="f of props.form.fields"
-      :key="f.field"
-      v-bind="f"
+      v-for="f of props.def.fields"
+      :key="f.path"
+      :field="f"
       v-slot="field"
-      :error="errors?.[f.field]"
+      :error="errors?.[f.path]"
     >
       <slot :name="`field:${field.type}`" v-bind="field">
         <component
-          v-if="f.component && props.components?.[f.component]"
-          :is="props.components[f.component]"
+          v-if="field.component && props.components?.[field.component]"
+          :is="props.components[field.component]"
           :on-blur="field.onBlur"
           :error="field.error"
           :model="field.model"
@@ -118,13 +133,13 @@ function optLabel(opt: TFoormEntryOptions): string {
           v-model="field.model.value"
         />
 
-        <div v-else-if="f.component && !props.components?.[f.component]">
+        <div v-else-if="field.component && !props.components?.[field.component]">
           [{{ field.label }}] Component "{{ field.component }}" not supplied
         </div>
 
         <component
-          v-else-if="props.types?.[f.type!]"
-          :is="props.types[f.type!]"
+          v-else-if="props.types?.[field.type]"
+          :is="props.types[field.type]"
           :on-blur="field.onBlur"
           :error="field.error"
           :model="field.model"

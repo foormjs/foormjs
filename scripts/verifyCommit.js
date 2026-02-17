@@ -1,5 +1,5 @@
 import { dye } from '@prostojs/dye'
-import fs from 'fs'
+import fs from 'node:fs'
 
 // Invoked on the commit-msg git hook by yorkie.
 const msgPath = process.env.GIT_PARAMS
