@@ -169,24 +169,24 @@ Primitives use dot notation for type refinement and implicit validation.
 
 #### String Extensions
 
-| Extension       | Description                    | Validation Pattern                          |
-| --------------- | ------------------------------ | ------------------------------------------- |
-| `string.email`  | Email format                   | `^[^\s@]+@[^\s@]+\.[^\s@]+$`               |
-| `string.phone`  | Phone number format            | `^\+?[0-9\s-]{10,15}$`                     |
-| `string.date`   | Common date formats            | YYYY-MM-DD, MM/DD/YYYY, DD-MM-YYYY, etc.   |
-| `string.isoDate`| ISO 8601 date with time        | `2024-01-15T10:30:00Z`                      |
-| `string.uuid`   | UUID format                    | `^[0-9a-f]{8}-...-[0-9a-f]{12}$`           |
+| Extension        | Description             | Validation Pattern                       |
+| ---------------- | ----------------------- | ---------------------------------------- |
+| `string.email`   | Email format            | `^[^\s@]+@[^\s@]+\.[^\s@]+$`             |
+| `string.phone`   | Phone number format     | `^\+?[0-9\s-]{10,15}$`                   |
+| `string.date`    | Common date formats     | YYYY-MM-DD, MM/DD/YYYY, DD-MM-YYYY, etc. |
+| `string.isoDate` | ISO 8601 date with time | `2024-01-15T10:30:00Z`                   |
+| `string.uuid`    | UUID format             | `^[0-9a-f]{8}-...-[0-9a-f]{12}$`         |
 
 #### Number Extensions
 
-| Extension            | Description               | Implicit constraint          |
-| -------------------- | ------------------------- | ---------------------------- |
-| `number.int`         | Integer values            | `@expect.int`                |
-| `number.positive`    | Values >= 0               | `@expect.min 0`              |
-| `number.negative`    | Values <= 0               | `@expect.max 0`              |
-| `number.single`      | Single-precision float    | —                            |
-| `number.double`      | Double-precision float    | —                            |
-| `number.timestamp`   | Unix timestamp (integer)  | `@expect.int`                |
+| Extension          | Description              | Implicit constraint |
+| ------------------ | ------------------------ | ------------------- |
+| `number.int`       | Integer values           | `@expect.int`       |
+| `number.positive`  | Values >= 0              | `@expect.min 0`     |
+| `number.negative`  | Values <= 0              | `@expect.max 0`     |
+| `number.single`    | Single-precision float   | —                   |
+| `number.double`    | Double-precision float   | —                   |
+| `number.timestamp` | Unix timestamp (integer) | `@expect.int`       |
 
 #### Combining Extensions
 
@@ -228,6 +228,7 @@ export interface LoginForm {
 ```
 
 **Behavior:**
+
 - **TypeScript type** - phantom props are emitted as comments; absent from generated class
 - **Runtime** - present in `type.props` Map with `designType: 'phantom'`
 - **Validation** - skipped entirely
@@ -290,27 +291,27 @@ export type Username = string
 
 #### Meta Annotations (`@meta.*`)
 
-| Annotation               | Description                                    |
-| ------------------------ | ---------------------------------------------- |
-| `@meta.label 'text'`    | Human-readable label                           |
-| `@meta.id` or `@meta.id 'name'` | Marks identifier field                |
-| `@meta.isKey`            | Key field in arrays for lookups                |
-| `@meta.description 'text'` | Field description                           |
-| `@meta.documentation 'text'` | Multi-line docs (repeatable)              |
-| `@meta.placeholder 'text'` | UI placeholder text                         |
-| `@meta.sensitive`        | Marks sensitive data (e.g., passwords)         |
-| `@meta.readonly`         | Read-only field                                |
+| Annotation                      | Description                            |
+| ------------------------------- | -------------------------------------- |
+| `@meta.label 'text'`            | Human-readable label                   |
+| `@meta.id` or `@meta.id 'name'` | Marks identifier field                 |
+| `@meta.isKey`                   | Key field in arrays for lookups        |
+| `@meta.description 'text'`      | Field description                      |
+| `@meta.documentation 'text'`    | Multi-line docs (repeatable)           |
+| `@meta.placeholder 'text'`      | UI placeholder text                    |
+| `@meta.sensitive`               | Marks sensitive data (e.g., passwords) |
+| `@meta.readonly`                | Read-only field                        |
 
 #### Validation Annotations (`@expect.*`)
 
-| Annotation                              | Applies To    | Description                          |
-| --------------------------------------- | ------------- | ------------------------------------ |
-| `@expect.minLength 5, 'msg'`           | string, array | Minimum length                       |
-| `@expect.maxLength 100, 'msg'`         | string, array | Maximum length                       |
-| `@expect.min 0, 'msg'`                 | number        | Minimum value                        |
-| `@expect.max 100, 'msg'`               | number        | Maximum value                        |
-| `@expect.int`                           | number        | Must be integer                      |
-| `@expect.pattern 'regex', 'flags', 'msg'` | string     | Regex match (repeatable, append)     |
+| Annotation                                | Applies To    | Description                      |
+| ----------------------------------------- | ------------- | -------------------------------- |
+| `@expect.minLength 5, 'msg'`              | string, array | Minimum length                   |
+| `@expect.maxLength 100, 'msg'`            | string, array | Maximum length                   |
+| `@expect.min 0, 'msg'`                    | number        | Minimum value                    |
+| `@expect.max 100, 'msg'`                  | number        | Maximum value                    |
+| `@expect.int`                             | number        | Must be integer                  |
+| `@expect.pattern 'regex', 'flags', 'msg'` | string        | Regex match (repeatable, append) |
 
 All `@expect.*` annotations except `@expect.int` accept an optional custom error message as the last argument.
 
@@ -325,6 +326,7 @@ All `@expect.*` annotations except `@expect.int` accept an optional custom error
 - **`append`**: values accumulate into an array (e.g., `@expect.pattern` uses append).
 
 For repeatable annotations (`multiple: true`):
+
 - **replace**: higher-priority set replaces the entire array
 - **append**: values from both sides concatenate
 
@@ -411,10 +413,10 @@ import { User } from './models/user.as'
 ### Static Properties on Generated Types
 
 ```typescript
-Product.type       // Type structure (TAtscriptTypeDef)
-Product.metadata   // Top-level annotations (TMetadataMap)
+Product.type // Type structure (TAtscriptTypeDef)
+Product.metadata // Top-level annotations (TMetadataMap)
 Product.validator() // Creates validator instance
-Product.optional   // Optional flag (if applicable)
+Product.optional // Optional flag (if applicable)
 ```
 
 ### Runtime Type Structure
@@ -422,8 +424,8 @@ Product.optional   // Optional flag (if applicable)
 ```typescript
 interface TAtscriptAnnotatedType<T = TAtscriptTypeDef, DataType = InferDataType<T>> {
   __is_atscript_annotated_type: true
-  type: T           // Type definition
-  metadata: TMetadataMap  // Annotation values
+  type: T // Type definition
+  metadata: TMetadataMap // Annotation values
   validator: (opts?) => Validator
   optional?: boolean
 }
@@ -462,14 +464,14 @@ metadata.keys(): IterableIterator<string>  // Get all keys
 
 ### Type Kinds
 
-| Kind             | Interface              | Description                              |
-| ---------------- | ---------------------- | ---------------------------------------- |
+| Kind             | Interface              | Description                                 |
+| ---------------- | ---------------------- | ------------------------------------------- |
 | `''`             | `TAtscriptTypeFinal`   | Primitives/literals (`designType`, `value`) |
-| `'object'`       | `TAtscriptTypeObject`  | Named `props` Map, `propsPatterns`       |
-| `'array'`        | `TAtscriptTypeArray`   | Element type in `of`                     |
-| `'union'`        | `TAtscriptTypeComplex` | Alternatives in `items`                  |
-| `'intersection'` | `TAtscriptTypeComplex` | Combined types in `items`                |
-| `'tuple'`        | `TAtscriptTypeComplex` | Positional types in `items`              |
+| `'object'`       | `TAtscriptTypeObject`  | Named `props` Map, `propsPatterns`          |
+| `'array'`        | `TAtscriptTypeArray`   | Element type in `of`                        |
+| `'union'`        | `TAtscriptTypeComplex` | Alternatives in `items`                     |
+| `'intersection'` | `TAtscriptTypeComplex` | Combined types in `items`                   |
+| `'tuple'`        | `TAtscriptTypeComplex` | Positional types in `items`                 |
 
 Each type also carries a `tags` set with semantic labels like `'email'`, `'uuid'`, `'positive'`.
 
@@ -479,13 +481,13 @@ Each type also carries a `tags` set with semantic labels like `'email'`, `'uuid'
 import { forAnnotatedType } from '@atscript/typescript/utils'
 
 const description = forAnnotatedType(someType, {
-  final:        (d) => `primitive: ${d.type.designType}`,
-  object:       (d) => `object with ${d.type.props.size} props`,
-  array:        (d) => `array`,
-  union:        (d) => `union of ${d.type.items.length}`,
-  intersection: (d) => `intersection of ${d.type.items.length}`,
-  tuple:        (d) => `tuple of ${d.type.items.length}`,
-  phantom:      (d) => `phantom element`,  // optional handler
+  final: d => `primitive: ${d.type.designType}`,
+  object: d => `object with ${d.type.props.size} props`,
+  array: d => `array`,
+  union: d => `union of ${d.type.items.length}`,
+  intersection: d => `intersection of ${d.type.items.length}`,
+  tuple: d => `tuple of ${d.type.items.length}`,
+  phantom: d => `phantom element`, // optional handler
 })
 ```
 
@@ -509,9 +511,8 @@ import { defineAnnotatedType } from '@atscript/typescript/utils'
 
 const userType = defineAnnotatedType('object')
   .prop('name', defineAnnotatedType().designType('string').$type)
-  .prop('age',  defineAnnotatedType().designType('number').$type)
-  .annotate('meta.label', 'User')
-  .$type
+  .prop('age', defineAnnotatedType().designType('number').$type)
+  .annotate('meta.label', 'User').$type
 
 userType.validator().validate({ name: 'Alice', age: 30 })
 ```
@@ -540,7 +541,7 @@ try {
   validator.validate(data)
 } catch (error) {
   console.error(error.message) // First error message
-  console.error(error.errors)  // All errors: { path, message, details? }[]
+  console.error(error.errors) // All errors: { path, message, details? }[]
 }
 ```
 
@@ -559,21 +560,21 @@ if (validator.validate(data, true)) {
 
 ```typescript
 const validator = Product.validator({
-  partial: true,              // true | 'deep' | (type, path) => boolean
-  unknwonProps: 'strip',      // 'error' (default) | 'ignore' | 'strip'
+  partial: true, // true | 'deep' | (type, path) => boolean
+  unknwonProps: 'strip', // 'error' (default) | 'ignore' | 'strip'
   errorLimit: 10,
   skipList: new Set(['metadata', 'audit.createdBy']),
-  replace: (type, path) => path === 'status' ? customStatusType : type,
+  replace: (type, path) => (path === 'status' ? customStatusType : type),
 })
 ```
 
-| Option         | Values                                           | Description                           |
-| -------------- | ------------------------------------------------ | ------------------------------------- |
+| Option         | Values                                            | Description                          |
+| -------------- | ------------------------------------------------- | ------------------------------------ |
 | `partial`      | `false`, `true`, `'deep'`, `(type, path) => bool` | Control required property validation |
-| `unknwonProps` | `'error'`, `'ignore'`, `'strip'`                 | Handle undefined properties           |
-| `errorLimit`   | `number`                                         | Max validation errors (default: 10)   |
-| `skipList`     | `Set<string>`                                    | Property paths to skip                |
-| `replace`      | `(type, path) => type`                           | Dynamic type overriding               |
+| `unknwonProps` | `'error'`, `'ignore'`, `'strip'`                  | Handle undefined properties          |
+| `errorLimit`   | `number`                                          | Max validation errors (default: 10)  |
+| `skipList`     | `Set<string>`                                     | Property paths to skip               |
+| `replace`      | `(type, path) => type`                            | Dynamic type overriding              |
 
 ### Validator Plugins
 
@@ -617,9 +618,9 @@ try {
 } catch (e) {
   if (e instanceof ValidatorError) {
     for (const err of e.errors) {
-      console.log(err.path)     // e.g. "address.city"
+      console.log(err.path) // e.g. "address.city"
       console.log(err.message)
-      console.log(err.details)  // Nested errors for unions
+      console.log(err.details) // Nested errors for unions
     }
   }
 }
@@ -644,8 +645,8 @@ validator.validate(someValue)
 Control via TypeScript plugin option in configuration:
 
 ```javascript
-plugins: [ts()]                         // false (default) - no overhead
-plugins: [ts({ jsonSchema: 'lazy' })]   // Computed on first call, cached
+plugins: [ts()] // false (default) - no overhead
+plugins: [ts({ jsonSchema: 'lazy' })] // Computed on first call, cached
 plugins: [ts({ jsonSchema: 'bundle' })] // Pre-computed at build time
 ```
 
@@ -683,9 +684,9 @@ const schema = {
   type: 'object',
   properties: {
     name: { type: 'string', minLength: 3 },
-    age: { type: 'number', minimum: 0 }
+    age: { type: 'number', minimum: 0 },
   },
-  required: ['name', 'age']
+  required: ['name', 'age'],
 }
 
 const type = fromJsonSchema(schema)
@@ -733,11 +734,15 @@ import ts from '@atscript/typescript'
 
 export default defineConfig({
   rootDir: 'src',
-  format: 'dts',                    // Default output format: 'dts' | 'js'
-  unknownAnnotation: 'error',       // 'error' | 'warn' | 'allow'
+  format: 'dts', // Default output format: 'dts' | 'js'
+  unknownAnnotation: 'error', // 'error' | 'warn' | 'allow'
   plugins: [ts({ jsonSchema: 'lazy' })],
-  annotations: { /* custom annotations */ },
-  primitives: { /* custom primitives */ },
+  annotations: {
+    /* custom annotations */
+  },
+  primitives: {
+    /* custom primitives */
+  },
 })
 ```
 

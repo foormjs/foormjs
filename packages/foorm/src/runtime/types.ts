@@ -66,3 +66,41 @@ export interface FoormDef {
   fields: FoormFieldDef[]
   flatMap: Map<string, TAtscriptAnnotatedType>
 }
+
+// ── Array & Group extensions ─────────────────────────────────
+
+/** Variant of an array item (one per union branch, or single for homogeneous arrays). */
+export interface FoormArrayVariant {
+  /** Display label — from @meta.label or auto-generated (e.g. "1. String") */
+  label: string
+  /** The annotated type for this variant */
+  type: TAtscriptAnnotatedType
+  /** Pre-built FoormDef for object variants (undefined for primitives) */
+  def?: FoormDef
+  /** Design type for primitive variants ('string', 'number', 'boolean') */
+  designType?: string
+}
+
+/** Extended field def for array-typed fields. */
+export interface FoormArrayFieldDef extends FoormFieldDef {
+  /** ATScript annotated type of array items (from TAtscriptTypeArray.of) */
+  itemType: TAtscriptAnnotatedType
+  /** Variant definitions — single-element for homogeneous arrays, multiple for unions */
+  variants: FoormArrayVariant[]
+}
+
+/** Extended field def for grouped nested objects (with @foorm.title or @foorm.component). */
+export interface FoormGroupFieldDef extends FoormFieldDef {
+  /** Pre-built FoormDef for the nested object's fields */
+  groupDef: FoormDef
+}
+
+/** Type guard: checks if a field def is an array field. */
+export function isArrayField(field: FoormFieldDef): field is FoormArrayFieldDef {
+  return field.type === 'array'
+}
+
+/** Type guard: checks if a field def is a group field. */
+export function isGroupField(field: FoormFieldDef): field is FoormGroupFieldDef {
+  return field.type === 'group'
+}

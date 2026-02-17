@@ -1,31 +1,41 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page, type Locator } from '@playwright/test'
+
+/** Scope all locators to the first (e2e-test) form on the page. */
+function getForm(page: Page): Locator {
+  return page.locator('form').first()
+}
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
-  await page.locator('form').waitFor()
+  await page.locator('form').first().waitFor()
 })
 
 // ── Form Structure ────────────────────────────────────────────────
 
 test.describe('Form Structure', () => {
   test('renders computed form title with default value', async ({ page }) => {
-    await expect(page.locator('h2')).toHaveText('User <unknown>')
+    const form = getForm(page)
+    await expect(form.locator('h2')).toHaveText('User <unknown>')
   })
 
   test('renders submit button with static text', async ({ page }) => {
-    await expect(page.getByRole('button', { name: 'Register' })).toHaveText('Register')
+    const form = getForm(page)
+    await expect(form.getByRole('button', { name: 'Register' })).toHaveText('Register')
   })
 
   test('submit button is disabled when required fields are empty', async ({ page }) => {
-    await expect(page.getByRole('button', { name: 'Register' })).toBeDisabled()
+    const form = getForm(page)
+    await expect(form.getByRole('button', { name: 'Register' })).toBeDisabled()
   })
 
   test('paragraph primitive renders description as <p>', async ({ page }) => {
-    await expect(page.locator('p').first()).toHaveText('Please fill out this form')
+    const form = getForm(page)
+    await expect(form.locator('p').first()).toHaveText('Please fill out this form')
   })
 
   test('paragraph does not render an input', async ({ page }) => {
-    await expect(page.locator('input[name="info"]')).toHaveCount(0)
+    const form = getForm(page)
+    await expect(form.locator('input[name="info"]')).toHaveCount(0)
   })
 })
 
@@ -33,74 +43,83 @@ test.describe('Form Structure', () => {
 
 test.describe('Computed Reactivity', () => {
   test('title updates when firstName changes', async ({ page }) => {
-    await expect(page.locator('h2')).toHaveText('User <unknown>')
-    await page.locator('input[name="firstName"]').fill('Alice')
-    await expect(page.locator('h2')).toHaveText('User Alice')
+    const form = getForm(page)
+    await expect(form.locator('h2')).toHaveText('User <unknown>')
+    await form.locator('input[name="firstName"]').fill('Alice')
+    await expect(form.locator('h2')).toHaveText('User Alice')
   })
 
   test('title reverts when firstName is cleared', async ({ page }) => {
-    await page.locator('input[name="firstName"]').fill('Bob')
-    await expect(page.locator('h2')).toHaveText('User Bob')
-    await page.locator('input[name="firstName"]').clear()
-    await expect(page.locator('h2')).toHaveText('User <unknown>')
+    const form = getForm(page)
+    await form.locator('input[name="firstName"]').fill('Bob')
+    await expect(form.locator('h2')).toHaveText('User Bob')
+    await form.locator('input[name="firstName"]').clear()
+    await expect(form.locator('h2')).toHaveText('User <unknown>')
   })
 
   test('submit button enables when firstName and lastName are filled', async ({ page }) => {
-    const button = page.getByRole('button', { name: 'Register' })
+    const form = getForm(page)
+    const button = form.getByRole('button', { name: 'Register' })
     await expect(button).toBeDisabled()
-    await page.locator('input[name="firstName"]').fill('Alice')
+    await form.locator('input[name="firstName"]').fill('Alice')
     await expect(button).toBeDisabled()
-    await page.locator('input[name="lastName"]').fill('Smith')
+    await form.locator('input[name="lastName"]').fill('Smith')
     await expect(button).toBeEnabled()
   })
 
   test('computed placeholder updates based on other field', async ({ page }) => {
-    const lastNameInput = page.locator('input[name="lastName"]')
+    const form = getForm(page)
+    const lastNameInput = form.locator('input[name="lastName"]')
     await expect(lastNameInput).toHaveAttribute('placeholder', 'Doe')
-    await page.locator('input[name="firstName"]').fill('Alice')
+    await form.locator('input[name="firstName"]').fill('Alice')
     await expect(lastNameInput).toHaveAttribute('placeholder', 'Same as Alice?')
   })
 
   test('computed label updates based on other field', async ({ page }) => {
-    const emailLabel = page
+    const form = getForm(page)
+    const emailLabel = form
       .locator('.oo-default-field')
       .filter({ hasText: /Email/ })
       .locator('label')
     await expect(emailLabel).toHaveText('Email')
-    await page.locator('input[name="firstName"]').fill('Alice')
+    await form.locator('input[name="firstName"]').fill('Alice')
     await expect(emailLabel).toHaveText('Alices Email')
   })
 
   test('computed description updates based on other field', async ({ page }) => {
-    const emailField = page.locator('.oo-default-field').filter({ hasText: /Email/ })
+    const form = getForm(page)
+    const emailField = form.locator('.oo-default-field').filter({ hasText: /Email/ })
     await expect(emailField.locator('span')).toHaveText('Your email address')
-    await page.locator('input[name="firstName"]').fill('Alice')
+    await form.locator('input[name="firstName"]').fill('Alice')
     await expect(emailField.locator('span')).toHaveText('We will contact Alice here')
   })
 
   test('computed hint updates based on value and other fields', async ({ page }) => {
-    const nicknameField = page.locator('.oo-default-field').filter({ hasText: 'Nickname' })
+    const form = getForm(page)
+    const nicknameField = form.locator('.oo-default-field').filter({ hasText: 'Nickname' })
     await expect(nicknameField.locator('.oo-error-slot')).toHaveText('Choose a cool nickname')
-    await page.locator('input[name="nickname"]').fill('CoolGuy')
+    await form.locator('input[name="nickname"]').fill('CoolGuy')
     await expect(nicknameField.locator('.oo-error-slot')).toHaveText('Nice nickname, stranger!')
-    await page.locator('input[name="firstName"]').fill('Alice')
+    await form.locator('input[name="firstName"]').fill('Alice')
     await expect(nicknameField.locator('.oo-error-slot')).toHaveText('Nice nickname, Alice!')
   })
 
   test('computed disabled reacts to form data', async ({ page }) => {
-    const passwordField = page
+    const form = getForm(page)
+    const passwordField = form
       .locator('.oo-default-field')
       .filter({ has: page.locator('input[name="password"]') })
     await expect(passwordField).toHaveClass(/disabled/)
-    await page.locator('input[name="firstName"]').fill('Alice')
-    await page.locator('input[name="lastName"]').fill('Smith')
+    await form.locator('input[name="firstName"]').fill('Alice')
+    await form.locator('input[name="lastName"]').fill('Smith')
     await expect(passwordField).not.toHaveClass(/disabled/)
   })
 
   test('computed classes react to field value', async ({ page }) => {
-    const styledField = page.locator('.oo-default-field').filter({ hasText: 'Styled Field' })
+    const form = getForm(page)
+    const styledField = form.locator('.oo-default-field').filter({ hasText: 'Styled Field' })
     await expect(styledField).toHaveClass(/empty-value/)
-    await page.locator('input[name="styledField"]').fill('something')
+    await form.locator('input[name="styledField"]').fill('something')
     await expect(styledField).toHaveClass(/has-value/)
   })
 })
@@ -109,47 +128,56 @@ test.describe('Computed Reactivity', () => {
 
 test.describe('Static Annotations', () => {
   test('renders field labels', async ({ page }) => {
+    const form = getForm(page)
     for (const label of ['First Name', 'Last Name', 'Age', 'Password']) {
-      await expect(page.locator('.oo-default-field label').filter({ hasText: label })).toBeVisible()
+      await expect(form.locator('.oo-default-field label').filter({ hasText: label })).toBeVisible()
     }
   })
 
   test('renders field description', async ({ page }) => {
-    const firstNameField = page.locator('.oo-default-field').filter({ hasText: 'First Name' })
+    const form = getForm(page)
+    const firstNameField = form.locator('.oo-default-field').filter({ hasText: 'First Name' })
     await expect(firstNameField.locator('span')).toHaveText('Your given name')
   })
 
   test('renders static placeholder', async ({ page }) => {
-    await expect(page.locator('input[name="firstName"]')).toHaveAttribute('placeholder', 'John')
+    const form = getForm(page)
+    await expect(form.locator('input[name="firstName"]')).toHaveAttribute('placeholder', 'John')
   })
 
   test('renders hint in error slot when no error', async ({ page }) => {
-    const lastNameField = page.locator('.oo-default-field').filter({ hasText: 'Last Name' })
+    const form = getForm(page)
+    const lastNameField = form.locator('.oo-default-field').filter({ hasText: 'Last Name' })
     await expect(lastNameField.locator('.oo-error-slot')).toHaveText('Real last name please')
   })
 
   test('renders autocomplete attribute', async ({ page }) => {
-    await expect(page.locator('input[name="firstName"]')).toHaveAttribute(
+    const form = getForm(page)
+    await expect(form.locator('input[name="firstName"]')).toHaveAttribute(
       'autocomplete',
       'given-name'
     )
   })
 
   test('renders number type input', async ({ page }) => {
-    await expect(page.locator('input[name="age"]')).toHaveAttribute('type', 'number')
+    const form = getForm(page)
+    await expect(form.locator('input[name="age"]')).toHaveAttribute('type', 'number')
   })
 
   test('renders password type input', async ({ page }) => {
-    await expect(page.locator('input[name="password"]')).toHaveAttribute('type', 'password')
+    const form = getForm(page)
+    await expect(form.locator('input[name="password"]')).toHaveAttribute('type', 'password')
   })
 
   test('statically disabled field has disabled class', async ({ page }) => {
-    const disabledField = page.locator('.oo-default-field').filter({ hasText: 'Disabled Field' })
+    const form = getForm(page)
+    const disabledField = form.locator('.oo-default-field').filter({ hasText: 'Disabled Field' })
     await expect(disabledField).toHaveClass(/disabled/)
   })
 
   test('fields render in order', async ({ page }) => {
-    const labels = await page.locator('.oo-default-field label').allTextContents()
+    const form = getForm(page)
+    const labels = await form.locator('.oo-default-field label').allTextContents()
     const firstNameIdx = labels.indexOf('First Name')
     const lastNameIdx = labels.indexOf('Last Name')
     const ageIdx = labels.indexOf('Age')
@@ -162,10 +190,11 @@ test.describe('Static Annotations', () => {
 
 test.describe('Validation', () => {
   test('shows validation error on blur for empty required field', async ({ page }) => {
-    const firstNameInput = page.locator('input[name="firstName"]')
+    const form = getForm(page)
+    const firstNameInput = form.locator('input[name="firstName"]')
     await firstNameInput.focus()
     await firstNameInput.blur()
-    const errorSlot = page
+    const errorSlot = form
       .locator('.oo-default-field')
       .filter({ hasText: 'First Name' })
       .locator('.oo-error-slot')
@@ -173,8 +202,9 @@ test.describe('Validation', () => {
   })
 
   test('clears validation error when valid value entered', async ({ page }) => {
-    const firstNameInput = page.locator('input[name="firstName"]')
-    const errorSlot = page
+    const form = getForm(page)
+    const firstNameInput = form.locator('input[name="firstName"]')
+    const errorSlot = form
       .locator('.oo-default-field')
       .filter({ hasText: 'First Name' })
       .locator('.oo-error-slot')
@@ -189,8 +219,9 @@ test.describe('Validation', () => {
   })
 
   test('multiple validators run in order', async ({ page }) => {
-    const ageInput = page.locator('input[name="age"]')
-    const errorSlot = page
+    const form = getForm(page)
+    const ageInput = form.locator('input[name="age"]')
+    const errorSlot = form
       .locator('.oo-default-field')
       .filter({ hasText: 'Age' })
       .locator('.oo-error-slot')
@@ -212,8 +243,9 @@ test.describe('Validation', () => {
   })
 
   test('field gets error class on validation failure', async ({ page }) => {
-    const firstNameInput = page.locator('input[name="firstName"]')
-    const field = page.locator('.oo-default-field').filter({ hasText: 'First Name' })
+    const form = getForm(page)
+    const firstNameInput = form.locator('input[name="firstName"]')
+    const field = form.locator('.oo-default-field').filter({ hasText: 'First Name' })
 
     await firstNameInput.focus()
     await firstNameInput.blur()
@@ -225,19 +257,24 @@ test.describe('Validation', () => {
 
 test.describe('Primitives and Actions', () => {
   test('action field renders with label', async ({ page }) => {
-    await expect(page.getByText('Reset Password')).toBeVisible()
+    const form = getForm(page)
+    await expect(form.getByText('Reset Password')).toBeVisible()
   })
 
   test('action field has no input element', async ({ page }) => {
-    await expect(page.locator('input[name="resetAction"]')).toHaveCount(0)
+    const form = getForm(page)
+    await expect(form.locator('input[name="resetAction"]')).toHaveCount(0)
   })
 
   test('action button emits action event on click', async ({ page }) => {
+    const form = getForm(page)
     const logs: string[] = []
     page.on('console', msg => {
-      if (msg.type() === 'log') {logs.push(msg.text())}
+      if (msg.type() === 'log') {
+        logs.push(msg.text())
+      }
     })
-    await page.getByRole('button', { name: 'Reset Password' }).click()
+    await form.getByRole('button', { name: 'Reset Password' }).click()
     await page.waitForTimeout(100)
     expect(logs.some(l => l.includes('action') && l.includes('reset-password'))).toBe(true)
   })
@@ -247,7 +284,8 @@ test.describe('Primitives and Actions', () => {
 
 test.describe('Select Fields', () => {
   test('renders select with static options', async ({ page }) => {
-    const select = page.locator('select[name="country"]')
+    const form = getForm(page)
+    const select = form.locator('select[name="country"]')
     await expect(select).toBeVisible()
     const options = select.locator('option')
     // placeholder + 3 options
@@ -259,25 +297,29 @@ test.describe('Select Fields', () => {
   })
 
   test('select placeholder option is disabled', async ({ page }) => {
-    const placeholder = page.locator('select[name="country"] option').first()
+    const form = getForm(page)
+    const placeholder = form.locator('select[name="country"] option').first()
     await expect(placeholder).toBeDisabled()
   })
 
   test('select option values match keys', async ({ page }) => {
-    const options = page.locator('select[name="country"] option:not([disabled])')
+    const form = getForm(page)
+    const options = form.locator('select[name="country"] option:not([disabled])')
     await expect(options.nth(0)).toHaveAttribute('value', 'us')
     await expect(options.nth(1)).toHaveAttribute('value', 'ca')
     await expect(options.nth(2)).toHaveAttribute('value', 'uk')
   })
 
   test('selecting an option updates the model', async ({ page }) => {
-    const select = page.locator('select[name="country"]')
+    const form = getForm(page)
+    const select = form.locator('select[name="country"]')
     await select.selectOption('ca')
     await expect(select).toHaveValue('ca')
   })
 
   test('renders select with context-driven options', async ({ page }) => {
-    const citySelect = page.locator('select[name="city"]')
+    const form = getForm(page)
+    const citySelect = form.locator('select[name="city"]')
     await expect(citySelect).toBeVisible()
     // placeholder + 3 context options
     const options = citySelect.locator('option')
@@ -288,7 +330,8 @@ test.describe('Select Fields', () => {
   })
 
   test('context-driven select option values match keys', async ({ page }) => {
-    const options = page.locator('select[name="city"] option:not([disabled])')
+    const form = getForm(page)
+    const options = form.locator('select[name="city"] option:not([disabled])')
     await expect(options.nth(0)).toHaveAttribute('value', 'nyc')
     await expect(options.nth(1)).toHaveAttribute('value', 'la')
     await expect(options.nth(2)).toHaveAttribute('value', 'chi')
@@ -299,19 +342,22 @@ test.describe('Select Fields', () => {
 
 test.describe('Radio Fields', () => {
   test('renders radio group with options', async ({ page }) => {
-    const radios = page.locator('input[name="gender"]')
+    const form = getForm(page)
+    const radios = form.locator('input[name="gender"]')
     await expect(radios).toHaveCount(3)
   })
 
   test('radio options have correct values', async ({ page }) => {
-    const radios = page.locator('input[name="gender"]')
+    const form = getForm(page)
+    const radios = form.locator('input[name="gender"]')
     await expect(radios.nth(0)).toHaveAttribute('value', 'male')
     await expect(radios.nth(1)).toHaveAttribute('value', 'female')
     await expect(radios.nth(2)).toHaveAttribute('value', 'other')
   })
 
   test('radio labels display correctly', async ({ page }) => {
-    const radioField = page.locator('.oo-radio-field').filter({ hasText: 'Gender' })
+    const form = getForm(page)
+    const radioField = form.locator('.oo-radio-field').filter({ hasText: 'Gender' })
     const labels = radioField.locator('.oo-radio-group label')
     await expect(labels.nth(0)).toContainText('Male')
     await expect(labels.nth(1)).toContainText('Female')
@@ -319,11 +365,12 @@ test.describe('Radio Fields', () => {
   })
 
   test('selecting a radio updates the model', async ({ page }) => {
-    const femaleRadio = page.locator('input[name="gender"][value="female"]')
+    const form = getForm(page)
+    const femaleRadio = form.locator('input[name="gender"][value="female"]')
     await femaleRadio.check()
     await expect(femaleRadio).toBeChecked()
     // Other radios should be unchecked
-    await expect(page.locator('input[name="gender"][value="male"]')).not.toBeChecked()
+    await expect(form.locator('input[name="gender"][value="male"]')).not.toBeChecked()
   })
 })
 
@@ -331,18 +378,21 @@ test.describe('Radio Fields', () => {
 
 test.describe('Checkbox Fields', () => {
   test('renders checkbox with label', async ({ page }) => {
-    const checkbox = page.locator('input[name="agreeToTerms"]')
+    const form = getForm(page)
+    const checkbox = form.locator('input[name="agreeToTerms"]')
     await expect(checkbox).toBeVisible()
     await expect(checkbox).toHaveAttribute('type', 'checkbox')
   })
 
   test('checkbox label text is correct', async ({ page }) => {
-    const checkboxField = page.locator('.oo-checkbox-field')
+    const form = getForm(page)
+    const checkboxField = form.locator('.oo-checkbox-field')
     await expect(checkboxField.locator('label')).toContainText('I agree to terms and conditions')
   })
 
   test('checkbox toggles boolean value', async ({ page }) => {
-    const checkbox = page.locator('input[name="agreeToTerms"]')
+    const form = getForm(page)
+    const checkbox = form.locator('input[name="agreeToTerms"]')
     await expect(checkbox).not.toBeChecked()
     await checkbox.check()
     await expect(checkbox).toBeChecked()
@@ -355,14 +405,16 @@ test.describe('Checkbox Fields', () => {
 
 test.describe('Custom Attributes', () => {
   test('renders static custom attrs', async ({ page }) => {
-    const usernameInput = page.locator('input[name="username"]')
+    const form = getForm(page)
+    const usernameInput = form.locator('input[name="username"]')
     await expect(usernameInput).toHaveAttribute('data-testid', 'username-input')
     await expect(usernameInput).toHaveAttribute('aria-label', 'Username field')
     await expect(usernameInput).toHaveAttribute('maxlength', '50')
   })
 
   test('computed attrs react to field value', async ({ page }) => {
-    const phoneInput = page.locator('input[name="phone"]')
+    const form = getForm(page)
+    const phoneInput = form.locator('input[name="phone"]')
 
     // Initially empty, should be invalid
     await expect(phoneInput).toHaveAttribute('data-valid', 'false')
@@ -380,14 +432,15 @@ test.describe('Custom Attributes', () => {
   })
 
   test('fn.attr overrides static attr with same name', async ({ page }) => {
-    const membershipInput = page.locator('input[name="membershipLevel"]')
+    const form = getForm(page)
+    const membershipInput = form.locator('input[name="membershipLevel"]')
 
     // Initially checkbox is unchecked, should use computed value 'basic'
     await expect(membershipInput).toHaveAttribute('data-tier', 'basic')
     await expect(membershipInput).toHaveAttribute('data-static', 'always-present')
 
     // Check the agreeToTerms checkbox
-    const checkbox = page.locator('input[name="agreeToTerms"]')
+    const checkbox = form.locator('input[name="agreeToTerms"]')
     await checkbox.check()
 
     // Now data-tier should be 'premium' (computed overrides static)
@@ -396,8 +449,9 @@ test.describe('Custom Attributes', () => {
   })
 
   test('computed attrs react to other form fields', async ({ page }) => {
-    const membershipInput = page.locator('input[name="membershipLevel"]')
-    const checkbox = page.locator('input[name="agreeToTerms"]')
+    const form = getForm(page)
+    const membershipInput = form.locator('input[name="membershipLevel"]')
+    const checkbox = form.locator('input[name="agreeToTerms"]')
 
     await expect(membershipInput).toHaveAttribute('data-tier', 'basic')
 
@@ -410,8 +464,9 @@ test.describe('Custom Attributes', () => {
   })
 
   test('readonly field with fn.value reacts to form data changes', async ({ page }) => {
-    const membershipInput = page.locator('input[name="membershipLevel"]')
-    const checkbox = page.locator('input[name="agreeToTerms"]')
+    const form = getForm(page)
+    const membershipInput = form.locator('input[name="membershipLevel"]')
+    const checkbox = form.locator('input[name="agreeToTerms"]')
 
     // Initially unchecked → value should be 'basic'
     await expect(membershipInput).toHaveValue('basic')
@@ -434,7 +489,8 @@ test.describe('Custom Attributes', () => {
 
 test.describe('Context Access', () => {
   test('renders label from nested context object', async ({ page }) => {
-    const field = page.locator('.oo-default-field').filter({ hasText: 'Context-Driven Label' })
+    const form = getForm(page)
+    const field = form.locator('.oo-default-field').filter({ hasText: 'Context-Driven Label' })
     await expect(field).toBeVisible()
 
     const label = field.locator('label')
@@ -442,9 +498,8 @@ test.describe('Context Access', () => {
   })
 
   test('renders description from nested context object', async ({ page }) => {
-    const field = page
-      .locator('.oo-default-field')
-      .filter({ hasText: 'Context-Driven Label' })
+    const form = getForm(page)
+    const field = form.locator('.oo-default-field').filter({ hasText: 'Context-Driven Label' })
     const description = field.locator('span')
     await expect(description).toHaveText(
       'This label and description come from nested context object'
@@ -452,10 +507,11 @@ test.describe('Context Access', () => {
   })
 
   test('uses fallback when context is missing', async ({ page }) => {
+    const form = getForm(page)
     // This test verifies the fallback behavior is defined in the annotation
     // The actual fallback would only show if context.labels was undefined
     // For now, we just verify the field renders with context
-    const input = page.locator('input[name="contextDrivenField"]')
+    const input = form.locator('input[name="contextDrivenField"]')
     await expect(input).toBeVisible()
   })
 })
@@ -464,17 +520,20 @@ test.describe('Context Access', () => {
 
 test.describe('Custom Component', () => {
   test('renders custom component when @foorm.component is specified', async ({ page }) => {
-    const customField = page.locator('.custom-star-input')
+    const form = getForm(page)
+    const customField = form.locator('.custom-star-input')
     await expect(customField).toBeVisible()
   })
 
   test('custom component displays star prefix', async ({ page }) => {
-    const prefix = page.locator('.custom-star-input .prefix')
+    const form = getForm(page)
+    const prefix = form.locator('.custom-star-input .prefix')
     await expect(prefix).toHaveText('⭐')
   })
 
   test('custom component has correct label and description', async ({ page }) => {
-    const field = page.locator('.custom-star-input')
+    const form = getForm(page)
+    const field = form.locator('.custom-star-input')
     await expect(field.locator('label')).toHaveText('Favorite Star')
     await expect(field.locator('.description')).toHaveText(
       'This field uses a custom component with star prefix'
@@ -482,38 +541,40 @@ test.describe('Custom Component', () => {
   })
 
   test('custom component input works correctly', async ({ page }) => {
-    const input = page.locator('.custom-star-input input[name="favoriteStar"]')
+    const form = getForm(page)
+    const input = form.locator('.custom-star-input input[name="favoriteStar"]')
     await expect(input).toBeVisible()
     await input.fill('Sirius')
     await expect(input).toHaveValue('Sirius')
   })
 
   test('custom component shows validation error for short input', async ({ page }) => {
-    const input = page.locator('.custom-star-input input[name="favoriteStar"]')
+    const form = getForm(page)
+    const input = form.locator('.custom-star-input input[name="favoriteStar"]')
     await input.fill('AB')
     await input.blur()
 
-    const errorHint = page.locator('.custom-star-input .error-hint')
+    const errorHint = form.locator('.custom-star-input .error-hint')
     await expect(errorHint).toHaveText('Must be at least 3 characters')
   })
 
   test('custom component passes validation for valid input', async ({ page }) => {
-    const input = page.locator('.custom-star-input input[name="favoriteStar"]')
+    const form = getForm(page)
+    const input = form.locator('.custom-star-input input[name="favoriteStar"]')
     await input.fill('Polaris')
     await input.blur()
 
-    const field = page.locator('.custom-star-input')
+    const field = form.locator('.custom-star-input')
     await expect(field).not.toHaveClass(/error/)
   })
 
   test('custom component has distinctive yellow styling', async ({ page }) => {
-    const inputWrapper = page.locator('.custom-star-input .input-wrapper')
+    const form = getForm(page)
+    const inputWrapper = form.locator('.custom-star-input .input-wrapper')
     await expect(inputWrapper).toBeVisible()
 
     // Check that the wrapper has a background color (yellow theme)
-    const bgColor = await inputWrapper.evaluate((el) =>
-      window.getComputedStyle(el).backgroundColor
-    )
+    const bgColor = await inputWrapper.evaluate(el => window.getComputedStyle(el).backgroundColor)
     // #fffbeb is rgb(255, 251, 235)
     expect(bgColor).toBe('rgb(255, 251, 235)')
   })
@@ -523,41 +584,45 @@ test.describe('Custom Component', () => {
 
 test.describe('Computed Paragraph', () => {
   test('renders default computed paragraph text when no data', async ({ page }) => {
-    const summaryP = page.locator('p').filter({ hasText: 'Fill out your info' })
+    const form = getForm(page)
+    const summaryP = form.locator('p').filter({ hasText: 'Fill out your info' })
     await expect(summaryP).toHaveText('Fill out your info above to see a summary.')
   })
 
   test('computed paragraph updates when firstName and lastName are filled', async ({ page }) => {
-    await page.locator('input[name="firstName"]').fill('John')
-    await page.locator('input[name="lastName"]').fill('Doe')
+    const form = getForm(page)
+    await form.locator('input[name="firstName"]').fill('John')
+    await form.locator('input[name="lastName"]').fill('Doe')
 
-    const summaryP = page.locator('p').filter({ hasText: 'Hello, John' })
+    const summaryP = form.locator('p').filter({ hasText: 'Hello, John' })
     await expect(summaryP).toHaveText('Hello, John Doe! You are 25 years old.')
   })
 
   test('computed paragraph reacts to age changes', async ({ page }) => {
-    await page.locator('input[name="firstName"]').fill('Jane')
-    await page.locator('input[name="lastName"]').fill('Smith')
+    const form = getForm(page)
+    await form.locator('input[name="firstName"]').fill('Jane')
+    await form.locator('input[name="lastName"]').fill('Smith')
 
     // Age has default value of 25
-    const summaryP = page.locator('p').filter({ hasText: 'Hello, Jane' })
+    const summaryP = form.locator('p').filter({ hasText: 'Hello, Jane' })
     await expect(summaryP).toHaveText('Hello, Jane Smith! You are 25 years old.')
 
     // Change age
-    await page.locator('input[name="age"]').fill('30')
+    await form.locator('input[name="age"]').fill('30')
     await expect(summaryP).toHaveText('Hello, Jane Smith! You are 30 years old.')
   })
 
   test('computed paragraph reverts when firstName is cleared', async ({ page }) => {
-    await page.locator('input[name="firstName"]').fill('Bob')
-    await page.locator('input[name="lastName"]').fill('Johnson')
+    const form = getForm(page)
+    await form.locator('input[name="firstName"]').fill('Bob')
+    await form.locator('input[name="lastName"]').fill('Johnson')
 
-    const summaryP = page.locator('p').filter({ hasText: 'Hello, Bob' })
+    const summaryP = form.locator('p').filter({ hasText: 'Hello, Bob' })
     await expect(summaryP).toBeVisible()
 
-    await page.locator('input[name="firstName"]').clear()
+    await form.locator('input[name="firstName"]').clear()
 
-    const defaultP = page.locator('p').filter({ hasText: 'Fill out your info' })
+    const defaultP = form.locator('p').filter({ hasText: 'Fill out your info' })
     await expect(defaultP).toHaveText('Fill out your info above to see a summary.')
   })
 })

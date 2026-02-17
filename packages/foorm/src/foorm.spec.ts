@@ -63,13 +63,21 @@ function makeType(opts: {
         prop = defineAnnotatedType('object')
         for (const [nestedName, nestedDef] of Object.entries(propDef.nestedProps)) {
           const nestedProp = defineAnnotatedType()
-          if (nestedDef.designType) { nestedProp.designType(nestedDef.designType as any) }
-          if (nestedDef.tags) { nestedProp.tags(...nestedDef.tags) }
-          if (nestedDef.optional) { nestedProp.optional() }
+          if (nestedDef.designType) {
+            nestedProp.designType(nestedDef.designType as any)
+          }
+          if (nestedDef.tags) {
+            nestedProp.tags(...nestedDef.tags)
+          }
+          if (nestedDef.optional) {
+            nestedProp.optional()
+          }
           if (nestedDef.metadata) {
             for (const [k, v] of Object.entries(nestedDef.metadata)) {
               if (Array.isArray(v)) {
-                for (const item of v) { nestedProp.annotate(k as any, item, true) }
+                for (const item of v) {
+                  nestedProp.annotate(k as any, item, true)
+                }
               } else {
                 nestedProp.annotate(k as any, v)
               }
@@ -79,16 +87,24 @@ function makeType(opts: {
         }
       } else {
         prop = defineAnnotatedType()
-        if (propDef.designType) { prop.designType(propDef.designType as any) }
-        if (propDef.tags) { prop.tags(...propDef.tags) }
+        if (propDef.designType) {
+          prop.designType(propDef.designType as any)
+        }
+        if (propDef.tags) {
+          prop.tags(...propDef.tags)
+        }
       }
 
-      if (propDef.optional) { prop.optional() }
+      if (propDef.optional) {
+        prop.optional()
+      }
 
       if (propDef.metadata) {
         for (const [k, v] of Object.entries(propDef.metadata)) {
           if (Array.isArray(v)) {
-            for (const item of v) { prop.annotate(k as any, item, true) }
+            for (const item of v) {
+              prop.annotate(k as any, item, true)
+            }
           } else {
             prop.annotate(k as any, v)
           }
@@ -109,13 +125,24 @@ const emptyScope: TFoormFnScope = { v: undefined, data: {}, context: {}, entry: 
 describe('compileFieldFn', () => {
   it('compiles and evaluates field-level fn string', () => {
     const fn = compileFieldFn<boolean>('(v, data) => v === data.expected')
-    expect(fn({ v: 'hello', data: { expected: 'hello' }, context: {}, entry: undefined })).toBe(true)
-    expect(fn({ v: 'hello', data: { expected: 'world' }, context: {}, entry: undefined })).toBe(false)
+    expect(fn({ v: 'hello', data: { expected: 'hello' }, context: {}, entry: undefined })).toBe(
+      true
+    )
+    expect(fn({ v: 'hello', data: { expected: 'world' }, context: {}, entry: undefined })).toBe(
+      false
+    )
   })
 
   it('has access to entry in scope', () => {
     const fn = compileFieldFn<string>('(v, data, ctx, entry) => entry.field')
-    expect(fn({ v: undefined, data: {}, context: {}, entry: { field: 'email', type: 'text', name: 'email' } })).toBe('email')
+    expect(
+      fn({
+        v: undefined,
+        data: {},
+        context: {},
+        entry: { field: 'email', type: 'text', name: 'email' },
+      })
+    ).toBe('email')
   })
 })
 
@@ -244,25 +271,49 @@ describe('resolveFieldProp', () => {
       props: { name: { metadata: { 'meta.label': 'Full Name' }, designType: 'string' } },
     })
     const def = createFoormDef(type)
-    expect(resolveFieldProp<string>(def.fields[0].prop, 'foorm.fn.label', 'meta.label', emptyScope)).toBe('Full Name')
+    expect(
+      resolveFieldProp<string>(def.fields[0].prop, 'foorm.fn.label', 'meta.label', emptyScope)
+    ).toBe('Full Name')
   })
 
   it('compiles and calls fn string', () => {
     const type = makeType({
-      props: { email: { metadata: { 'foorm.fn.disabled': '(v, data) => !data.name' }, designType: 'string' } },
+      props: {
+        email: {
+          metadata: { 'foorm.fn.disabled': '(v, data) => !data.name' },
+          designType: 'string',
+        },
+      },
     })
     const def = createFoormDef(type)
     const prop = def.fields[0].prop
-    expect(resolveFieldProp<boolean>(prop, 'foorm.fn.disabled', 'foorm.disabled', { ...emptyScope, data: { name: '' } })).toBe(true)
-    expect(resolveFieldProp<boolean>(prop, 'foorm.fn.disabled', 'foorm.disabled', { ...emptyScope, data: { name: 'John' } })).toBe(false)
+    expect(
+      resolveFieldProp<boolean>(prop, 'foorm.fn.disabled', 'foorm.disabled', {
+        ...emptyScope,
+        data: { name: '' },
+      })
+    ).toBe(true)
+    expect(
+      resolveFieldProp<boolean>(prop, 'foorm.fn.disabled', 'foorm.disabled', {
+        ...emptyScope,
+        data: { name: 'John' },
+      })
+    ).toBe(false)
   })
 
   it('fn takes precedence over static', () => {
     const type = makeType({
-      props: { status: { metadata: { 'foorm.value': 'static', 'foorm.fn.value': '() => "computed"' }, designType: 'string' } },
+      props: {
+        status: {
+          metadata: { 'foorm.value': 'static', 'foorm.fn.value': '() => "computed"' },
+          designType: 'string',
+        },
+      },
     })
     const def = createFoormDef(type)
-    expect(resolveFieldProp<string>(def.fields[0].prop, 'foorm.fn.value', 'foorm.value', emptyScope)).toBe('computed')
+    expect(
+      resolveFieldProp<string>(def.fields[0].prop, 'foorm.fn.value', 'foorm.value', emptyScope)
+    ).toBe('computed')
   })
 
   it('returns undefined when neither fn nor static exists', () => {
@@ -270,7 +321,9 @@ describe('resolveFieldProp', () => {
       props: { name: { metadata: {}, designType: 'string' } },
     })
     const def = createFoormDef(type)
-    expect(resolveFieldProp<string>(def.fields[0].prop, 'foorm.fn.label', 'meta.label', emptyScope)).toBeUndefined()
+    expect(
+      resolveFieldProp<string>(def.fields[0].prop, 'foorm.fn.label', 'meta.label', emptyScope)
+    ).toBeUndefined()
   })
 
   it('staticAsBoolean returns true for any non-undefined static value', () => {
@@ -278,12 +331,25 @@ describe('resolveFieldProp', () => {
       props: { locked: { metadata: { 'foorm.disabled': true }, designType: 'string' } },
     })
     const def = createFoormDef(type)
-    expect(resolveFieldProp<boolean>(def.fields[0].prop, 'foorm.fn.disabled', 'foorm.disabled', emptyScope, { staticAsBoolean: true })).toBe(true)
+    expect(
+      resolveFieldProp<boolean>(
+        def.fields[0].prop,
+        'foorm.fn.disabled',
+        'foorm.disabled',
+        emptyScope,
+        { staticAsBoolean: true }
+      )
+    ).toBe(true)
   })
 
   it('transform applies to static value', () => {
     const type = makeType({
-      props: { country: { metadata: { 'foorm.options': [{ label: 'US', value: 'us' }] }, tags: ['select'] } },
+      props: {
+        country: {
+          metadata: { 'foorm.options': [{ label: 'US', value: 'us' }] },
+          tags: ['select'],
+        },
+      },
     })
     const def = createFoormDef(type)
     const result = resolveFieldProp<any[]>(
@@ -291,7 +357,7 @@ describe('resolveFieldProp', () => {
       'foorm.fn.options',
       'foorm.options',
       emptyScope,
-      { transform: (raw: unknown) => Array.isArray(raw) ? raw.map((r: any) => r.label) : [] }
+      { transform: (raw: unknown) => (Array.isArray(raw) ? raw.map((r: any) => r.label) : []) }
     )
     expect(result).toEqual(['US'])
   })
@@ -305,7 +371,9 @@ describe('resolveFormProp', () => {
       metadata: { 'foorm.title': 'My Form' },
       props: {},
     })
-    expect(resolveFormProp<string>(type, 'foorm.fn.title', 'foorm.title', emptyScope)).toBe('My Form')
+    expect(resolveFormProp<string>(type, 'foorm.fn.title', 'foorm.title', emptyScope)).toBe(
+      'My Form'
+    )
   })
 
   it('compiles and calls form-level fn string', () => {
@@ -313,7 +381,12 @@ describe('resolveFormProp', () => {
       metadata: { 'foorm.fn.title': '(data) => "Hi " + data.user' },
       props: {},
     })
-    expect(resolveFormProp<string>(type, 'foorm.fn.title', 'foorm.title', { ...emptyScope, data: { user: 'Test' } })).toBe('Hi Test')
+    expect(
+      resolveFormProp<string>(type, 'foorm.fn.title', 'foorm.title', {
+        ...emptyScope,
+        data: { user: 'Test' },
+      })
+    ).toBe('Hi Test')
   })
 
   it('returns static submit text', () => {
@@ -321,12 +394,16 @@ describe('resolveFormProp', () => {
       metadata: { 'foorm.submit.text': 'Go' },
       props: {},
     })
-    expect(resolveFormProp<string>(type, 'foorm.fn.submit.text', 'foorm.submit.text', emptyScope)).toBe('Go')
+    expect(
+      resolveFormProp<string>(type, 'foorm.fn.submit.text', 'foorm.submit.text', emptyScope)
+    ).toBe('Go')
   })
 
   it('returns undefined when no metadata', () => {
     const type = makeType({ props: {} })
-    expect(resolveFormProp<string>(type, 'foorm.fn.title', 'foorm.title', emptyScope)).toBeUndefined()
+    expect(
+      resolveFormProp<string>(type, 'foorm.fn.title', 'foorm.title', emptyScope)
+    ).toBeUndefined()
   })
 })
 
@@ -337,7 +414,12 @@ describe('resolveOptions', () => {
     const type = makeType({
       props: {
         country: {
-          metadata: { 'foorm.options': [{ label: 'United States', value: 'us' }, { label: 'Canada', value: 'ca' }] },
+          metadata: {
+            'foorm.options': [
+              { label: 'United States', value: 'us' },
+              { label: 'Canada', value: 'ca' },
+            ],
+          },
           tags: ['select'],
         },
       },
@@ -351,7 +433,12 @@ describe('resolveOptions', () => {
 
   it('uses label as key when value is omitted', () => {
     const type = makeType({
-      props: { color: { metadata: { 'foorm.options': [{ label: 'Red' }, { label: 'Blue' }] }, tags: ['select'] } },
+      props: {
+        color: {
+          metadata: { 'foorm.options': [{ label: 'Red' }, { label: 'Blue' }] },
+          tags: ['select'],
+        },
+      },
     })
     const def = createFoormDef(type)
     expect(resolveOptions(def.fields[0].prop, emptyScope)).toEqual(['Red', 'Blue'])
@@ -360,11 +447,17 @@ describe('resolveOptions', () => {
   it('resolves computed options from fn', () => {
     const type = makeType({
       props: {
-        city: { metadata: { 'foorm.fn.options': '(v, data, context) => context.cities || []' }, tags: ['select'] },
+        city: {
+          metadata: { 'foorm.fn.options': '(v, data, context) => context.cities || []' },
+          tags: ['select'],
+        },
       },
     })
     const def = createFoormDef(type)
-    const scope: TFoormFnScope = { ...emptyScope, context: { cities: [{ key: 'nyc', label: 'NYC' }] } }
+    const scope: TFoormFnScope = {
+      ...emptyScope,
+      context: { cities: [{ key: 'nyc', label: 'NYC' }] },
+    }
     expect(resolveOptions(def.fields[0].prop, scope)).toEqual([{ key: 'nyc', label: 'NYC' }])
   })
 
@@ -400,7 +493,12 @@ describe('resolveAttrs', () => {
     const type = makeType({
       props: {
         email: {
-          metadata: { 'foorm.attr': [{ name: 'data-testid', value: 'email-input' }, { name: 'aria-label', value: 'Email' }] },
+          metadata: {
+            'foorm.attr': [
+              { name: 'data-testid', value: 'email-input' },
+              { name: 'aria-label', value: 'Email' },
+            ],
+          },
           designType: 'string',
         },
       },
@@ -416,14 +514,22 @@ describe('resolveAttrs', () => {
     const type = makeType({
       props: {
         password: {
-          metadata: { 'foorm.fn.attr': [{ name: 'data-strength', fn: '(v) => v && v.length > 8 ? "strong" : "weak"' }] },
+          metadata: {
+            'foorm.fn.attr': [
+              { name: 'data-strength', fn: '(v) => v && v.length > 8 ? "strong" : "weak"' },
+            ],
+          },
           designType: 'string',
         },
       },
     })
     const def = createFoormDef(type)
-    expect(resolveAttrs(def.fields[0].prop, { ...emptyScope, v: 'short' })).toEqual({ 'data-strength': 'weak' })
-    expect(resolveAttrs(def.fields[0].prop, { ...emptyScope, v: 'very-long-password' })).toEqual({ 'data-strength': 'strong' })
+    expect(resolveAttrs(def.fields[0].prop, { ...emptyScope, v: 'short' })).toEqual({
+      'data-strength': 'weak',
+    })
+    expect(resolveAttrs(def.fields[0].prop, { ...emptyScope, v: 'very-long-password' })).toEqual({
+      'data-strength': 'strong',
+    })
   })
 
   it('fn.attr overrides static attr with same name', () => {
@@ -432,15 +538,21 @@ describe('resolveAttrs', () => {
         username: {
           metadata: {
             'foorm.attr': [{ name: 'variant', value: 'default' }],
-            'foorm.fn.attr': [{ name: 'variant', fn: '(v, data) => data.premium ? "premium" : "basic"' }],
+            'foorm.fn.attr': [
+              { name: 'variant', fn: '(v, data) => data.premium ? "premium" : "basic"' },
+            ],
           },
           designType: 'string',
         },
       },
     })
     const def = createFoormDef(type)
-    expect(resolveAttrs(def.fields[0].prop, { ...emptyScope, data: { premium: true } })).toEqual({ variant: 'premium' })
-    expect(resolveAttrs(def.fields[0].prop, { ...emptyScope, data: { premium: false } })).toEqual({ variant: 'basic' })
+    expect(resolveAttrs(def.fields[0].prop, { ...emptyScope, data: { premium: true } })).toEqual({
+      variant: 'premium',
+    })
+    expect(resolveAttrs(def.fields[0].prop, { ...emptyScope, data: { premium: false } })).toEqual({
+      variant: 'basic',
+    })
   })
 
   it('returns undefined when no attr annotations', () => {
@@ -457,7 +569,9 @@ describe('resolveAttrs', () => {
 describe('hasComputedAnnotations', () => {
   it('returns false for static-only fields', () => {
     const type = makeType({
-      props: { name: { metadata: { 'meta.label': 'Name', 'foorm.disabled': true }, designType: 'string' } },
+      props: {
+        name: { metadata: { 'meta.label': 'Name', 'foorm.disabled': true }, designType: 'string' },
+      },
     })
     const def = createFoormDef(type)
     expect(hasComputedAnnotations(def.fields[0].prop)).toBe(false)
@@ -475,14 +589,21 @@ describe('hasComputedAnnotations', () => {
 
   it('returns true when foorm.fn.attr exists', () => {
     const type = makeType({
-      props: { name: { metadata: { 'foorm.fn.attr': [{ name: 'x', fn: '() => 1' }] }, designType: 'string' } },
+      props: {
+        name: {
+          metadata: { 'foorm.fn.attr': [{ name: 'x', fn: '() => 1' }] },
+          designType: 'string',
+        },
+      },
     })
     expect(hasComputedAnnotations(createFoormDef(type).fields[0].prop)).toBe(true)
   })
 
   it('returns true when foorm.validate exists (needs scope for validators)', () => {
     const type = makeType({
-      props: { name: { metadata: { 'foorm.validate': '(v) => !!v || "Required"' }, designType: 'string' } },
+      props: {
+        name: { metadata: { 'foorm.validate': '(v) => !!v || "Required"' }, designType: 'string' },
+      },
     })
     const def = createFoormDef(type)
     expect(hasComputedAnnotations(def.fields[0].prop)).toBe(true)
@@ -514,7 +635,12 @@ describe('createFoormDef', () => {
 
   it('metadata is accessible from prop', () => {
     const type = makeType({
-      props: { name: { metadata: { 'meta.label': 'Full Name', 'foorm.autocomplete': 'name' }, designType: 'string' } },
+      props: {
+        name: {
+          metadata: { 'meta.label': 'Full Name', 'foorm.autocomplete': 'name' },
+          designType: 'string',
+        },
+      },
     })
     const def = createFoormDef(type)
     expect(getFieldMeta<string>(def.fields[0].prop, 'meta.label')).toBe('Full Name')
@@ -665,7 +791,9 @@ describe('createFormData', () => {
       },
     })
     const def = createFoormDef(type)
-    expect(createFormData(type, def.fields)).toEqual({ address: { city: undefined, zip: undefined } })
+    expect(createFormData(type, def.fields)).toEqual({
+      address: { city: undefined, zip: undefined },
+    })
   })
 
   it('skips phantom types in data', () => {
@@ -776,7 +904,13 @@ describe('getFormValidator', () => {
 describe('supportsAltAction', () => {
   it('returns true when a field has the given altAction', () => {
     const type = makeType({
-      props: { save: { metadata: { 'foorm.altAction': 'save-draft' }, tags: ['action'], designType: 'phantom' } },
+      props: {
+        save: {
+          metadata: { 'foorm.altAction': 'save-draft' },
+          tags: ['action'],
+          designType: 'phantom',
+        },
+      },
     })
     expect(supportsAltAction(createFoormDef(type), 'save-draft')).toBe(true)
   })

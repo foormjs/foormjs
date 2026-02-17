@@ -1,4 +1,10 @@
-import type { TComputed, TFoormFnScope, TFoormEntryOptions, FoormFieldDef } from './types'
+import type {
+  TComputed,
+  TFoormFnScope,
+  TFoormEntryOptions,
+  FoormFieldDef,
+  FoormArrayVariant,
+} from './types'
 import type { TAtscriptAnnotatedType, TAtscriptTypeObject } from '@atscript/typescript/utils'
 import { isPhantomType } from '@atscript/typescript/utils'
 import { compileFieldFn, compileTopFn } from './fn-compiler'
@@ -135,15 +141,11 @@ export function parseStaticOptions(raw: unknown): TFoormEntryOptions[] {
  */
 export function resolveOptions(
   prop: TAtscriptAnnotatedType,
-  scope: TFoormFnScope,
+  scope: TFoormFnScope
 ): TFoormEntryOptions[] | undefined {
-  return resolveFieldProp<TFoormEntryOptions[]>(
-    prop,
-    'foorm.fn.options',
-    'foorm.options',
-    scope,
-    { transform: parseStaticOptions }
-  )
+  return resolveFieldProp<TFoormEntryOptions[]>(prop, 'foorm.fn.options', 'foorm.options', scope, {
+    transform: parseStaticOptions,
+  })
 }
 
 /**
@@ -156,7 +158,7 @@ export function resolveOptions(
  */
 export function resolveAttrs(
   prop: TAtscriptAnnotatedType,
-  scope: TFoormFnScope,
+  scope: TFoormFnScope
 ): Record<string, unknown> | undefined {
   const metadata = prop.metadata as unknown as TMetadataAccessor
   const staticAttrs = metadata.get('foorm.attr')
@@ -325,11 +327,13 @@ function buildNestedData(
         v: undefined,
         data: data as Record<string, unknown>,
         context: {},
-        entry: field ? {
-          field: field.path,
-          type: field.type,
-          name: field.name,
-        } : undefined,
+        entry: field
+          ? {
+              field: field.path,
+              type: field.type,
+              name: field.name,
+            }
+          : undefined,
       }
       const defaultValue = resolveFieldProp<unknown>(prop, 'foorm.fn.value', 'foorm.value', scope)
 
@@ -352,4 +356,65 @@ function getDefaultForDesignType(prop: TAtscriptAnnotatedType): unknown {
     default:
       return undefined
   }
+}
+
+// ── Array helpers ───────────────────────────────────────────
+
+/**
+ * Creates default data for a new array item based on its variant.
+ *
+ * @param variant - The array variant to create data for
+ * @returns Default value: nested object for object variants, primitive default for scalar variants
+ */
+export function createItemData(variant: FoormArrayVariant): unknown {
+  if (variant.def) {
+    return createFormData(
+      variant.type as TAtscriptAnnotatedType<TAtscriptTypeObject>,
+      variant.def.fields
+    )
+  }
+  switch (variant.designType) {
+    case 'string':
+      return ''
+    case 'number':
+      return 0
+    case 'boolean':
+      return false
+    default:
+      return undefined
+  }
+}
+
+/**
+ * Detects which variant an existing array item value matches.
+ *
+ * @param value - The array item value to inspect
+ * @param variants - Available variants for this array field
+ * @returns Index of the matching variant (0-based), or 0 as fallback
+ */
+export function detectVariant(value: unknown, variants: FoormArrayVariant[]): number {
+  if (variants.length <= 1) return 0
+
+  // Quick primitive matching by typeof
+  const vType = typeof value
+  for (let i = 0; i < variants.length; i++) {
+    const v = variants[i]
+    if (v.designType && v.designType === vType) return i
+  }
+
+  // Object variant matching via validator
+  if (value !== null && typeof value === 'object') {
+    for (let i = 0; i < variants.length; i++) {
+      const v = variants[i]
+      if (v.def) {
+        try {
+          if (v.type.validator().validate(value, true)) return i
+        } catch {
+          // Validator threw — skip this variant
+        }
+      }
+    }
+  }
+
+  return 0
 }

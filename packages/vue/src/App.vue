@@ -4,9 +4,11 @@ import CustomStarInput from '@/components/custom-star-input.vue'
 import { useFoorm } from '@/composables/use-foorm'
 import { E2eTestForm } from './forms/e2e-test-form.as'
 import { NestedForm } from './forms/nested-form.as'
+import { ArrayForm } from './forms/array-form.as'
 
 const { def, formData } = useFoorm(E2eTestForm)
 const { def: nestedDef, formData: nestedFormData } = useFoorm(NestedForm)
+const { def: arrayDef, formData: arrayFormData } = useFoorm(ArrayForm)
 
 const formContext = {
   cityOptions: [
@@ -36,7 +38,7 @@ function handleAction(name: string, d: unknown) {
 </script>
 
 <template>
-  <main style="width: 100%">
+  <main>
     <OoForm
       class="form"
       :def="def"
@@ -54,6 +56,13 @@ function handleAction(name: string, d: unknown) {
       first-validation="on-blur"
       @submit="handleSubmit"
     />
+    <OoForm
+      class="form"
+      :def="arrayDef"
+      :form-data="arrayFormData"
+      first-validation="on-blur"
+      @submit="handleSubmit"
+    />
   </main>
 </template>
 
@@ -62,17 +71,17 @@ main {
   min-height: 100vh;
   display: flex;
   align-items: flex-start;
-  justify-content: center;
   gap: 24px;
   padding: 48px 16px;
+  overflow-x: auto;
 }
 
 .form {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  width: 100%;
-  max-width: 500px;
+  min-width: 500px;
+  flex-shrink: 0;
   background: #fff;
   border-radius: 12px;
   padding: 32px;

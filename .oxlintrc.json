@@ -112,7 +112,14 @@
       }
     },
     {
-      "files": ["**/*.config.ts", "**/*.config.js", "vite.config.*", "vitest.config.*", "playwright.config.*", "rollup.config.*"],
+      "files": [
+        "**/*.config.ts",
+        "**/*.config.js",
+        "vite.config.*",
+        "vitest.config.*",
+        "playwright.config.*",
+        "rollup.config.*"
+      ],
       "rules": {
         "import/no-default-export": "off"
       }

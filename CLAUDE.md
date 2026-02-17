@@ -27,10 +27,10 @@ The Vue package (`packages/vue`) uses Vite — run `pnpm dev` and `pnpm build` f
 
 ## Monorepo Structure
 
-| Package          | Published Name | Build Tool | Description                                           |
-| ---------------- | -------------- | ---------- | ----------------------------------------------------- |
-| `packages/foorm` | `foorm`        | rollup     | ATScript-first form model with validation             |
-| `packages/vue`   | `@foormjs/vue` | vite       | Renderless Vue components built on top of foorm core  |
+| Package          | Published Name | Build Tool | Description                                          |
+| ---------------- | -------------- | ---------- | ---------------------------------------------------- |
+| `packages/foorm` | `foorm`        | rollup     | ATScript-first form model with validation            |
+| `packages/vue`   | `@foormjs/vue` | vite       | Renderless Vue components built on top of foorm core |
 
 Two export paths for foorm: `foorm` (runtime) and `foorm/plugin` (ATScript plugin for build-time/IDE usage).
 
@@ -107,6 +107,16 @@ Field-level computed (`@foorm.fn.*`): `label`, `description`, `hint`, `placehold
 All `@foorm.fn.*` take a JS function string `(v, data, context, entry) => result`.
 
 Standard ATScript metadata also used: `@meta.label`, `@meta.description`, `@meta.hint`, `@meta.placeholder`, `@expect.maxLength`, `@expect.min`, etc.
+
+## Post-Implementation Workflow
+
+After completing a feature, bug fix, or refactoring, use the available agents to verify everything works:
+
+1. **`lint-and-test`** — Run lint, format check, TypeScript type checks (both foorm and vue), and tests. Use after any code changes.
+2. **`build`** — Build all packages. Use after changes that affect exports, types, or package structure.
+3. **`readme-check`** — Find discrepancies between documentation (READMEs + foorm skill) and actual code. Use after significant API changes or refactoring.
+
+These agents run in isolation and return a concise summary. Delegate to them proactively — don't wait for the user to ask.
 
 ## Conventions
 

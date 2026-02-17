@@ -11,7 +11,7 @@ import {
   setByPath,
   foormValidatorPlugin,
 } from 'foorm'
-import { computed, inject, watch, type ComputedRef } from 'vue'
+import { computed, inject, ref, watch, type ComputedRef } from 'vue'
 
 const props = defineProps<{ field: FoormFieldDef; error?: string }>()
 
@@ -19,9 +19,20 @@ const vuiless = inject<ComputedRef<TVuilessState<TFormData, TFormContext>>>(
   'vuiless'
 ) as ComputedRef<TVuilessState<TFormData, TFormContext>>
 
+// Root form data for fn scope (ensures `data` in fn strings always references root)
+const rootData = inject<ComputedRef<TFormData>>(
+  'oo-root-data',
+  undefined as unknown as ComputedRef<TFormData>
+)
+
 // Helper to unwrap value (handles both static and computed)
-const unwrap = <T>(v: T | ComputedRef<T>): T =>
+const unwrap = <T,>(v: T | ComputedRef<T>): T =>
   typeof v === 'object' && v !== null && 'value' in v ? (v as ComputedRef<T>).value : (v as T)
+
+/** Returns the data object to use in fn scopes — root data if available, else local form data. */
+function scopeData(): Record<string, unknown> {
+  return (rootData?.value ?? vuiless.value.formData) as Record<string, unknown>
+}
 
 const prop = props.field.prop
 
@@ -39,18 +50,11 @@ let cachedValidator: InstanceType<typeof Validator> | undefined
 
 // ── Helpers for v-model with dot-path support ──────────────
 function getModel() {
-  return getByPath(
-    vuiless.value.formData as Record<string, unknown>,
-    props.field.path
-  )
+  return getByPath(vuiless.value.formData as Record<string, unknown>, props.field.path)
 }
 
 function setModel(value: unknown) {
-  setByPath(
-    vuiless.value.formData as Record<string, unknown>,
-    props.field.path,
-    value
-  )
+  setByPath(vuiless.value.formData as Record<string, unknown>, props.field.path, value)
 }
 
 // ── Declare all field properties ────────────────────────────
@@ -101,9 +105,8 @@ if (props.field.allStatic) {
   placeholder = getFieldMeta<string>(prop, 'meta.placeholder')
   styles = getFieldMeta(prop, 'foorm.styles')
   options = resolveOptions(prop, emptyScope)
-  attrs = (getFieldMeta(prop, 'foorm.attr') !== undefined)
-    ? resolveAttrs(prop, emptyScope)
-    : undefined
+  attrs =
+    getFieldMeta(prop, 'foorm.attr') !== undefined ? resolveAttrs(prop, emptyScope) : undefined
 
   // Classes: plain object (no computed)
   const staticClassValue = getFieldMeta(prop, 'foorm.classes')
@@ -116,10 +119,7 @@ if (props.field.allStatic) {
   }
 
   // Phantom value: static
-  phantomValue = props.field.phantom
-    ? getFieldMeta(prop, 'foorm.value')
-    : undefined
-
+  phantomValue = props.field.phantom ? getFieldMeta(prop, 'foorm.value') : undefined
 } else {
   // ══════════════════════════════════════════════════════════
   // DYNAMIC PATH: per-property static/dynamic detection
@@ -142,8 +142,7 @@ if (props.field.allStatic) {
   hasCustomValidators = getFieldMeta(prop, 'foorm.validate') !== undefined
 
   // ── Lazy scope construction ────────────────────────────────
-  const needsBaseScope =
-    hasFn.disabled || hasFn.hidden || hasFn.optional || hasFn.readonly
+  const needsBaseScope = hasFn.disabled || hasFn.hidden || hasFn.optional || hasFn.readonly
   const needsFullScope =
     hasFn.label ||
     hasFn.description ||
@@ -158,13 +157,11 @@ if (props.field.allStatic) {
   const needsScope = needsBaseScope || needsFullScope
 
   // Base scope for constraints (no entry)
+  // Uses scopeData() so fn strings always reference root form data
   const baseScope = needsScope
     ? computed<TFoormFnScope>(() => ({
-        v: getByPath(
-          vuiless.value.formData as Record<string, unknown>,
-          props.field.path
-        ),
-        data: vuiless.value.formData as Record<string, unknown>,
+        v: getByPath(vuiless.value.formData as Record<string, unknown>, props.field.path),
+        data: scopeData(),
         context: (vuiless.value.formContext ?? {}) as Record<string, unknown>,
         entry: undefined,
       }))
@@ -177,51 +174,36 @@ if (props.field.allStatic) {
   disabled = hasFn.disabled
     ? computed(
         () =>
-          resolveFieldProp<boolean>(
-            prop,
-            'foorm.fn.disabled',
-            'foorm.disabled',
-            bs.value,
-            { staticAsBoolean: true }
-          ) ?? false
+          resolveFieldProp<boolean>(prop, 'foorm.fn.disabled', 'foorm.disabled', bs.value, {
+            staticAsBoolean: true,
+          }) ?? false
       )
     : getFieldMeta(prop, 'foorm.disabled') !== undefined
 
   hidden = hasFn.hidden
     ? computed(
         () =>
-          resolveFieldProp<boolean>(
-            prop,
-            'foorm.fn.hidden',
-            'foorm.hidden',
-            bs.value,
-            { staticAsBoolean: true }
-          ) ?? false
+          resolveFieldProp<boolean>(prop, 'foorm.fn.hidden', 'foorm.hidden', bs.value, {
+            staticAsBoolean: true,
+          }) ?? false
       )
     : getFieldMeta(prop, 'foorm.hidden') !== undefined
 
   optional = hasFn.optional
     ? computed(
         () =>
-          resolveFieldProp<boolean>(
-            prop,
-            'foorm.fn.optional',
-            undefined,
-            bs.value
-          ) ?? (props.field.prop.optional ?? false)
+          resolveFieldProp<boolean>(prop, 'foorm.fn.optional', undefined, bs.value) ??
+          props.field.prop.optional ??
+          false
       )
     : (props.field.prop.optional ?? false)
 
   readonly = hasFn.readonly
     ? computed(
         () =>
-          resolveFieldProp<boolean>(
-            prop,
-            'foorm.fn.readonly',
-            'foorm.readonly',
-            bs.value,
-            { staticAsBoolean: true }
-          ) ?? false
+          resolveFieldProp<boolean>(prop, 'foorm.fn.readonly', 'foorm.readonly', bs.value, {
+            staticAsBoolean: true,
+          }) ?? false
       )
     : getFieldMeta(prop, 'foorm.readonly') !== undefined
 
@@ -256,52 +238,29 @@ if (props.field.allStatic) {
   label = hasFn.label
     ? computed(
         () =>
-          resolveFieldProp<string>(
-            prop,
-            'foorm.fn.label',
-            'meta.label',
-            fs.value
-          ) ?? props.field.name
+          resolveFieldProp<string>(prop, 'foorm.fn.label', 'meta.label', fs.value) ??
+          props.field.name
       )
     : (getFieldMeta<string>(prop, 'meta.label') ?? props.field.name)
 
   description = hasFn.description
     ? computed(() =>
-        resolveFieldProp<string>(
-          prop,
-          'foorm.fn.description',
-          'meta.description',
-          fs.value
-        )
+        resolveFieldProp<string>(prop, 'foorm.fn.description', 'meta.description', fs.value)
       )
     : getFieldMeta<string>(prop, 'meta.description')
 
   hint = hasFn.hint
-    ? computed(() =>
-        resolveFieldProp<string>(
-          prop,
-          'foorm.fn.hint',
-          'meta.hint',
-          fs.value
-        )
-      )
+    ? computed(() => resolveFieldProp<string>(prop, 'foorm.fn.hint', 'meta.hint', fs.value))
     : getFieldMeta<string>(prop, 'meta.hint')
 
   placeholder = hasFn.placeholder
     ? computed(() =>
-        resolveFieldProp<string>(
-          prop,
-          'foorm.fn.placeholder',
-          'meta.placeholder',
-          fs.value
-        )
+        resolveFieldProp<string>(prop, 'foorm.fn.placeholder', 'meta.placeholder', fs.value)
       )
     : getFieldMeta<string>(prop, 'meta.placeholder')
 
   styles = hasFn.styles
-    ? computed(() =>
-        resolveFieldProp(prop, 'foorm.fn.styles', 'foorm.styles', fs.value)
-      )
+    ? computed(() => resolveFieldProp(prop, 'foorm.fn.styles', 'foorm.styles', fs.value))
     : getFieldMeta(prop, 'foorm.styles')
 
   options = hasFn.options
@@ -316,67 +275,51 @@ if (props.field.allStatic) {
       : undefined
 
   // ── Classes — conditional computed ─────────────────────────
-  classesBase = (hasFn.classes || typeof disabled !== 'boolean' || typeof optional !== 'boolean')
-    ? computed(() => {
-        const classValue = hasFn.classes
-          ? resolveFieldProp(
-              prop,
-              'foorm.fn.classes',
-              undefined,
-              fs.value
-            )
-          : getFieldMeta(prop, 'foorm.classes')
+  classesBase =
+    hasFn.classes || typeof disabled !== 'boolean' || typeof optional !== 'boolean'
+      ? computed(() => {
+          const classValue = hasFn.classes
+            ? resolveFieldProp(prop, 'foorm.fn.classes', undefined, fs.value)
+            : getFieldMeta(prop, 'foorm.classes')
 
-        return {
-          ...(typeof classValue === 'string'
-            ? { [classValue]: true }
-            : (classValue as Record<string, boolean> | undefined)),
-          disabled: unwrap(disabled),
-          required: !unwrap(optional),
-        }
-      })
-    : (() => {
-        const staticClassValue = getFieldMeta(prop, 'foorm.classes')
-        return {
-          ...(typeof staticClassValue === 'string'
-            ? { [staticClassValue]: true }
-            : (staticClassValue as Record<string, boolean> | undefined)),
-          disabled: disabled as boolean,
-          required: !(optional as boolean),
-        }
-      })()
+          return {
+            ...(typeof classValue === 'string'
+              ? { [classValue]: true }
+              : (classValue as Record<string, boolean> | undefined)),
+            disabled: unwrap(disabled),
+            required: !unwrap(optional),
+          }
+        })
+      : (() => {
+          const staticClassValue = getFieldMeta(prop, 'foorm.classes')
+          return {
+            ...(typeof staticClassValue === 'string'
+              ? { [staticClassValue]: true }
+              : (staticClassValue as Record<string, boolean> | undefined)),
+            disabled: disabled as boolean,
+            required: !(optional as boolean),
+          }
+        })()
 
   // ── Phantom value (paragraph, action display) ──────────────
   phantomValue = props.field.phantom
     ? hasFn.value
-      ? computed(() =>
-          resolveFieldProp(prop, 'foorm.fn.value', 'foorm.value', fs.value)
-        )
+      ? computed(() => resolveFieldProp(prop, 'foorm.fn.value', 'foorm.value', fs.value))
       : getFieldMeta(prop, 'foorm.value')
     : undefined
 
   // ── Readonly watcher (computed derived fields) ─────────────
   if (hasFn.value && !props.field.phantom) {
     const computedValue = computed(() => {
-      if (unwrap(readonly))
-        return resolveFieldProp(
-          prop,
-          'foorm.fn.value',
-          'foorm.value',
-          fs.value
-        )
+      if (unwrap(readonly)) return resolveFieldProp(prop, 'foorm.fn.value', 'foorm.value', fs.value)
       return undefined
     })
 
     watch(
       computedValue,
-      (newVal) => {
+      newVal => {
         if (newVal !== undefined && unwrap(readonly))
-          setByPath(
-            vuiless.value.formData as Record<string, unknown>,
-            props.field.path,
-            newVal
-          )
+          setByPath(vuiless.value.formData as Record<string, unknown>, props.field.path, newVal)
       },
       { immediate: true }
     )
@@ -386,25 +329,33 @@ if (props.field.allStatic) {
 // ── Validation rule (shared by both paths) ──────────────────
 function vuilessRule(v: unknown) {
   cachedValidator ??= new Validator(prop, { plugins: [validatorPlugin] })
-  const isValid = cachedValidator.validate(v, true,
+  const isValid = cachedValidator.validate(
+    v,
+    true,
     hasCustomValidators
       ? {
-          data: vuiless.value.formData as Record<string, unknown>,
+          data: scopeData(),
           context: (vuiless.value.formContext ?? {}) as Record<string, unknown>,
         }
       : undefined
   )
-  if (!isValid) return cachedValidator.errors?.[0]?.message || 'Invalid value'
+  if (!isValid) {
+    // For array/group fields, only report root-level errors (path === '').
+    // Child errors are handled by their own OoField validators.
+    if (props.field.type === 'array' || props.field.type === 'group') {
+      const rootError = cachedValidator.errors?.find(e => e.path === '')
+      if (rootError) return rootError.message
+      return true
+    }
+    return cachedValidator.errors?.[0]?.message || 'Invalid value'
+  }
   return true
 }
 
 const rules = [vuilessRule]
 
 // Function to merge classes with error flag
-function getClasses(
-  error: string | undefined,
-  vuilessError: string | undefined
-) {
+function getClasses(error: string | undefined, vuilessError: string | undefined) {
   return {
     ...unwrap(classesBase),
     error: !!error || !!vuilessError,

@@ -12,53 +12,85 @@ export {}
 
 declare global {
   interface AtscriptMetadata {
-    "meta.label": string
-    "meta.id": string | true
-    "meta.description": string
-    "meta.documentation": (string)[]
-    "meta.placeholder": string
-    "meta.sensitive": boolean
-    "meta.readonly": boolean
-    "meta.isKey": boolean
-    "expect.minLength": { length: number, message?: string }
-    "expect.maxLength": { length: number, message?: string }
-    "expect.min": { minValue: number, message?: string }
-    "expect.max": { maxValue: number, message?: string }
-    "expect.int": boolean
-    "expect.pattern": ({ pattern: string, flags?: string, message?: string })[]
-    "emit.jsonSchema": boolean
-    "foorm.title": string
-    "foorm.submit.text": string
-    "foorm.type": string
-    "foorm.component": string
-    "foorm.autocomplete": string
-    "foorm.altAction": string
-    "foorm.value": string
-    "foorm.order": number
-    "foorm.hidden": boolean
-    "foorm.disabled": boolean
-    "foorm.readonly": boolean
-    "foorm.options": ({ label: string, value?: string })[]
-    "foorm.attr": ({ name: string, value: string })[]
-    "foorm.validate": (string)[]
-    "foorm.fn.title": string
-    "foorm.fn.submit.text": string
-    "foorm.fn.submit.disabled": string
-    "foorm.fn.label": string
-    "foorm.fn.description": string
-    "foorm.fn.hint": string
-    "foorm.fn.placeholder": string
-    "foorm.fn.disabled": string
-    "foorm.fn.hidden": string
-    "foorm.fn.readonly": string
-    "foorm.fn.optional": string
-    "foorm.fn.value": string
-    "foorm.fn.classes": string
-    "foorm.fn.styles": string
-    "foorm.fn.options": string
-    "foorm.fn.attr": ({ name: string, fn: string })[]
-    "meta.hint": string
+    'meta.label': string
+    'meta.id': string | true
+    'meta.description': string
+    'meta.documentation': string[]
+    'meta.placeholder': string
+    'meta.sensitive': boolean
+    'meta.readonly': boolean
+    'meta.isKey': boolean
+    'expect.minLength': { length: number; message?: string }
+    'expect.maxLength': { length: number; message?: string }
+    'expect.min': { minValue: number; message?: string }
+    'expect.max': { maxValue: number; message?: string }
+    'expect.int': boolean
+    'expect.pattern': { pattern: string; flags?: string; message?: string }[]
+    'emit.jsonSchema': boolean
+    'foorm.title': string
+    'foorm.submit.text': string
+    'foorm.type': string
+    'foorm.component': string
+    'foorm.autocomplete': string
+    'foorm.altAction': string
+    'foorm.value': string
+    'foorm.order': number
+    'foorm.hidden': boolean
+    'foorm.disabled': boolean
+    'foorm.readonly': boolean
+    'foorm.options': { label: string; value?: string }[]
+    'foorm.attr': { name: string; value: string }[]
+    'foorm.validate': string[]
+    'foorm.array.add.component': string
+    'foorm.array.add.label': string
+    'foorm.array.remove.component': string
+    'foorm.array.remove.label': string
+    'foorm.array.sortable': boolean
+    'foorm.fn.title': string
+    'foorm.fn.submit.text': string
+    'foorm.fn.submit.disabled': string
+    'foorm.fn.label': string
+    'foorm.fn.description': string
+    'foorm.fn.hint': string
+    'foorm.fn.placeholder': string
+    'foorm.fn.disabled': string
+    'foorm.fn.hidden': string
+    'foorm.fn.readonly': string
+    'foorm.fn.optional': string
+    'foorm.fn.value': string
+    'foorm.fn.classes': string
+    'foorm.fn.styles': string
+    'foorm.fn.options': string
+    'foorm.fn.attr': { name: string; fn: string }[]
+    'meta.hint': string
   }
-  type AtscriptPrimitiveTags = "never" | "string" | "email" | "phone" | "date" | "isoDate" | "uuid" | "number" | "positive" | "negative" | "single" | "double" | "int" | "timestamp" | "boolean" | "true" | "false" | "null" | "void" | "undefined" | "phantom" | "foorm" | "action" | "paragraph" | "select" | "radio" | "checkbox"
+  type AtscriptPrimitiveTags =
+    | 'never'
+    | 'string'
+    | 'email'
+    | 'phone'
+    | 'date'
+    | 'isoDate'
+    | 'uuid'
+    | 'number'
+    | 'positive'
+    | 'negative'
+    | 'single'
+    | 'double'
+    | 'int'
+    | 'timestamp'
+    | 'boolean'
+    | 'true'
+    | 'false'
+    | 'null'
+    | 'void'
+    | 'undefined'
+    | 'phantom'
+    | 'foorm'
+    | 'action'
+    | 'paragraph'
+    | 'select'
+    | 'radio'
+    | 'checkbox'
 }
 // prettier-ignore-end

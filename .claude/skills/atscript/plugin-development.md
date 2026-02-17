@@ -48,7 +48,9 @@ import { createAtscriptPlugin } from '@atscript/core'
 
 export const myPlugin = createAtscriptPlugin({
   name: 'my-plugin',
-  config() { /* ... */ },
+  config() {
+    /* ... */
+  },
 })
 ```
 
@@ -74,8 +76,8 @@ config(config) {
 | Property            | Type                               | Description                                                     |
 | ------------------- | ---------------------------------- | --------------------------------------------------------------- |
 | `primitives`        | `Record<string, TPrimitiveConfig>` | Custom primitive type definitions                               |
-| `annotations`       | `TAnnotationsTree`                 | Custom annotation definitions (nested `AnnotationSpec` objects)  |
-| `unknownAnnotation` | `'allow' \| 'warn' \| 'error'`    | How to handle undefined annotations                             |
+| `annotations`       | `TAnnotationsTree`                 | Custom annotation definitions (nested `AnnotationSpec` objects) |
+| `unknownAnnotation` | `'allow' \| 'warn' \| 'error'`     | How to handle undefined annotations                             |
 | `rootDir`           | `string`                           | Root directory for `.as` files                                  |
 | `entries`           | `string[]`                         | Specific files to process                                       |
 | `include`           | `string[]`                         | Glob patterns to include                                        |
@@ -163,9 +165,13 @@ import { AnnotationSpec } from '@atscript/core'
 
 const annotations: TAnnotationsTree = {
   namespace: {
-    annotationName: new AnnotationSpec({ /* config */ }),
+    annotationName: new AnnotationSpec({
+      /* config */
+    }),
     nested: {
-      deepAnnotation: new AnnotationSpec({ /* config */ }),
+      deepAnnotation: new AnnotationSpec({
+        /* config */
+      }),
     },
   },
 }
@@ -178,8 +184,8 @@ This creates annotations like `@namespace.annotationName` and `@namespace.nested
 ```typescript
 interface TAnnotationSpecConfig {
   description?: string
-  nodeType?: TNodeEntity[]       // 'interface', 'type', 'prop'
-  defType?: string[]             // Restrict to specific underlying types
+  nodeType?: TNodeEntity[] // 'interface', 'type', 'prop'
+  defType?: string[] // Restrict to specific underlying types
   multiple?: boolean
   mergeStrategy?: 'append' | 'replace'
   argument?: TAnnotationArgument | TAnnotationArgument[]
@@ -198,7 +204,7 @@ interface TAnnotationArgument {
   type: 'string' | 'number' | 'boolean'
   optional?: boolean
   description?: string
-  values?: string[]  // Allowed values (IntelliSense + parse-time validation)
+  values?: string[] // Allowed values (IntelliSense + parse-time validation)
 }
 ```
 
@@ -253,7 +259,7 @@ modify(token, args, doc) {
 
 ```typescript
 type TMessages = Array<{
-  severity: 1 | 2 | 3 | 4  // 1=Error, 2=Warning, 3=Info, 4=Hint
+  severity: 1 | 2 | 3 | 4 // 1=Error, 2=Warning, 3=Info, 4=Hint
   message: string
   range: { start: { line: number; character: number }; end: { line: number; character: number } }
   tags?: number[]
@@ -270,11 +276,11 @@ Primitives are defined as `Record<string, TPrimitiveConfig>`.
 
 ```typescript
 interface TPrimitiveConfig {
-  type?: string               // 'string', 'number', 'boolean', 'phantom', etc. (inherited from parent)
-  documentation?: string      // IntelliSense docs (inherited from parent)
+  type?: string // 'string', 'number', 'boolean', 'phantom', etc. (inherited from parent)
+  documentation?: string // IntelliSense docs (inherited from parent)
   expect?: Record<string, any> // Validation constraints (merged with parent)
-  extensions?: Record<string, Partial<TPrimitiveConfig>>  // Dot-notation subtypes
-  isContainer?: boolean       // If true, cannot be used directly
+  extensions?: Record<string, Partial<TPrimitiveConfig>> // Dot-notation subtypes
+  isContainer?: boolean // If true, cannot be used directly
 }
 ```
 
@@ -444,14 +450,23 @@ export const apiPlugin: () => TAtscriptPlugin = () => {
               description: 'Define an API endpoint',
               nodeType: ['interface'],
               argument: [
-                { name: 'method', type: 'string', values: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] },
+                {
+                  name: 'method',
+                  type: 'string',
+                  values: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+                },
                 { name: 'path', type: 'string', description: 'URL path pattern' },
               ],
             }),
             auth: new AnnotationSpec({
               description: 'Require authentication',
               nodeType: ['interface'],
-              argument: { name: 'strategy', type: 'string', values: ['bearer', 'basic', 'apiKey'], optional: true },
+              argument: {
+                name: 'strategy',
+                type: 'string',
+                values: ['bearer', 'basic', 'apiKey'],
+                optional: true,
+              },
             }),
             field: {
               query: new AnnotationSpec({
@@ -475,10 +490,12 @@ export const apiPlugin: () => TAtscriptPlugin = () => {
 
     render(doc, format) {
       if (format === 'openapi') {
-        return [{
-          fileName: `${doc.name}.openapi.json`,
-          content: generateOpenApiSpec(doc),
-        }]
+        return [
+          {
+            fileName: `${doc.name}.openapi.json`,
+            content: generateOpenApiSpec(doc),
+          },
+        ]
       }
     },
   }
@@ -561,7 +578,9 @@ export default defineConfig({
   rootDir: 'src',
   plugins: [
     ts(),
-    myPlugin({ /* options */ }),
+    myPlugin({
+      /* options */
+    }),
   ],
 })
 ```
@@ -582,7 +601,7 @@ Always export plugins as factory functions:
 
 ```typescript
 export const myPlugin: (opts?: TMyPluginOptions) => TAtscriptPlugin = opts => {
-  return { name: 'my-plugin', /* ... */ }
+  return { name: 'my-plugin' /* ... */ }
 }
 ```
 

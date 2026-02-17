@@ -61,10 +61,10 @@ const { def, formData } = useFoorm(RegistrationForm)
 
 ## Packages
 
-| Package | Description | Docs |
-|---|---|---|
-| [`foorm`](packages/foorm) | Core form model — definitions, validation, metadata resolution | [README](packages/foorm/README.md) |
-| [`@foormjs/vue`](packages/vue) | Renderless Vue components — `OoForm`, `OoField`, `useFoorm` | [README](packages/vue/README.md) |
+| Package                        | Description                                                    | Docs                               |
+| ------------------------------ | -------------------------------------------------------------- | ---------------------------------- |
+| [`foorm`](packages/foorm)      | Core form model — definitions, validation, metadata resolution | [README](packages/foorm/README.md) |
+| [`@foormjs/vue`](packages/vue) | Renderless Vue components — `OoForm`, `OoField`, `useFoorm`    | [README](packages/vue/README.md)   |
 
 ## ATScript
 

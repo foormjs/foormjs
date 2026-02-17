@@ -63,7 +63,9 @@ defineEmits<{
   border-radius: 8px;
   background: #fffbeb;
   overflow: hidden;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .input-wrapper:focus-within {

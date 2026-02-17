@@ -64,8 +64,8 @@ export function foormValidatorPlugin(opts?: TFoormPluginOptions): TValidatorPlug
     // Skip disabled/hidden fields (form-level validation)
     if (opts?.skipDisabledHidden && (disabled || hidden)) return true
 
-    const optional = evalConstraint(def.metadata, 'foorm.optional', 'foorm.fn.optional', baseScope)
-      ?? def.optional
+    const optional =
+      evalConstraint(def.metadata, 'foorm.optional', 'foorm.fn.optional', baseScope) ?? def.optional
 
     // Foorm-level required check (empty string, undefined, null = missing)
     if (opts?.checkRequired && !optional && !value && value !== 0 && value !== false) {
@@ -143,7 +143,8 @@ function evalOptions(
   const staticOpts = metadata?.get('foorm.options')
   if (staticOpts) {
     const items = Array.isArray(staticOpts) ? staticOpts : [staticOpts]
-    return items.map((item: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    return items.map((item: any) => {
+      // eslint-disable-line @typescript-eslint/no-explicit-any
       if (typeof item === 'object' && item !== null && 'label' in item) {
         const { label, value } = item as { label: string; value?: string }
         return value !== undefined ? { key: value, label } : label

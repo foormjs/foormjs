@@ -27,13 +27,13 @@ Custom primitives extend built-in ones or define entirely new namespaces (includ
 
 ## Extension Object Fields
 
-| Field           | Type                                      | Required | Description                                                             |
-| --------------- | ----------------------------------------- | -------- | ----------------------------------------------------------------------- |
-| `type`          | `'string' \| 'number' \| 'boolean' \| 'phantom'` | No | Base type. **Inherited from parent** if omitted.                       |
-| `documentation` | `string`                                  | No       | IntelliSense hover text. **Inherited from parent** if omitted.          |
-| `expect`        | `object`                                  | No       | Implicit validation constraints. **Merged with parent's** `expect`.     |
-| `extensions`    | `Record<string, ...>`                     | No       | Nested sub-extensions (e.g., `number.int.positive`).                    |
-| `isContainer`   | `boolean`                                 | No       | If `true`, cannot be used directly — one of its extensions must be chosen. |
+| Field           | Type                                             | Required | Description                                                                |
+| --------------- | ------------------------------------------------ | -------- | -------------------------------------------------------------------------- |
+| `type`          | `'string' \| 'number' \| 'boolean' \| 'phantom'` | No       | Base type. **Inherited from parent** if omitted.                           |
+| `documentation` | `string`                                         | No       | IntelliSense hover text. **Inherited from parent** if omitted.             |
+| `expect`        | `object`                                         | No       | Implicit validation constraints. **Merged with parent's** `expect`.        |
+| `extensions`    | `Record<string, ...>`                            | No       | Nested sub-extensions (e.g., `number.int.positive`).                       |
+| `isContainer`   | `boolean`                                        | No       | If `true`, cannot be used directly — one of its extensions must be chosen. |
 
 **Key:** Extensions automatically inherit `type`, `documentation`, `expect`, and `tags` from their parent primitive. You only need to specify fields you want to override or add.
 
@@ -164,11 +164,13 @@ primitives: {
 ```
 
 **Key points:**
+
 - `isContainer: true` prevents using `foorm` directly; the compiler requires `foorm.action`, `foorm.paragraph`, etc.
 - Extensions inherit `type: 'phantom'` from parent — no need to repeat on each one
 - Individual extensions can **override** back to a data type (e.g., `type: 'string'` for `foorm.select`)
 
 **Phantom behavior:**
+
 - Excluded from generated TypeScript class
 - Skipped by validation
 - Excluded from JSON Schema and serialization

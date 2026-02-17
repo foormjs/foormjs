@@ -22,7 +22,7 @@ try {
   validator.validate(data)
 } catch (error) {
   console.error(error.message) // first error
-  console.error(error.errors)  // all errors: { path, message, details? }[]
+  console.error(error.errors) // all errors: { path, message, details? }[]
 }
 ```
 
@@ -55,19 +55,19 @@ const validator = Product.validator({
   unknwonProps: 'strip',
   errorLimit: 5,
   skipList: new Set(['metadata', 'audit.createdBy']),
-  replace: (type, path) => path === 'status' ? customStatusType : type,
+  replace: (type, path) => (path === 'status' ? customStatusType : type),
   plugins: [myPlugin],
 })
 ```
 
-| Option | Values | Description |
-|--------|--------|-------------|
-| `partial` | `false` (default), `true`, `'deep'`, or `(type, path) => boolean` | Controls whether missing required properties are errors. `true` = top-level optional, `'deep'` = recursively optional, function = fine-grained per path |
-| `unknwonProps` | `'error'` (default), `'ignore'`, `'strip'` | How unknown properties are handled. `'strip'` removes them from the data |
-| `errorLimit` | number (default: `10`) | Max errors collected before stopping |
-| `skipList` | `Set<string>` | Property paths to skip during validation |
-| `replace` | `(type, path) => type` | Dynamically replace type definitions at specific paths |
-| `plugins` | `TValidatorPlugin[]` | Custom validation plugins |
+| Option         | Values                                                            | Description                                                                                                                                             |
+| -------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `partial`      | `false` (default), `true`, `'deep'`, or `(type, path) => boolean` | Controls whether missing required properties are errors. `true` = top-level optional, `'deep'` = recursively optional, function = fine-grained per path |
+| `unknwonProps` | `'error'` (default), `'ignore'`, `'strip'`                        | How unknown properties are handled. `'strip'` removes them from the data                                                                                |
+| `errorLimit`   | number (default: `10`)                                            | Max errors collected before stopping                                                                                                                    |
+| `skipList`     | `Set<string>`                                                     | Property paths to skip during validation                                                                                                                |
+| `replace`      | `(type, path) => type`                                            | Dynamically replace type definitions at specific paths                                                                                                  |
+| `plugins`      | `TValidatorPlugin[]`                                              | Custom validation plugins                                                                                                                               |
 
 ---
 
@@ -75,14 +75,14 @@ const validator = Product.validator({
 
 Annotations from `.as` files are automatically enforced by the validator:
 
-| Annotation | Applies To | Validates |
-|------------|-----------|-----------|
-| `@expect.minLength value, 'msg'` | string, array | Minimum length |
-| `@expect.maxLength value, 'msg'` | string, array | Maximum length |
-| `@expect.min value, 'msg'` | number | Minimum value |
-| `@expect.max value, 'msg'` | number | Maximum value |
-| `@expect.int` | number | Must be integer |
-| `@expect.pattern 'regex', 'flags', 'msg'` | string | Regex match (repeatable, append) |
+| Annotation                                | Applies To    | Validates                        |
+| ----------------------------------------- | ------------- | -------------------------------- |
+| `@expect.minLength value, 'msg'`          | string, array | Minimum length                   |
+| `@expect.maxLength value, 'msg'`          | string, array | Maximum length                   |
+| `@expect.min value, 'msg'`                | number        | Minimum value                    |
+| `@expect.max value, 'msg'`                | number        | Maximum value                    |
+| `@expect.int`                             | number        | Must be integer                  |
+| `@expect.pattern 'regex', 'flags', 'msg'` | string        | Regex match (repeatable, append) |
 
 All `@expect.*` annotations except `@expect.int` accept an optional custom error message as the last argument.
 
@@ -129,7 +129,7 @@ try {
 } catch (e) {
   if (e instanceof ValidatorError) {
     for (const err of e.errors) {
-      console.log(err.path)    // e.g. "address.city"
+      console.log(err.path) // e.g. "address.city"
       console.log(err.message) // e.g. "Expected string, got number"
       console.log(err.details) // nested errors for unions
     }
@@ -165,13 +165,13 @@ const validator = Product.validator({ plugins: [requireNonEmpty] })
 
 The `ctx` parameter exposes:
 
-| Property | Description |
-|----------|-------------|
-| `ctx.opts` | Validator options |
-| `ctx.path` | Current property path (e.g. `"address.city"`) |
-| `ctx.error(msg)` | Report a validation error |
-| `ctx.context` | External context passed via `validate()` third arg |
-| `ctx.validateAnnotatedType` | Recursively validate a nested annotated type |
+| Property                    | Description                                        |
+| --------------------------- | -------------------------------------------------- |
+| `ctx.opts`                  | Validator options                                  |
+| `ctx.path`                  | Current property path (e.g. `"address.city"`)      |
+| `ctx.error(msg)`            | Report a validation error                          |
+| `ctx.context`               | External context passed via `validate()` third arg |
+| `ctx.validateAnnotatedType` | Recursively validate a nested annotated type       |
 
 ### External Context
 
@@ -211,8 +211,7 @@ import { defineAnnotatedType } from '@atscript/typescript/utils'
 
 const userType = defineAnnotatedType('object')
   .prop('name', defineAnnotatedType().designType('string').$type)
-  .prop('age', defineAnnotatedType().designType('number').$type)
-  .$type
+  .prop('age', defineAnnotatedType().designType('number').$type).$type
 
 userType.validator().validate({ name: 'Alice', age: 30 })
 ```
@@ -225,13 +224,13 @@ See https://atscript.moost.org/packages/typescript/validation-comparison for det
 
 Key advantages over Zod and class-validator:
 
-| Feature | ATScript | Zod | class-validator |
-|---------|----------|-----|-----------------|
-| Syntax | Type definitions + annotations | Schema DSL / method chains | Decorator stacks on classes |
-| Standalone primitives | Yes | Yes | No (wrapper class required) |
-| Unions | Native `\|` syntax | `z.union()` | Not supported |
-| Intersections | True merge via `&` | No true merge | Single inheritance only |
-| Partial validation | `true`, `'deep'`, or function | Top-level only (deep removed in v4) | Manual duplicate DTOs |
-| Custom logic | Pluggable at validator level | Per-node `.refine()` | Custom validator class |
-| Type guards | `validate(data, true)` narrows | `.parse()` returns typed data | None |
-| Beyond validation | Same file carries UI, DB, API metadata | Validation only | Validation only |
+| Feature               | ATScript                               | Zod                                 | class-validator             |
+| --------------------- | -------------------------------------- | ----------------------------------- | --------------------------- |
+| Syntax                | Type definitions + annotations         | Schema DSL / method chains          | Decorator stacks on classes |
+| Standalone primitives | Yes                                    | Yes                                 | No (wrapper class required) |
+| Unions                | Native `\|` syntax                     | `z.union()`                         | Not supported               |
+| Intersections         | True merge via `&`                     | No true merge                       | Single inheritance only     |
+| Partial validation    | `true`, `'deep'`, or function          | Top-level only (deep removed in v4) | Manual duplicate DTOs       |
+| Custom logic          | Pluggable at validator level           | Per-node `.refine()`                | Custom validator class      |
+| Type guards           | `validate(data, true)` narrows         | `.parse()` returns typed data       | None                        |
+| Beyond validation     | Same file carries UI, DB, API metadata | Validation only                     | Validation only             |

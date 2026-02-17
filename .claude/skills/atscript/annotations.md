@@ -51,16 +51,16 @@ export default defineConfig({
 
 ## AnnotationSpec Constructor Options
 
-| Option          | Type                                                 | Default        | Description                                                                         |
-| --------------- | ---------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------- |
-| `description`   | `string`                                             | —              | Shown in IntelliSense hover tooltips                                                |
-| `nodeType`      | `string[]`                                           | (unrestricted) | Valid targets: `'interface'`, `'type'`, `'prop'`                                    |
-| `defType`       | `string[]`                                           | (unrestricted) | Restrict to specific underlying types (e.g., `['string']`, `['number']`, `['array']`) |
-| `argument`      | `object \| object[]`                                 | —              | Single or array of argument definitions: `{ name, type, optional?, description?, values? }` |
-| `multiple`      | `boolean`                                            | `false`        | Whether the annotation can appear more than once on the same node                   |
-| `mergeStrategy` | `'replace' \| 'append'`                              | `'replace'`    | How annotation values merge during type inheritance                                 |
-| `validate`      | `(mainToken, args, doc) => TMessages \| undefined`   | —              | Advanced: custom AST-level validation (plugin use)                                  |
-| `modify`        | `(mainToken, args, doc) => void`                     | —              | Advanced: mutate the AST after annotation is applied (plugin use)                   |
+| Option          | Type                                               | Default        | Description                                                                                 |
+| --------------- | -------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------- |
+| `description`   | `string`                                           | —              | Shown in IntelliSense hover tooltips                                                        |
+| `nodeType`      | `string[]`                                         | (unrestricted) | Valid targets: `'interface'`, `'type'`, `'prop'`                                            |
+| `defType`       | `string[]`                                         | (unrestricted) | Restrict to specific underlying types (e.g., `['string']`, `['number']`, `['array']`)       |
+| `argument`      | `object \| object[]`                               | —              | Single or array of argument definitions: `{ name, type, optional?, description?, values? }` |
+| `multiple`      | `boolean`                                          | `false`        | Whether the annotation can appear more than once on the same node                           |
+| `mergeStrategy` | `'replace' \| 'append'`                            | `'replace'`    | How annotation values merge during type inheritance                                         |
+| `validate`      | `(mainToken, args, doc) => TMessages \| undefined` | —              | Advanced: custom AST-level validation (plugin use)                                          |
+| `modify`        | `(mainToken, args, doc) => void`                   | —              | Advanced: mutate the AST after annotation is applied (plugin use)                           |
 
 ### Argument Definition
 
@@ -70,7 +70,7 @@ interface TAnnotationArgument {
   type: 'string' | 'number' | 'boolean'
   optional?: boolean
   description?: string
-  values?: string[]  // Allowed values (shown in IntelliSense, validated at parse time)
+  values?: string[] // Allowed values (shown in IntelliSense, validated at parse time)
 }
 ```
 
@@ -354,6 +354,121 @@ deprecated: new AnnotationSpec({
 ```
 
 Usage: `@api.deprecated` or `@api.deprecated 'Use newField instead'`
+
+---
+
+## Custom Validation for Annotations
+
+The `validate` callback on `AnnotationSpec` lets you add custom parse-time validation logic that runs in the IDE and during compilation. This is useful when `defType` or `values` alone aren't expressive enough.
+
+### Validate Callback Signature
+
+```ts
+validate(mainToken: Token, args: Token[], doc: AtscriptDoc): TMessages | undefined
+```
+
+| Parameter   | Description                                                             |
+| ----------- | ----------------------------------------------------------------------- |
+| `mainToken` | The annotation token; access the parent node via `mainToken.parentNode` |
+| `args`      | Array of argument tokens with `.text`, `.type`, and `.range` properties |
+| `doc`       | The `AtscriptDoc` instance for resolving types and unwinding references |
+
+**Return value:** An array of diagnostic messages, or `undefined`/empty array if validation passes.
+
+Each message has the shape:
+
+```ts
+{ severity: 1 | 2 | 3 | 4, message: string, range: { start, end } }
+```
+
+Severity levels: `1` = Error, `2` = Warning, `3` = Info, `4` = Hint.
+
+### Example: Argument Value Format Validation
+
+Validate that a color annotation receives a valid hex color string:
+
+```js
+color: new AnnotationSpec({
+  argument: { name: 'value', type: 'string' },
+  validate(mainToken, args) {
+    if (!args[0]) return
+    const value = args[0].text
+    if (!/^#[\da-f]{3,8}$/i.test(value)) {
+      return [{ severity: 1, message: `Invalid hex color "${value}".`, range: args[0].range }]
+    }
+  },
+})
+```
+
+### Example: Field Type Checking
+
+Restrict an annotation to only `string` or `number` fields by inspecting the AST:
+
+```js
+import { isPrimitive, isRef } from '@atscript/core/nodes'
+
+sortable: new AnnotationSpec({
+  description: 'Mark field as sortable',
+  nodeType: ['prop'],
+  validate(mainToken, args, doc) {
+    const field = mainToken.parentNode
+    let definition = field.getDefinition()
+    if (isRef(definition)) {
+      definition = doc.unwindType(definition.id, definition.chain)?.def || definition
+    }
+    if (!isPrimitive(definition) || !['string', 'number'].includes(definition.type)) {
+      return [
+        {
+          severity: 1,
+          message: '@ui.sortable can only be applied to string or number fields.',
+          range: mainToken.range,
+        },
+      ]
+    }
+  },
+})
+```
+
+### Example: Cross-Field Validation
+
+Check that a referenced sibling property actually exists in the parent interface:
+
+```js
+import { isInterface } from '@atscript/core/nodes'
+
+dependsOn: new AnnotationSpec({
+  description: 'Declare a dependency on another field',
+  nodeType: ['prop'],
+  argument: { name: 'fieldName', type: 'string' },
+  validate(mainToken, args) {
+    const fieldName = args[0].text
+    const parent = mainToken.parentNode?.parent
+    if (isInterface(parent) && !parent.props.has(fieldName)) {
+      return [
+        {
+          severity: 1,
+          message: `Field "${fieldName}" does not exist in this interface.`,
+          range: args[0].range,
+        },
+      ]
+    }
+  },
+})
+```
+
+### `defType` as a Simpler Alternative
+
+When you only need to restrict which value types an annotation can target, use `defType` instead of a full `validate` function. ATScript automatically reports errors for incompatible usage:
+
+```js
+precision: new AnnotationSpec({
+  description: 'Decimal precision for number fields',
+  defType: ['number'],
+  argument: { name: 'digits', type: 'number' },
+})
+```
+
+Available `defType` values: `'string'`, `'number'`, `'boolean'`, `'array'`, `'object'`, `'union'`, `'intersection'`.
 
 ---
 

@@ -78,6 +78,87 @@ const validate = getFormValidator(def)
 const { passed, errors } = validate(data)
 ```
 
+## Arrays and Nested Structures
+
+### Array Fields
+
+Declare array fields with TypeScript array syntax. foorm automatically handles add/remove buttons, item rendering, and array-level validation:
+
+```
+@meta.label 'Tags'
+@foorm.array.add.label 'Add tag'
+@foorm.array.remove.label 'x'
+@expect.maxLength 5, 'Maximum 5 tags'
+tags: string[]
+
+@meta.label 'Addresses'
+@foorm.title 'Addresses'
+@foorm.array.add.label 'Add address'
+@foorm.array.remove.label 'Remove address'
+addresses: {
+    @meta.label 'Street'
+    @foorm.validate '(v) => !!v || "Street is required"'
+    street: string
+
+    @meta.label 'City'
+    @foorm.validate '(v) => !!v || "City is required"'
+    city: string
+
+    @meta.label 'ZIP'
+    zip?: string
+}[]
+```
+
+Supported item types: primitives (`string[]`, `number[]`, `boolean[]`), objects (`{ ... }[]`), and unions (`(ObjectType | string)[]`).
+
+#### Array Annotations
+
+| Annotation                          | Description                                 |
+| ----------------------------------- | ------------------------------------------- |
+| `@foorm.array.add.label 'text'`     | Label for the add button (default: "Add")   |
+| `@foorm.array.add.component 'Name'` | Custom add button component                 |
+| `@foorm.array.remove.label 'text'`  | Label for the remove button                 |
+| `@foorm.array.remove.component 'N'` | Custom remove button component              |
+| `@expect.minLength N, 'msg'`        | Minimum number of items                     |
+| `@expect.maxLength N, 'msg'`        | Maximum number of items                     |
+
+### Nested Groups
+
+Use `@foorm.title` on an object field to render it as a titled group section:
+
+```
+@foorm.title 'Settings'
+settings: {
+    @meta.label 'Notify by email'
+    emailNotify: foorm.checkbox
+
+    @meta.label 'Max items per page'
+    @foorm.type 'number'
+    pageSize?: number
+}
+```
+
+Without `@foorm.title`, nested object fields are flattened into the parent form. With `@foorm.title`, they render as a distinct visual section with a title header.
+
+### Union Arrays
+
+Arrays can contain multiple types. Each union member becomes a selectable variant:
+
+```
+@meta.label 'Contacts'
+@foorm.array.add.label 'Add contact'
+contacts: ({
+    @meta.label 'Full Name'
+    @foorm.validate '(v) => !!v || "Name is required"'
+    fullName: string
+
+    @meta.label 'Email'
+    email?: string.email
+} | string)[]
+```
+
+The add button offers one option per variant. Items include a variant selector dropdown.
+
 ## Advanced Usage
 
 ### Computed Properties
@@ -162,13 +243,13 @@ username?: string
 
 Foorm provides special primitive types for non-data UI elements:
 
-| Primitive | Description |
-|---|---|
-| `foorm.action` | Button that triggers an alternate action (not a data field) |
-| `foorm.paragraph` | Read-only text content |
-| `foorm.select` | Dropdown select (string value) |
-| `foorm.radio` | Radio button group (string value) |
-| `foorm.checkbox` | Boolean checkbox toggle |
+| Primitive         | Description                                                 |
+| ----------------- | ----------------------------------------------------------- |
+| `foorm.action`    | Button that triggers an alternate action (not a data field) |
+| `foorm.paragraph` | Read-only text content                                      |
+| `foorm.select`    | Dropdown select (string value)                              |
+| `foorm.radio`     | Radio button group (string value)                           |
+| `foorm.checkbox`  | Boolean checkbox toggle                                     |
 
 ```
 @meta.label 'Reset Password'
@@ -213,69 +294,77 @@ const attrs = resolveAttrs(field.prop, scope)
 
 ### Core
 
-| Export | Description |
-|---|---|
-| `createFoormDef(type)` | Converts an ATScript annotated type into a `FoormDef` with ordered fields |
-| `createFormData(type, fields)` | Creates a data object with defaults from the schema |
-| `getFormValidator(def, opts?)` | Returns a reusable `(data) => { passed, errors }` validator function |
-| `supportsAltAction(def, action)` | Checks if any field supports a given alternate action |
+| Export                           | Description                                                               |
+| -------------------------------- | ------------------------------------------------------------------------- |
+| `createFoormDef(type)`           | Converts an ATScript annotated type into a `FoormDef` with ordered fields |
+| `createFormData(type, fields)`   | Creates a data object with defaults from the schema                       |
+| `createItemData(variant)`        | Creates a default data value for an array item variant                    |
+| `detectVariant(value, variants)` | Detects which variant an existing array item value matches                |
+| `buildVariants(itemType)`        | Builds variant definitions for an array item type                         |
+| `getFormValidator(def, opts?)`   | Returns a reusable `(data) => { passed, errors }` validator function      |
+| `supportsAltAction(def, action)` | Checks if any field supports a given alternate action                     |
+| `isArrayField(field)`            | Type guard: returns true if the field is an array field                   |
+| `isGroupField(field)`            | Type guard: returns true if the field is a group field                    |
 
 ### Resolve Utilities
 
-| Export | Description |
-|---|---|
-| `resolveFieldProp(prop, fnKey, staticKey, scope, opts?)` | Resolves a field-level metadata value (fn or static) |
-| `resolveFormProp(type, fnKey, staticKey, scope, opts?)` | Resolves a form-level metadata value (fn or static) |
-| `resolveOptions(prop, scope)` | Resolves `@foorm.options` / `@foorm.fn.options` |
-| `resolveAttrs(prop, scope)` | Resolves `@foorm.attr` / `@foorm.fn.attr` |
-| `getFieldMeta(prop, key)` | Reads a static metadata value from a field prop |
-| `hasComputedAnnotations(prop)` | Returns true if the field has any `@foorm.fn.*` annotations |
-| `parseStaticOptions(raw)` | Normalizes raw options metadata into `TFoormEntryOptions[]` |
+| Export                                                   | Description                                                 |
+| -------------------------------------------------------- | ----------------------------------------------------------- |
+| `resolveFieldProp(prop, fnKey, staticKey, scope, opts?)` | Resolves a field-level metadata value (fn or static)        |
+| `resolveFormProp(type, fnKey, staticKey, scope, opts?)`  | Resolves a form-level metadata value (fn or static)         |
+| `resolveOptions(prop, scope)`                            | Resolves `@foorm.options` / `@foorm.fn.options`             |
+| `resolveAttrs(prop, scope)`                              | Resolves `@foorm.attr` / `@foorm.fn.attr`                   |
+| `getFieldMeta(prop, key)`                                | Reads a static metadata value from a field prop             |
+| `hasComputedAnnotations(prop)`                           | Returns true if the field has any `@foorm.fn.*` annotations |
+| `parseStaticOptions(raw)`                                | Normalizes raw options metadata into `TFoormEntryOptions[]` |
 
 ### General Utilities
 
-| Export | Description |
-|---|---|
-| `evalComputed(value, scope)` | Resolves a `TComputed<T>` value (static or function) |
-| `getByPath(obj, path)` | Gets a nested value by dot-separated path |
-| `setByPath(obj, path, value)` | Sets a nested value by dot-separated path |
+| Export                        | Description                                          |
+| ----------------------------- | ---------------------------------------------------- |
+| `evalComputed(value, scope)`  | Resolves a `TComputed<T>` value (static or function) |
+| `getByPath(obj, path)`        | Gets a nested value by dot-separated path            |
+| `setByPath(obj, path, value)` | Sets a nested value by dot-separated path            |
 
 ### Function Compilers
 
-| Export | Description |
-|---|---|
-| `compileFieldFn(fnStr)` | Compiles a `@foorm.fn.*` function string (field-level) |
-| `compileTopFn(fnStr)` | Compiles a `@foorm.fn.*` function string (form-level) |
-| `compileValidatorFn(fnStr)` | Compiles a `@foorm.validate` function string |
+| Export                      | Description                                            |
+| --------------------------- | ------------------------------------------------------ |
+| `compileFieldFn(fnStr)`     | Compiles a `@foorm.fn.*` function string (field-level) |
+| `compileTopFn(fnStr)`       | Compiles a `@foorm.fn.*` function string (form-level)  |
+| `compileValidatorFn(fnStr)` | Compiles a `@foorm.validate` function string           |
 
 ### Validator Plugin
 
-| Export | Description |
-|---|---|
+| Export                        | Description                                                |
+| ----------------------------- | ---------------------------------------------------------- |
 | `foormValidatorPlugin(opts?)` | Creates an ATScript validator plugin for foorm annotations |
 
 ### Types
 
-| Export | Description |
-|---|---|
-| `FoormDef` | Complete form definition (type, fields, flatMap) |
-| `FoormFieldDef` | Single field definition (path, prop, type, phantom, name, allStatic) |
-| `TFoormFnScope` | Scope object passed to computed functions (`v`, `data`, `context`, `entry`) |
-| `TFoormFieldEvaluated` | Evaluated field snapshot passed as `entry` in scope |
-| `TFoormEntryOptions` | Option for select/radio fields (`string` or `{ key, label }`) |
-| `TComputed<T>` | A value that is either static or a function of scope |
-| `TResolveOptions<T>` | Options for resolve utilities (staticAsBoolean, transform) |
-| `TFoormPluginOptions` | Validator plugin options (skipDisabledHidden, checkRequired) |
-| `TFoormValidatorContext` | Per-call validator context (data, context) |
+| Export                   | Description                                                                 |
+| ------------------------ | --------------------------------------------------------------------------- |
+| `FoormDef`               | Complete form definition (type, fields, flatMap)                            |
+| `FoormFieldDef`          | Single field definition (path, prop, type, phantom, name, allStatic)        |
+| `FoormArrayFieldDef`     | Array field definition (extends FoormFieldDef with itemType, variants)      |
+| `FoormGroupFieldDef`     | Group field definition (extends FoormFieldDef with groupDef)                |
+| `FoormArrayVariant`      | Variant definition for array items (label, type, def, designType)           |
+| `TFoormFnScope`          | Scope object passed to computed functions (`v`, `data`, `context`, `entry`) |
+| `TFoormFieldEvaluated`   | Evaluated field snapshot passed as `entry` in scope                         |
+| `TFoormEntryOptions`     | Option for select/radio fields (`string` or `{ key, label }`)               |
+| `TComputed<T>`           | A value that is either static or a function of scope                        |
+| `TResolveOptions<T>`     | Options for resolve utilities (staticAsBoolean, transform)                  |
+| `TFoormPluginOptions`    | Validator plugin options (skipDisabledHidden, checkRequired)                |
+| `TFoormValidatorContext` | Per-call validator context (data, context)                                  |
 
 ### Build-time Plugin
 
-| Export | Description |
-|---|---|
-| `foormPlugin(opts?)` | ATScript plugin for `@foorm.*` annotations and primitives |
-| `TFoormPluginOptions` | Plugin options (extraTypes, components) |
-| `annotations` | Raw annotation definitions tree |
-| `primitives` | Raw primitive definitions |
+| Export                | Description                                               |
+| --------------------- | --------------------------------------------------------- |
+| `foormPlugin(opts?)`  | ATScript plugin for `@foorm.*` annotations and primitives |
+| `TFoormPluginOptions` | Plugin options (extraTypes, components)                   |
+| `annotations`         | Raw annotation definitions tree                           |
+| `primitives`          | Raw primitive definitions                                 |
 
 For ATScript documentation, see [atscript.moost.org](https://atscript.moost.org).
 

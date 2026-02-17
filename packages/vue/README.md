@@ -84,12 +84,7 @@ function handleSubmit(data: typeof formData) {
 </script>
 
 <template>
-  <OoForm
-    :def="def"
-    :form-data="formData"
-    first-validation="on-blur"
-    @submit="handleSubmit"
-  />
+  <OoForm :def="def" :form-data="formData" first-validation="on-blur" @submit="handleSubmit" />
 </template>
 ```
 
@@ -179,28 +174,88 @@ const emit = defineEmits<{ (e: 'action', name: string): void }>()
 
 Key props available to your component:
 
-| Prop | Type | Description |
-|---|---|---|
-| `model` | `{ value: V }` | Reactive model — bind with `v-model="model.value"` |
-| `onBlur` | `(e: FocusEvent) => void` | Triggers validation on blur |
-| `error` | `string?` | Validation error message |
-| `label` | `string?` | Resolved field label |
-| `description` | `string?` | Resolved field description |
-| `hint` | `string?` | Resolved hint text |
-| `placeholder` | `string?` | Resolved placeholder |
-| `disabled` | `boolean?` | Whether the field is disabled |
-| `hidden` | `boolean?` | Whether the field is hidden |
-| `readonly` | `boolean?` | Whether the field is read-only |
-| `optional` | `boolean?` | Whether the field is optional |
-| `required` | `boolean?` | Whether the field is required |
-| `type` | `string` | The field input type |
-| `options` | `TFoormEntryOptions[]?` | Options for select/radio fields |
-| `formData` | `TFormData` | The full reactive form data |
-| `formContext` | `TFormContext?` | External context passed to the form |
-| `name` | `string?` | Field name |
-| `maxLength` | `number?` | Max length constraint |
-| `autocomplete` | `string?` | HTML autocomplete value |
-| `field` | `FoormFieldDef?` | Full field definition for advanced use |
+| Prop           | Type                      | Description                                        |
+| -------------- | ------------------------- | -------------------------------------------------- |
+| `model`        | `{ value: V }`            | Reactive model — bind with `v-model="model.value"` |
+| `onBlur`       | `(e: FocusEvent) => void` | Triggers validation on blur                        |
+| `error`        | `string?`                 | Validation error message                           |
+| `label`        | `string?`                 | Resolved field label                               |
+| `description`  | `string?`                 | Resolved field description                         |
+| `hint`         | `string?`                 | Resolved hint text                                 |
+| `placeholder`  | `string?`                 | Resolved placeholder                               |
+| `disabled`     | `boolean?`                | Whether the field is disabled                      |
+| `hidden`       | `boolean?`                | Whether the field is hidden                        |
+| `readonly`     | `boolean?`                | Whether the field is read-only                     |
+| `optional`     | `boolean?`                | Whether the field is optional                      |
+| `required`     | `boolean?`                | Whether the field is required                      |
+| `type`         | `string`                  | The field input type                               |
+| `options`      | `TFoormEntryOptions[]?`   | Options for select/radio fields                    |
+| `formData`     | `TFormData`               | The full reactive form data                        |
+| `formContext`  | `TFormContext?`           | External context passed to the form                |
+| `name`         | `string?`                 | Field name                                         |
+| `maxLength`    | `number?`                 | Max length constraint                              |
+| `autocomplete` | `string?`                 | HTML autocomplete value                            |
+| `field`        | `FoormFieldDef?`          | Full field definition for advanced use             |
+
+### Arrays
+
+Array fields are handled automatically. Define them in your `.as` schema:
+
+```
+@meta.label 'Tags'
+@foorm.array.add.label 'Add tag'
+@foorm.array.remove.label 'x'
+@expect.maxLength 5, 'Maximum 5 tags'
+tags: string[]
+
+@meta.label 'Addresses'
+@foorm.title 'Addresses'
+@foorm.array.add.label 'Add address'
+addresses: {
+    @meta.label 'Street'
+    @foorm.validate '(v) => !!v || "Street is required"'
+    street: string
+
+    @meta.label 'City'
+    city: string
+}[]
+```
+
+`OoForm` renders arrays with add/remove buttons, inline editing for primitives, and sub-form cards for objects. Array-level validation (`@expect.minLength`, `@expect.maxLength`) is displayed below the add button.
+
+Union arrays (`(ObjectType | string)[]`) render a variant selector per item and offer one add button per variant.
+
+#### Custom Add/Remove Components
+
+Use `@foorm.array.add.component` and `@foorm.array.remove.component` to supply your own button components via the `components` prop:
+
+```
+@foorm.array.add.component 'AddAddressBtn'
+@foorm.array.remove.component 'RemoveAddressBtn'
+addresses: { ... }[]
+```
+
+```vue
+<OoForm :def="def" :form-data="formData" :components="{ AddAddressBtn, RemoveAddressBtn }" />
+```
+
+### Nested Groups
+
+Use `@foorm.title` on a nested object field to render it as a titled, visually distinct section:
+
+```
+@foorm.title 'Settings'
+settings: {
+    @meta.label 'Notify by email'
+    emailNotify: foorm.checkbox
+
+    @meta.label 'Page size'
+    @foorm.type 'number'
+    pageSize?: number
+}
+```
+
+Without `@foorm.title`, nested object fields flatten into the parent form. With it, they render as an indented group with a title header. Groups can be nested to any depth.
 
 ### Scoped Slots
 
@@ -287,12 +342,7 @@ async function handleSubmit(data: any) {
 </script>
 
 <template>
-  <OoForm
-    :def="def"
-    :form-data="formData"
-    :errors="serverErrors"
-    @submit="handleSubmit"
-  />
+  <OoForm :def="def" :form-data="formData" :errors="serverErrors" @submit="handleSubmit" />
 </template>
 ```
 
@@ -341,34 +391,67 @@ Renderless form wrapper component.
 
 **Props:**
 
-| Prop | Type | Required | Description |
-|---|---|---|---|
-| `def` | `FoormDef` | Yes | Form definition from `useFoorm()` or `createFoormDef()` |
-| `formData` | `object` | No | Reactive form data (created internally if omitted) |
-| `formContext` | `object` | No | External context for computed functions and validators |
-| `firstValidation` | `'on-blur' \| 'on-change' \| 'on-submit'` | No | When to trigger first validation |
-| `components` | `Record<string, Component>` | No | Named components (matched by `@foorm.component`) |
-| `types` | `Record<string, Component>` | No | Type-based components (matched by field type) |
-| `errors` | `Record<string, string>` | No | External error messages (e.g. server-side) |
+| Prop              | Type                                      | Required | Description                                             |
+| ----------------- | ----------------------------------------- | -------- | ------------------------------------------------------- |
+| `def`             | `FoormDef`                                | Yes      | Form definition from `useFoorm()` or `createFoormDef()` |
+| `formData`        | `object`                                  | No       | Reactive form data (created internally if omitted)      |
+| `formContext`     | `object`                                  | No       | External context for computed functions and validators  |
+| `firstValidation` | `'on-blur' \| 'on-change' \| 'on-submit'` | No       | When to trigger first validation                        |
+| `components`      | `Record<string, Component>`               | No       | Named components (matched by `@foorm.component`)        |
+| `types`           | `Record<string, Component>`               | No       | Type-based components (matched by field type)           |
+| `errors`          | `Record<string, string>`                  | No       | External error messages (e.g. server-side)              |
 
 **Events:**
 
-| Event | Payload | Description |
-|---|---|---|
-| `submit` | `formData` | Emitted on valid form submission |
-| `action` | `name, formData` | Emitted when an action button is clicked (supported alt action) |
-| `unsupported-action` | `name, formData` | Emitted for unrecognized action names |
+| Event                | Payload          | Description                                                     |
+| -------------------- | ---------------- | --------------------------------------------------------------- |
+| `submit`             | `formData`       | Emitted on valid form submission                                |
+| `action`             | `name, formData` | Emitted when an action button is clicked (supported alt action) |
+| `unsupported-action` | `name, formData` | Emitted for unrecognized action names                           |
 
 **Slots:**
 
-| Slot | Scope | Description |
-|---|---|---|
-| `field:{type}` | Field bindings | Override rendering for a specific field type |
-| `form.header` | `{ title, clearErrors, reset, formContext, disabled }` | Before fields |
-| `form.before` | `{ clearErrors, reset }` | After header, before fields |
-| `form.after` | `{ clearErrors, reset, disabled, formContext }` | After fields, before submit |
-| `form.submit` | `{ text, disabled, clearErrors, reset, formContext }` | Submit button |
-| `form.footer` | `{ disabled, clearErrors, reset, formContext }` | After submit |
+| Slot           | Scope                                                  | Description                                  |
+| -------------- | ------------------------------------------------------ | -------------------------------------------- |
+| `field:{type}` | Field bindings                                         | Override rendering for a specific field type |
+| `form.header`  | `{ title, clearErrors, reset, formContext, disabled }` | Before fields                                |
+| `form.before`  | `{ clearErrors, reset }`                               | After header, before fields                  |
+| `form.after`   | `{ clearErrors, reset, disabled, formContext }`        | After fields, before submit                  |
+| `form.submit`  | `{ text, disabled, clearErrors, reset, formContext }`  | Submit button                                |
+| `form.footer`  | `{ disabled, clearErrors, reset, formContext }`        | After submit                                 |
+
+### `OoGroup`
+
+Recursive field renderer. Used internally by `OoForm` to iterate fields, render nested groups, and delegate to `OoArray` for array fields. Can also be used standalone for custom layouts.
+
+**Props:**
+
+| Prop         | Type                        | Description                                         |
+| ------------ | --------------------------- | --------------------------------------------------- |
+| `def`        | `FoormDef`                  | Field definitions to iterate                        |
+| `field`      | `FoormFieldDef?`            | Source field (for title/component). Absent at root   |
+| `formData`   | `unknown?`                  | Overrides parent vuiless formData (nested context)  |
+| `components` | `Record<string, Component>` | Named components map                                |
+| `types`      | `Record<string, Component>` | Type-to-component map                               |
+| `errors`     | `Record<string, string>?`   | External error overrides (path to message)          |
+| `error`      | `string?`                   | Validation error for this group/array itself        |
+| `disabled`   | `boolean?`                  | Whether this group is disabled                      |
+| `hidden`     | `boolean?`                  | Whether this group is hidden                        |
+
+### `OoArray`
+
+Array field renderer. Handles add/remove buttons, variant selection for unions, and delegates item rendering to `OoGroup` (objects) or inline inputs (primitives).
+
+**Props:**
+
+| Prop         | Type                        | Description                                |
+| ------------ | --------------------------- | ------------------------------------------ |
+| `field`      | `FoormArrayFieldDef`        | Array field definition (required)          |
+| `components` | `Record<string, Component>` | Named components map                       |
+| `types`      | `Record<string, Component>` | Type-to-component map                      |
+| `errors`     | `Record<string, string>?`   | External error overrides                   |
+| `error`      | `string?`                   | Array-level validation error               |
+| `disabled`   | `boolean?`                  | Whether the array is disabled              |
 
 ### `OoField`
 
@@ -376,16 +459,31 @@ Renderless field wrapper (used internally by `OoForm`, can also be used standalo
 
 **Props:**
 
-| Prop | Type | Description |
-|---|---|---|
+| Prop    | Type            | Description                        |
+| ------- | --------------- | ---------------------------------- |
 | `field` | `FoormFieldDef` | Field definition from `def.fields` |
-| `error` | `string?` | External error message |
+| `error` | `string?`       | External error message             |
 
 **Default Slot Bindings:** All `TFoormComponentProps` fields plus `classes`, `styles`, `value` (phantom), `vName`, `attrs`.
 
 ### `TFoormComponentProps`
 
 TypeScript interface for custom field components. See the "Building a Custom Component" section above.
+
+### `TFoormGroupComponentProps`
+
+TypeScript interface for custom group/array components registered via `@foorm.component` on object or array fields:
+
+| Prop          | Type                      | Description                                      |
+| ------------- | ------------------------- | ------------------------------------------------ |
+| `field`       | `FoormFieldDef`           | The field definition (array or group)            |
+| `model`       | `{ value: unknown }`      | Reactive model for the group/array value         |
+| `formData`    | `TFormData`               | The full reactive form data                      |
+| `formContext`  | `TFormContext?`           | External context                                 |
+| `disabled`    | `boolean?`                | Whether the field is disabled                    |
+| `hidden`      | `boolean?`                | Whether the field is hidden                      |
+| `label`       | `string?`                 | Resolved title/label                             |
+| `errors`      | `Record<string, string>?` | External error overrides                         |
 
 For ATScript documentation, see [atscript.moost.org](https://atscript.moost.org).
 

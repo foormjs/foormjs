@@ -1,4 +1,4 @@
-import type { FoormFieldDef, TFoormEntryOptions } from 'foorm'
+import type { FoormFieldDef, TFoormEntryOptions, FoormArrayFieldDef } from 'foorm'
 
 /**
  * Props contract for custom field components used with `OoForm` / `OoField`.
@@ -57,4 +57,31 @@ export interface TFoormComponentProps<V, TFormData, TFormContext> {
   maxLength?: number
   /** Autocomplete hint from `@foorm.autocomplete`. */
   autocomplete?: string
+}
+
+/**
+ * Props contract for custom group/array components used via `@foorm.component` on
+ * object or array-typed fields.
+ *
+ * @typeParam TFormData - The full form data object type
+ * @typeParam TFormContext - The external context object type
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface TFoormGroupComponentProps<TFormData = any, TFormContext = any> {
+  /** The field definition (FoormArrayFieldDef for arrays, FoormGroupFieldDef for objects). */
+  field: FoormFieldDef | FoormArrayFieldDef
+  /** Reactive model wrapping the group/array value. */
+  model: { value: unknown }
+  /** The full reactive form data object. */
+  formData: TFormData
+  /** External context passed to the form. */
+  formContext?: TFormContext
+  /** Whether the field is disabled. */
+  disabled?: boolean
+  /** Whether the field is hidden. */
+  hidden?: boolean
+  /** Resolved title/label for the group. */
+  label?: string
+  /** External error overrides (path → message). */
+  errors?: Record<string, string | undefined>
 }

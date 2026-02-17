@@ -19,20 +19,38 @@ function run() {
     print.header(name)
     if (pkg.dependencies) {
       print.subHeader('dependencies')
-      for (const i of Object.entries(pkg.dependencies).map(e => [e[0], print.gray(e[1])].join('\t'))) {
-        if (i.startsWith(`@${PROJECT}js`)) { print.item2(i) } else { print.item(i) }
+      for (const i of Object.entries(pkg.dependencies).map(e =>
+        [e[0], print.gray(e[1])].join('\t')
+      )) {
+        if (i.startsWith(`@${PROJECT}js`)) {
+          print.item2(i)
+        } else {
+          print.item(i)
+        }
       }
     }
     if (pkg.devDependencies) {
       print.subHeader('devDependencies')
-      for (const i of Object.entries(pkg.devDependencies).map(e => [e[0], print.gray(e[1])].join('\t'))) {
-        if (i.startsWith(`@${PROJECT}js`)) { print.item2(i) } else { print.item(i) }
+      for (const i of Object.entries(pkg.devDependencies).map(e =>
+        [e[0], print.gray(e[1])].join('\t')
+      )) {
+        if (i.startsWith(`@${PROJECT}js`)) {
+          print.item2(i)
+        } else {
+          print.item(i)
+        }
       }
     }
     if (pkg.peerDependencies) {
       print.subHeader('peerDependencies')
-      for (const i of Object.entries(pkg.peerDependencies).map(e => [e[0], print.gray(e[1])].join('\t'))) {
-        if (i.startsWith(`@${PROJECT}js`)) { print.item2(i) } else { print.item(i) }
+      for (const i of Object.entries(pkg.peerDependencies).map(e =>
+        [e[0], print.gray(e[1])].join('\t')
+      )) {
+        if (i.startsWith(`@${PROJECT}js`)) {
+          print.item2(i)
+        } else {
+          print.item(i)
+        }
       }
     }
     console.log()

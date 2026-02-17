@@ -1,5 +1,12 @@
-import type { TAnnotationsTree, TMessages } from '@atscript/core'
-import { AnnotationSpec } from '@atscript/core'
+import type { AtscriptDoc, TAnnotationsTree, TMessages, Token } from '@atscript/core'
+import {
+  AnnotationSpec,
+  isArray,
+  isInterface,
+  isPrimitive,
+  isRef,
+  isStructure,
+} from '@atscript/core'
 
 /**
  * Attempts to compile a function string with `new Function` and returns
@@ -23,6 +30,33 @@ function validateFnString(
     ]
   }
   return undefined
+}
+
+/**
+ * Validates that @foorm.title / @foorm.fn.title is only applied to
+ * interface/type nodes, or to prop nodes whose resolved type is object or array.
+ */
+function validateTitleTarget(
+  mainToken: Token,
+  _args: Token[],
+  doc: AtscriptDoc
+): TMessages | undefined {
+  const node = mainToken.parentNode
+  if (!node || node.entity === 'interface' || node.entity === 'type') return undefined
+  let definition = node.getDefinition()
+  if (isRef(definition) && definition.id) {
+    definition = doc.unwindType(definition.id)?.def || definition
+  }
+  if (isInterface(definition) || isArray(definition) || isStructure(definition)) return undefined
+  if (isPrimitive(definition) && (definition.type === 'object' || definition.type === 'array'))
+    return undefined
+  return [
+    {
+      severity: 1,
+      message: '@foorm.title can only be applied to object or array fields.',
+      range: mainToken.range,
+    },
+  ]
 }
 
 function fnAnnotation(description: string): AnnotationSpec {
@@ -65,13 +99,14 @@ export const annotations: TAnnotationsTree = {
   foorm: {
     // ── Form-level static annotations ────────────────────────
     title: new AnnotationSpec({
-      description: 'Static form title',
-      nodeType: ['interface'],
+      description: 'Static title for the form or a nested group/array section',
+      nodeType: ['interface', 'type', 'prop'],
       argument: {
         name: 'title',
         type: 'string',
-        description: 'The form title text',
+        description: 'The title text',
       },
+      validate: validateTitleTarget,
     }),
 
     submit: {
@@ -237,10 +272,73 @@ export const annotations: TAnnotationsTree = {
       },
     }),
 
+    // ── Array annotations ──────────────────────────────────
+    array: {
+      add: {
+        component: new AnnotationSpec({
+          description: 'Custom component for the array add-item button',
+          nodeType: ['prop'],
+          argument: {
+            name: 'name',
+            type: 'string',
+            description: 'Component name from the components registry',
+          },
+        }),
+        label: new AnnotationSpec({
+          description: 'Label for the add-item button (default: "Add item")',
+          nodeType: ['prop'],
+          argument: {
+            name: 'label',
+            type: 'string',
+            description: 'Button label text',
+          },
+        }),
+      },
+      remove: {
+        component: new AnnotationSpec({
+          description: 'Custom component for the array remove-item button',
+          nodeType: ['prop'],
+          argument: {
+            name: 'name',
+            type: 'string',
+            description: 'Component name from the components registry',
+          },
+        }),
+        label: new AnnotationSpec({
+          description: 'Label for the remove-item button (default: "Remove")',
+          nodeType: ['prop'],
+          argument: {
+            name: 'label',
+            type: 'string',
+            description: 'Button label text',
+          },
+        }),
+      },
+      sortable: new AnnotationSpec({
+        description: 'Enable drag-to-reorder for array items (future feature)',
+        nodeType: ['prop'],
+      }),
+    },
+
     // ── Computed (fn) annotations ────────────────────────────
     fn: {
-      // Form-level computed
-      title: fnTopAnnotation('Computed form title: (data, context) => string'),
+      // Form/group-level computed
+      title: new AnnotationSpec({
+        description:
+          'Computed title for the form or a nested group/array: (data, context) => string',
+        nodeType: ['interface', 'type', 'prop'],
+        argument: {
+          name: 'fn',
+          type: 'string',
+          description: 'JS function string: (data, context) => result',
+        },
+        validate(mainToken, args, doc) {
+          const fnErrors = args[0] ? validateFnString(args[0].text, args[0].range) : undefined
+          const targetErrors = validateTitleTarget(mainToken, args, doc)
+          if (fnErrors && targetErrors) return [...fnErrors, ...targetErrors]
+          return fnErrors || targetErrors
+        },
+      }),
       submit: {
         text: fnTopAnnotation('Computed submit button text: (data, context) => string'),
         disabled: fnTopAnnotation('Computed submit disabled state: (data, context) => boolean'),

@@ -25,7 +25,10 @@ export default defineConfig({
           let content = readFileSync(dtsPath, 'utf-8')
           // Replace relative paths to workspace packages with module names
           content = content.replaceAll(/from ['"]\.\.\/\.\.\/\.\.\/foorm\/src['"]/g, "from 'foorm'")
-          content = content.replaceAll(/from ['"]@atscript\/typescript\/utils['"]/g, "from '@atscript/typescript'")
+          content = content.replaceAll(
+            /from ['"]@atscript\/typescript\/utils['"]/g,
+            "from '@atscript/typescript'"
+          )
           writeFileSync(dtsPath, content)
         }
       },
@@ -38,13 +41,7 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      external: [
-        'vue',
-        'vuiless-forms',
-        'foorm',
-        '@atscript/core',
-        '@atscript/typescript',
-      ],
+      external: ['vue', 'vuiless-forms', 'foorm', '@atscript/core', '@atscript/typescript'],
       output: {
         globals: {
           vue: 'Vue',

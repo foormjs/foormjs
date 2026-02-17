@@ -13,13 +13,13 @@ ATScript is a universal type and metadata description language — a TypeScript 
 
 This skill has detailed sub-files. Read the relevant one(s) based on the task:
 
-| File | When to Read |
-|------|-------------|
-| `basics.md` | Core `.as` syntax, interfaces, types, primitives, annotations, ad-hoc annotations, metadata access, type traversal, validation basics, JSON Schema, serialization |
-| `annotations.md` | Creating **custom** annotations with `AnnotationSpec` in `atscript.config.js` — new `@namespace.name` metadata |
-| `primitives.md` | Creating **custom** primitives — new semantic types like `string.url`, `number.percentage`, phantom namespaces |
-| `validation.md` | Deep dive into validation — Validator API, modes, options, plugins, error handling, annotation-driven rules, custom validators |
-| `plugin-development.md` | Developing ATScript plugins — `TAtscriptPlugin` interface, hooks (`config`, `resolve`, `load`, `onDocumnet`, `render`, `buildEnd`), AST access |
+| File                    | When to Read                                                                                                                                                      |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `basics.md`             | Core `.as` syntax, interfaces, types, primitives, annotations, ad-hoc annotations, metadata access, type traversal, validation basics, JSON Schema, serialization |
+| `annotations.md`        | Creating **custom** annotations with `AnnotationSpec` in `atscript.config.js` — new `@namespace.name` metadata                                                    |
+| `primitives.md`         | Creating **custom** primitives — new semantic types like `string.url`, `number.percentage`, phantom namespaces                                                    |
+| `validation.md`         | Deep dive into validation — Validator API, modes, options, plugins, error handling, annotation-driven rules, custom validators                                    |
+| `plugin-development.md` | Developing ATScript plugins — `TAtscriptPlugin` interface, hooks (`config`, `resolve`, `load`, `onDocumnet`, `render`, `buildEnd`), AST access                    |
 
 ## Quick Reference
 
@@ -37,11 +37,17 @@ import { User, Product } from './models.as'
 
 // Utilities
 import {
-  Validator, ValidatorError,
-  serializeAnnotatedType, deserializeAnnotatedType,
-  forAnnotatedType, flattenAnnotatedType, defineAnnotatedType,
-  buildJsonSchema, fromJsonSchema,
-  isAnnotatedType, isPhantomType,
+  Validator,
+  ValidatorError,
+  serializeAnnotatedType,
+  deserializeAnnotatedType,
+  forAnnotatedType,
+  flattenAnnotatedType,
+  defineAnnotatedType,
+  buildJsonSchema,
+  fromJsonSchema,
+  isAnnotatedType,
+  isPhantomType,
 } from '@atscript/typescript/utils'
 
 // Config and plugin types
