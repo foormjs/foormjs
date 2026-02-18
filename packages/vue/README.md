@@ -189,6 +189,7 @@ Key props available to your component:
 | `optional`     | `boolean?`                | Whether the field is optional                      |
 | `required`     | `boolean?`                | Whether the field is required                      |
 | `type`         | `string`                  | The field input type                               |
+| `altAction`    | `string?`                 | Alternate action name from `@foorm.altAction`      |
 | `options`      | `TFoormEntryOptions[]?`   | Options for select/radio fields                    |
 | `formData`     | `TFormData`               | The full reactive form data                        |
 | `formContext`  | `TFormContext?`           | External context passed to the form                |
@@ -228,19 +229,20 @@ addresses: {
 
 Union arrays (`(ObjectType | string)[]`) render a variant selector per item and offer one add button per variant.
 
-#### Custom Add/Remove Components
+#### Custom Add Button
 
-Use `@foorm.array.add.component` and `@foorm.array.remove.component` to supply your own button components via the `components` prop:
+Use `@foorm.array.add.component` to supply your own add-item button component via the `components` prop:
 
 ```
 @foorm.array.add.component 'AddAddressBtn'
-@foorm.array.remove.component 'RemoveAddressBtn'
 addresses: { ... }[]
 ```
 
 ```vue
-<OoForm :def="def" :form-data="formData" :components="{ AddAddressBtn, RemoveAddressBtn }" />
+<OoForm :def="def" :form-data="formData" :components="{ AddAddressBtn }" />
 ```
+
+The remove button is not a standalone component — it is the responsibility of the group component (for object items) or the field component (for primitive items) via `onRemove`/`canRemove`/`removeLabel` props.
 
 ### Nested Groups
 
@@ -394,15 +396,16 @@ Renderless form wrapper component.
 
 **Props:**
 
-| Prop              | Type                                      | Required | Description                                             |
-| ----------------- | ----------------------------------------- | -------- | ------------------------------------------------------- |
-| `def`             | `FoormDef`                                | Yes      | Form definition from `useFoorm()` or `createFoormDef()` |
-| `formData`        | `object`                                  | No       | Reactive form data (created internally if omitted)      |
-| `formContext`     | `object`                                  | No       | External context for computed functions and validators  |
-| `firstValidation` | `'on-blur' \| 'on-change' \| 'on-submit'` | No       | When to trigger first validation                        |
-| `components`      | `Record<string, Component>`               | No       | Named components (matched by `@foorm.component`)        |
-| `types`           | `Record<string, Component>`               | No       | Type-based components (matched by field type)           |
-| `errors`          | `Record<string, string>`                  | No       | External error messages (e.g. server-side)              |
+| Prop              | Type                                                                     | Required | Description                                             |
+| ----------------- | ------------------------------------------------------------------------ | -------- | ------------------------------------------------------- |
+| `def`             | `FoormDef`                                                               | Yes      | Form definition from `useFoorm()` or `createFoormDef()` |
+| `formData`        | `object`                                                                 | No       | Reactive form data (created internally if omitted)      |
+| `formContext`     | `object`                                                                 | No       | External context for computed functions and validators  |
+| `firstValidation` | `'on-change' \| 'touched-on-blur' \| 'on-blur' \| 'on-submit' \| 'none'` | No       | When to trigger first validation                        |
+| `components`      | `Record<string, Component>`                                              | No       | Named components (matched by `@foorm.component`)        |
+| `types`           | `Record<string, Component>`                                              | No       | Type-based components (matched by field type)           |
+| `groupComponent`  | `Component`                                                              | No       | Custom wrapper component for all groups and array items |
+| `errors`          | `Record<string, string>`                                                 | No       | External error messages (e.g. server-side)              |
 
 **Events:**
 
@@ -430,19 +433,20 @@ Recursive field renderer. Used internally by `OoForm` to iterate fields, render 
 
 **Props:**
 
-| Prop          | Type                        | Description                                                    |
-| ------------- | --------------------------- | -------------------------------------------------------------- |
-| `def`         | `FoormDef?`                 | Field definitions to iterate                                   |
-| `field`       | `FoormFieldDef?`            | Source field (for title/component/validation). Absent at root  |
-| `pathPrefix`  | `string?`                   | Explicit path prefix from OoArray (per-item index)             |
-| `components`  | `Record<string, Component>` | Named components map                                           |
-| `types`       | `Record<string, Component>` | Type-to-component map                                          |
-| `errors`      | `Record<string, string>?`   | External error overrides (path to message)                     |
-| `disabled`    | `boolean?`                  | Whether this group is disabled                                 |
-| `hidden`      | `boolean?`                  | Whether this group is hidden                                   |
-| `onRemove`    | `() => void?`               | Callback to remove this item from its parent array             |
-| `canRemove`   | `boolean?`                  | Whether removal is allowed (respects minLength)                |
-| `removeLabel` | `string?`                   | Label for the remove button (from `@foorm.array.remove.label`) |
+| Prop             | Type                        | Description                                                    |
+| ---------------- | --------------------------- | -------------------------------------------------------------- |
+| `def`            | `FoormDef?`                 | Field definitions to iterate                                   |
+| `field`          | `FoormFieldDef?`            | Source field (for title/component/validation). Absent at root  |
+| `pathPrefix`     | `string?`                   | Explicit path prefix from OoArray (per-item index)             |
+| `components`     | `Record<string, Component>` | Named components map                                           |
+| `types`          | `Record<string, Component>` | Type-to-component map                                          |
+| `groupComponent` | `Component?`                | Custom wrapper component for groups and array items            |
+| `errors`         | `Record<string, string>?`   | External error overrides (path to message)                     |
+| `disabled`       | `boolean?`                  | Whether this group is disabled                                 |
+| `hidden`         | `boolean?`                  | Whether this group is hidden                                   |
+| `onRemove`       | `() => void?`               | Callback to remove this item from its parent array             |
+| `canRemove`      | `boolean?`                  | Whether removal is allowed (respects minLength)                |
+| `removeLabel`    | `string?`                   | Label for the remove button (from `@foorm.array.remove.label`) |
 
 ### `OoArray`
 
@@ -450,14 +454,15 @@ Array field renderer. Handles add/remove buttons, variant selection for unions, 
 
 **Props:**
 
-| Prop         | Type                        | Description                                 |
-| ------------ | --------------------------- | ------------------------------------------- |
-| `field`      | `FoormArrayFieldDef`        | Array field definition (required)           |
-| `components` | `Record<string, Component>` | Named components map                        |
-| `types`      | `Record<string, Component>` | Type-to-component map                       |
-| `errors`     | `Record<string, string>?`   | External error overrides                    |
-| `error`      | `string?`                   | Array-level validation error (from OoGroup) |
-| `disabled`   | `boolean?`                  | Whether the array is disabled               |
+| Prop             | Type                        | Description                                 |
+| ---------------- | --------------------------- | ------------------------------------------- |
+| `field`          | `FoormArrayFieldDef`        | Array field definition (required)           |
+| `components`     | `Record<string, Component>` | Named components map                        |
+| `types`          | `Record<string, Component>` | Type-to-component map                       |
+| `groupComponent` | `Component?`                | Custom wrapper component for array items    |
+| `errors`         | `Record<string, string>?`   | External error overrides                    |
+| `error`          | `string?`                   | Array-level validation error (from OoGroup) |
+| `disabled`       | `boolean?`                  | Whether the array is disabled               |
 
 ### `OoField`
 

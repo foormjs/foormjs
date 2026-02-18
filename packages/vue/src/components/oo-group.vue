@@ -38,6 +38,8 @@ export interface OoGroupProps<TF, TC> {
   /** Type-to-component map for default field rendering. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   types?: Record<string, Component<TFoormComponentProps<any, TF, TC>>>
+  /** Custom group wrapper component. */
+  groupComponent?: Component
   /** External error overrides (path → message). */
   errors?: Record<string, string | undefined>
   /** Whether this group is disabled. */
@@ -152,8 +154,17 @@ const isPrimitiveWrapper = computed(() => {
   return !!d && d.fields.length === 1 && d.fields[0].path === undefined
 })
 
-const renderRemoveInHeader = computed(() => !!props.onRemove && !isPrimitiveWrapper.value)
-const passRemoveToFields = computed(() => !!props.onRemove && isPrimitiveWrapper.value)
+// ── Custom group component ──────────────────────────────────
+const useCustomGroup = computed(
+  () => !!props.groupComponent && (!!props.field || props.pathPrefix !== undefined)
+)
+
+const renderRemoveInHeader = computed(
+  () => !!props.onRemove && !isPrimitiveWrapper.value && !useCustomGroup.value
+)
+const passRemoveToFields = computed(
+  () => !!props.onRemove && isPrimitiveWrapper.value && !useCustomGroup.value
+)
 
 // ── Absolute path helper for error lookup ───────────────────
 function absoluteFieldPath(f: FoormFieldDef): string | undefined {
@@ -182,9 +193,25 @@ function optLabel(opt: TFoormEntryOptions): string {
 </script>
 
 <template>
-  <div :class="{ 'oo-group': !!field }" v-show="!field || !hidden">
-    <!-- Header: title + optional remove button (object array items) -->
-    <div class="oo-group-header" v-if="title || renderRemoveInHeader">
+  <component
+    :is="useCustomGroup ? groupComponent! : 'div'"
+    v-bind="
+      useCustomGroup
+        ? {
+            title,
+            error: !arrayField ? selfError : undefined,
+            onRemove,
+            canRemove,
+            removeLabel,
+            disabled,
+          }
+        : undefined
+    "
+    :class="useCustomGroup ? 'oo-custom-group' : { 'oo-group': !!field }"
+    v-show="!field || !hidden"
+  >
+    <!-- Default header (only when NOT using custom group) -->
+    <div class="oo-group-header" v-if="!useCustomGroup && (title || renderRemoveInHeader)">
       <div class="oo-group-header-content">
         <h2 v-if="title && !field" class="oo-form-title">{{ title }}</h2>
         <h3 v-else-if="title" class="oo-group-title">{{ title }}</h3>
@@ -200,8 +227,10 @@ function optLabel(opt: TFoormEntryOptions): string {
       </button>
     </div>
 
-    <!-- Group-level error (arrays handle their own error below the add button) -->
-    <div v-if="selfError && !arrayField" class="oo-group-error">{{ selfError }}</div>
+    <!-- Group-level error (only when NOT using custom group; custom group receives it as prop) -->
+    <div v-if="!useCustomGroup && selfError && !arrayField" class="oo-group-error">
+      {{ selfError }}
+    </div>
 
     <!-- Array field → delegate to OoArray -->
     <OoArray
@@ -209,6 +238,7 @@ function optLabel(opt: TFoormEntryOptions): string {
       :field="arrayField"
       :components="components"
       :types="types"
+      :group-component="groupComponent"
       :errors="errors"
       :error="selfError"
       :disabled="disabled"
@@ -224,6 +254,7 @@ function optLabel(opt: TFoormEntryOptions): string {
           :def="getGroupDef(f)"
           :components="components"
           :types="types"
+          :group-component="groupComponent"
           :errors="errors"
           :disabled="disabled"
           :hidden="hidden"
@@ -255,7 +286,7 @@ function optLabel(opt: TFoormEntryOptions): string {
             :class="field.classes"
             :style="field.styles"
             :optional="field.optional"
-            :required="!field.required"
+            :required="field.required"
             :disabled="field.disabled"
             :hidden="field.hidden"
             :type="field.type"
@@ -293,7 +324,7 @@ function optLabel(opt: TFoormEntryOptions): string {
             :class="field.classes"
             :style="field.styles"
             :optional="field.optional"
-            :required="!field.required"
+            :required="field.required"
             :disabled="field.disabled"
             :hidden="field.hidden"
             :type="field.type"
@@ -459,12 +490,21 @@ function optLabel(opt: TFoormEntryOptions): string {
 
     <!-- Slot fallback: when no def and no field (pure prefix provider for primitive array items) -->
     <slot v-else></slot>
-  </div>
+  </component>
 </template>
 
 <style>
-.oo-group {
+.oo-group,
+.oo-custom-group {
   margin: 8px 0;
+}
+
+.oo-array-item > .oo-group,
+.oo-array-item > .oo-custom-group {
+  margin: 0;
+}
+
+.oo-group {
   padding-left: 12px;
   border-left: 2px solid #e5e7eb;
 }

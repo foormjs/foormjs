@@ -106,7 +106,7 @@ validator.validate(data) // throws ValidatorError on failure
 // Foorm validator (with foorm-specific handling)
 const def = createFoormDef(type)
 const validate = getFormValidator(def)
-const { passed, errors } = validate(data)
+const errors = validate({ data }) // Record<string, string> — empty = passed
 ```
 
 Both `@expect.*` constraints and `@foorm.validate` function strings survive serialization and work on the frontend.

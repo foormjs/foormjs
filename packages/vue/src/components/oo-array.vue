@@ -11,6 +11,7 @@ export interface OoArrayProps {
   components?: Record<string, Component<any>>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   types?: Record<string, Component<any>>
+  groupComponent?: Component
   errors?: Record<string, string | undefined>
   error?: string
   disabled?: boolean
@@ -165,7 +166,10 @@ const addComponent = computed(() => {
       v-for="(_item, i) in arrayValue"
       :key="itemKeys[i]"
       class="oo-array-item"
-      :class="{ 'oo-array-item--primitive': !currentVariant(i).def }"
+      :class="{
+        'oo-array-item--primitive': !currentVariant(i).def,
+        'oo-array-item--custom-group': !!groupComponent && !!currentVariant(i).def,
+      }"
     >
       <!-- Variant selector (union arrays) -->
       <component
@@ -196,6 +200,7 @@ const addComponent = computed(() => {
         :path-prefix="String(i)"
         :components="components"
         :types="types"
+        :group-component="groupComponent"
         :errors="errors"
         :disabled="disabled"
         :on-remove="() => removeItem(i)"
@@ -264,7 +269,8 @@ const addComponent = computed(() => {
   background: #fafafa;
 }
 
-.oo-array-item--primitive {
+.oo-array-item--primitive,
+.oo-array-item--custom-group {
   padding: 0;
   border: none;
   border-radius: 0;

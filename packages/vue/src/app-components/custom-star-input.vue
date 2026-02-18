@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TFoormComponentProps } from './types'
+import type { TFoormComponentProps } from '../components/types'
 
 // Props that match TFoormComponentProps
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

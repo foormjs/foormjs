@@ -54,4 +54,4 @@ export { compileFieldFn, compileTopFn, compileValidatorFn } from './runtime/fn-c
 
 // Validator plugin
 export { foormValidatorPlugin } from './runtime/validator-plugin'
-export type { TFoormPluginOptions, TFoormValidatorContext } from './runtime/validator-plugin'
+export type { TFoormValidatorContext } from './runtime/validator-plugin'

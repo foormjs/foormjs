@@ -2,31 +2,16 @@ import type { TFoormFieldEvaluated, TFoormEntryOptions } from './types'
 import { compileValidatorFn, compileFieldFn } from './fn-compiler'
 
 /**
- * ATScript validator plugin that processes @foorm.validate annotations
- * and optionally handles form-level concerns (disabled/hidden skip, required check).
+ * ATScript validator plugin that processes @foorm.validate annotations.
  *
  * Uses ATScript 0.1.10 external context: data/context are passed per-call
  * via `validator.validate(value, safe, context)` and read from `ctx.context`.
  *
  * Usage:
- *   // Per-field validation (foorm rule) — only @foorm.validate
  *   const plugin = foormValidatorPlugin()
  *   const validator = new Validator(field.prop, { plugins: [plugin] })
  *   validator.validate(value, true, { data: formData, context })
- *
- *   // Whole-form validation — skip + required + @foorm.validate + @expect.*
- *   const plugin = foormValidatorPlugin({ skipDisabledHidden: true, checkRequired: true })
- *   const validator = new Validator(type, { plugins: [plugin], unknwonProps: 'ignore' })
- *   validator.validate(formData, true, { data, context })
  */
-
-/** Static plugin configuration — set once at plugin creation time. */
-export interface TFoormPluginOptions {
-  /** When true, return `true` (accept/skip) for disabled or hidden fields. */
-  skipDisabledHidden?: boolean
-  /** When true, check foorm-style required (empty string/undefined/null → 'Required' error). */
-  checkRequired?: boolean
-}
 
 /** Per-call context passed via `validator.validate(value, safe, context)`. */
 export interface TFoormValidatorContext {
@@ -38,76 +23,59 @@ export interface TFoormValidatorContext {
 type TValidatorPlugin = (ctx: any, def: any, value: unknown) => boolean | undefined
 
 /**
- * Creates an ATScript validator plugin that processes `@foorm.validate` annotations
- * and optionally handles form-level concerns (disabled/hidden skip, required check).
+ * Creates an ATScript validator plugin that processes `@foorm.validate` annotations.
  *
- * @param opts - Plugin configuration: skipDisabledHidden, checkRequired
  * @returns An ATScript validator plugin function
  */
-export function foormValidatorPlugin(opts?: TFoormPluginOptions): TValidatorPlugin {
+export function foormValidatorPlugin(): TValidatorPlugin {
   return (ctx, def, value) => {
+    const hasValidators = def.metadata?.get('foorm.validate')
+    if (!hasValidators) return undefined
+
     const foormCtx = ctx.context as TFoormValidatorContext | undefined
     const data = foormCtx?.data ?? {}
     const context = foormCtx?.context ?? {}
 
-    const hasValidators = def.metadata?.get('foorm.validate')
-    const needsProcessing = hasValidators || opts?.skipDisabledHidden || opts?.checkRequired
-    if (!needsProcessing) return undefined
-
     // Base scope for evaluating constraints
     const baseScope = { v: value, data, context, entry: undefined }
 
-    // Resolve constraints
+    // Resolve constraints for the entry object
     const disabled = evalConstraint(def.metadata, 'foorm.disabled', 'foorm.fn.disabled', baseScope)
     const hidden = evalConstraint(def.metadata, 'foorm.hidden', 'foorm.fn.hidden', baseScope)
-
-    // Skip disabled/hidden fields (form-level validation)
-    if (opts?.skipDisabledHidden && (disabled || hidden)) return true
-
     const optional =
       evalConstraint(def.metadata, 'foorm.optional', 'foorm.fn.optional', baseScope) ?? def.optional
 
-    // Foorm-level required check (empty string, undefined, null = missing)
-    if (opts?.checkRequired && !optional && !value && value !== 0 && value !== false) {
-      ctx.error('Required')
-      return false
+    // Build entry object with field metadata
+    const entry: TFoormFieldEvaluated = {
+      field: def.name || '',
+      type: (def.metadata?.get('foorm.type') as string) || 'text',
+      component: def.metadata?.get('foorm.component') as string | undefined,
+      name: def.name || '',
+      disabled,
+      optional,
+      hidden,
+      readonly: evalConstraint(def.metadata, 'foorm.readonly', 'foorm.fn.readonly', baseScope),
     }
 
-    // @foorm.validate custom validators
-    if (hasValidators) {
-      const fns = Array.isArray(hasValidators) ? hasValidators : [hasValidators]
+    // Full scope with evaluated entry
+    const scope = { v: value, data, context, entry }
 
-      // Build entry object with field metadata
-      const entry: TFoormFieldEvaluated = {
-        field: def.name || '',
-        type: (def.metadata?.get('foorm.type') as string) || 'text',
-        component: def.metadata?.get('foorm.component') as string | undefined,
-        name: def.name || '',
-        disabled,
-        optional,
-        hidden,
-        readonly: evalConstraint(def.metadata, 'foorm.readonly', 'foorm.fn.readonly', baseScope),
+    // Evaluate options (static or computed)
+    entry.options = evalOptions(def.metadata, scope)
+
+    // Run custom validators with full scope
+    const fns = Array.isArray(hasValidators) ? hasValidators : [hasValidators]
+    for (const fnStr of fns) {
+      if (typeof fnStr !== 'string') {
+        continue
       }
 
-      // Full scope with evaluated entry
-      const scope = { v: value, data, context, entry }
+      const fn = compileValidatorFn(fnStr)
+      const result = fn(scope)
 
-      // Evaluate options (static or computed)
-      entry.options = evalOptions(def.metadata, scope)
-
-      // Run custom validators with full scope
-      for (const fnStr of fns) {
-        if (typeof fnStr !== 'string') {
-          continue
-        }
-
-        const fn = compileValidatorFn(fnStr)
-        const result = fn(scope)
-
-        if (result !== true) {
-          ctx.error(typeof result === 'string' ? result : 'Validation failed')
-          return false
-        }
+      if (result !== true) {
+        ctx.error(typeof result === 'string' ? result : 'Validation failed')
+        return false
       }
     }
 

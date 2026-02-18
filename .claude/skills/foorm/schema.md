@@ -33,6 +33,7 @@ export interface RegistrationForm {
 | ------------------------------------------- | ---------------------------------------- |
 | `@foorm.title 'text'`                       | Static form title                        |
 | `@foorm.submit.text 'text'`                 | Submit button text (default: `'Submit'`) |
+| `@foorm.submit.disabled`                    | Statically disable the submit button     |
 | `@foorm.fn.title '(data) => ...'`           | Computed form title                      |
 | `@foorm.fn.submit.text '(data) => ...'`     | Computed submit text                     |
 | `@foorm.fn.submit.disabled '(data) => ...'` | Computed submit disabled state           |
@@ -86,7 +87,7 @@ Any field property can be dynamic. Function strings receive `(v, data, context, 
 - `v` — current field value
 - `data` — full form data object
 - `context` — external context passed via `formContext` prop
-- `entry` — evaluated field snapshot (`{ field, type, name, disabled, optional, hidden, readonly, options }`)
+- `entry` — evaluated field snapshot (`{ field, type, component, name, disabled, optional, hidden, readonly, options }`)
 
 **Caveat:** Functions are strings compiled at runtime with `new Function()`. No imports, no closures — only pure expressions.
 
@@ -251,14 +252,14 @@ The add button shows one option per variant. Items include a variant selector dr
 
 ### Array Annotations
 
-| Annotation                             | Description                                          |
-| -------------------------------------- | ---------------------------------------------------- |
-| `@foorm.array.add.label 'text'`        | Label for the add-item button (default: "Add")       |
-| `@foorm.array.add.component 'Name'`    | Named component for a custom add button              |
-| `@foorm.array.remove.label 'text'`     | Label for the remove-item button (default: "Remove") |
-| `@foorm.array.remove.component 'Name'` | Named component for a custom remove button           |
-| `@expect.minLength N, 'msg'`           | Minimum number of items (validated on submit)        |
-| `@expect.maxLength N, 'msg'`           | Maximum number of items (add button disabled at max) |
+| Annotation                              | Description                                             |
+| --------------------------------------- | ------------------------------------------------------- |
+| `@foorm.array.add.label 'text'`         | Label for the add-item button (default: "Add item")     |
+| `@foorm.array.add.component 'Name'`     | Named component for a custom add button                 |
+| `@foorm.array.remove.label 'text'`      | Label for the remove-item button (default: "Remove")    |
+| `@foorm.array.variant.component 'Name'` | Named component for the union variant selector per item |
+| `@expect.minLength N, 'msg'`            | Minimum number of items (validated on submit)           |
+| `@expect.maxLength N, 'msg'`            | Maximum number of items (add button disabled at max)    |
 
 ---
 

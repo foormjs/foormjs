@@ -16,9 +16,7 @@ export interface TFormValidatorCallOptions {
  * Plugin and Validator are created once and reused on every call.
  * Per-call data/context is passed via ATScript's external context mechanism.
  *
- * The foormValidatorPlugin handles:
- * - Custom @foorm.validate validators
- * - Disabled/hidden/required constraint evaluation
+ * The foormValidatorPlugin handles custom @foorm.validate validators.
  * ATScript's @expect.* validation runs for remaining fields.
  *
  * @param def - The FoormDef produced by createFoormDef

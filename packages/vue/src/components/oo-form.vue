@@ -5,7 +5,7 @@ import OoGroup from './oo-group.vue'
 import type { FoormDef, TFoormFnScope } from '@foormjs/atscript'
 import { getFormValidator, resolveFormProp, supportsAltAction } from '@foormjs/atscript'
 import { computed, provide, ref, type Component } from 'vue'
-import { type TFoormComponentProps } from './types'
+import type { TFoormComponentProps } from './types'
 
 export interface Props<TF, TC> {
   def: FoormDef
@@ -16,6 +16,7 @@ export interface Props<TF, TC> {
   components?: Record<string, Component<TFoormComponentProps<any, TF, TC>>>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   types?: Record<string, Component<TFoormComponentProps<any, TF, TC>>>
+  groupComponent?: Component
   errors?: Record<string, string | undefined>
 }
 
@@ -122,7 +123,13 @@ function onSubmit() {
       :set-errors="setErrors"
     ></slot>
 
-    <OoGroup :def="def" :components="components" :types="types" :errors="errors" />
+    <OoGroup
+      :def="def"
+      :components="components"
+      :types="types"
+      :errors="errors"
+      :group-component="groupComponent"
+    />
 
     <slot
       name="form.after"

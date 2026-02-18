@@ -90,6 +90,10 @@ export interface ArrayForm {
 
 
 export annotate ArrayForm as ArrayFormCustom {
-    @foorm.array.variant 'CustomVariantPicker'
+
+    @foorm.array.add.component 'CustomAddButton'
+    scores
+
+    @foorm.array.variant.component 'CustomVariantPicker'
     contacts
 }

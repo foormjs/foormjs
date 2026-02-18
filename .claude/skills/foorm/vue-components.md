@@ -36,15 +36,16 @@ Renderless form wrapper. Iterates fields, resolves metadata, renders components.
 
 ### Props
 
-| Prop              | Type                                      | Required | Default | Description                                             |
-| ----------------- | ----------------------------------------- | -------- | ------- | ------------------------------------------------------- |
-| `def`             | `FoormDef`                                | Yes      | —       | Form definition from `useFoorm()`                       |
-| `formData`        | `object`                                  | No       | `{}`    | Reactive form data                                      |
-| `formContext`     | `object`                                  | No       | —       | External context for computed fns and validators        |
-| `firstValidation` | `'on-blur' \| 'on-change' \| 'on-submit'` | No       | —       | When to trigger first validation                        |
-| `types`           | `Record<string, Component>`               | No       | —       | Components mapped by field type                         |
-| `components`      | `Record<string, Component>`               | No       | —       | Components mapped by `@foorm.component` name            |
-| `errors`          | `Record<string, string>`                  | No       | —       | External errors (e.g., server-side) keyed by field path |
+| Prop              | Type                                                                     | Required | Default | Description                                                    |
+| ----------------- | ------------------------------------------------------------------------ | -------- | ------- | -------------------------------------------------------------- |
+| `def`             | `FoormDef`                                                               | Yes      | —       | Form definition from `useFoorm()`                              |
+| `formData`        | `object`                                                                 | No       | `{}`    | Reactive form data                                             |
+| `formContext`     | `object`                                                                 | No       | —       | External context for computed fns and validators               |
+| `firstValidation` | `'on-change' \| 'touched-on-blur' \| 'on-blur' \| 'on-submit' \| 'none'` | No       | —       | When to trigger first validation                               |
+| `types`           | `Record<string, Component>`                                              | No       | —       | Components mapped by field type                                |
+| `components`      | `Record<string, Component>`                                              | No       | —       | Components mapped by `@foorm.component` name and array widgets |
+| `groupComponent`  | `Component`                                                              | No       | —       | Custom wrapper component for all groups and array items        |
+| `errors`          | `Record<string, string>`                                                 | No       | —       | External errors (e.g., server-side) keyed by field path        |
 
 ### Events
 
@@ -95,14 +96,14 @@ For each field, `OoForm` resolves the component in this order:
 </OoForm>
 ```
 
-| Slot           | Scope                                                                                          |
-| -------------- | ---------------------------------------------------------------------------------------------- |
-| `field:{type}` | All `TFoormComponentProps` + `classes`, `styles`, `value`, `vName`, `attrs`, `onBlur`, `model` |
-| `form.header`  | `{ clearErrors, reset, setErrors, formContext, disabled }`                                     |
-| `form.before`  | `{ clearErrors, reset, setErrors }`                                                            |
-| `form.after`   | `{ clearErrors, reset, setErrors, disabled, formContext }`                                     |
-| `form.submit`  | `{ text, disabled, clearErrors, reset, setErrors, formContext }`                               |
-| `form.footer`  | `{ disabled, clearErrors, reset, setErrors, formContext }`                                     |
+| Slot           | Scope                                                                       |
+| -------------- | --------------------------------------------------------------------------- |
+| `field:{type}` | All `TFoormComponentProps` + `classes`, `styles`, `value`, `vName`, `attrs` |
+| `form.header`  | `{ clearErrors, reset, setErrors, formContext, disabled }`                  |
+| `form.before`  | `{ clearErrors, reset, setErrors }`                                         |
+| `form.after`   | `{ clearErrors, reset, setErrors, disabled, formContext }`                  |
+| `form.submit`  | `{ text, disabled, clearErrors, reset, setErrors, formContext }`            |
+| `form.footer`  | `{ disabled, clearErrors, reset, setErrors, formContext }`                  |
 
 ---
 
@@ -350,32 +351,244 @@ All fields register with the single root foorm context (provided by `OoForm`). `
 
 Array field renderer. Handles:
 
-- **Add/remove buttons** — labels from `@foorm.array.add.label` / `@foorm.array.remove.label`, or custom components from `@foorm.array.add.component` / `@foorm.array.remove.component`
+- **Add button** — label from `@foorm.array.add.label`, or a custom component via `@foorm.array.add.component`
+- **Remove button** — label from `@foorm.array.remove.label`; rendered by the group wrapper (default or custom) for object items, or passed as `onRemove` prop to field components for primitive items
+- **Variant selector** — for union arrays, a per-item selector to switch types; customizable via `@foorm.array.variant.component`
 - **Primitive items** (`string[]`, `number[]`) — rendered via `OoGroup` with `itemField` (compact inline input + remove button)
 - **Object items** (`{ ... }[]`) — rendered via `OoGroup` with sub-fields in a card
 - **Union arrays** (`(A | B)[]`) — variant selector per item, one add button per variant
 - **Array-level validation** — `@expect.minLength` / `@expect.maxLength` errors displayed below the add button
 - **Min/max enforcement** — add button disabled at maxLength, remove button disabled at minLength
 
-### Custom Group/Array Components
+---
 
-Use `@foorm.component` on an object or array field to delegate rendering to a custom component:
+## Custom Components
 
-```
-@foorm.title 'Addresses'
-@foorm.component 'AddressList'
-addresses: { ... }[]
-```
+foormjs supports five types of custom components. Each has a dedicated props interface exported from `@foormjs/vue`:
 
-Custom group/array components receive the same `TFoormComponentProps` as leaf fields — they are rendered through `OoField` via terminal delegation:
+| Component Type  | Props Interface               | How to Pass                    | Purpose                              |
+| --------------- | ----------------------------- | ------------------------------ | ------------------------------------ |
+| Field component | `TFoormComponentProps`        | `types` or `components` prop   | Renders a single field (input, etc.) |
+| Group component | `TFoormGroupComponentProps`   | `groupComponent` prop          | Wraps groups and array items         |
+| Add button      | `TFoormAddComponentProps`     | `components` prop + annotation | Custom add-item button for arrays    |
+| Variant picker  | `TFoormVariantComponentProps` | `components` prop + annotation | Custom variant selector for unions   |
 
-```ts
+### Custom Field Components
+
+Field components render individual form fields. They receive all resolved metadata via `TFoormComponentProps`.
+
+**Important for arrays:** When a field is rendered inside an array, `onRemove`, `canRemove`, and `removeLabel` props are provided. Custom field components **must handle the remove button** for primitive array items (like `string[]`, `number[]`), because there is no group wrapper around them.
+
+```vue
+<script setup lang="ts">
 import type { TFoormComponentProps } from '@foormjs/vue'
 
-const props = defineProps<TFoormComponentProps<unknown[], any, any>>()
-// model.value is the array/object value
-// field is the FoormArrayFieldDef or FoormGroupFieldDef
+defineProps<TFoormComponentProps<string, any, any>>()
+</script>
+
+<template>
+  <div class="field" v-show="!hidden">
+    <div class="header">
+      <label v-if="label">{{ label }}</label>
+      <!-- Remove button for array items — IMPORTANT to implement -->
+      <button v-if="onRemove" type="button" :disabled="!canRemove" @click="onRemove">
+        {{ removeLabel || '×' }}
+      </button>
+    </div>
+    <input
+      :value="model.value"
+      @input="model.value = ($event.target as HTMLInputElement).value"
+      @blur="onBlur"
+      :type="type"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      :readonly="readonly"
+    />
+    <span v-if="error" class="error">{{ error }}</span>
+    <span v-else-if="hint" class="hint">{{ hint }}</span>
+  </div>
+</template>
 ```
+
+Register by field type (covers all fields of that type) or by `@foorm.component` name (targets specific fields):
+
+```vue
+<OoForm
+  :def="def"
+  :form-data="formData"
+  :types="{ text: MyTextInput, select: MySelect }"
+  :components="{ StarRating: MyStarRating }"
+  @submit="onSubmit"
+/>
+```
+
+### Custom Group Component
+
+The group component wraps all nested groups (objects with `@foorm.title`) and array items (each card in an array). It replaces the default `div.oo-group` markup. Fields are rendered in its **default slot**.
+
+Pass it via the `groupComponent` prop on `OoForm` — it applies to all groups in the form.
+
+```vue
+<script setup lang="ts">
+import type { TFoormGroupComponentProps } from '@foormjs/vue'
+
+defineProps<TFoormGroupComponentProps>()
+</script>
+
+<template>
+  <div class="card">
+    <div class="card-header" v-if="title || onRemove">
+      <h3 v-if="title">{{ title }}</h3>
+      <span v-if="error" class="error">{{ error }}</span>
+      <!-- Remove button for array items — IMPORTANT to implement -->
+      <button v-if="onRemove" type="button" :disabled="!canRemove" @click="onRemove">
+        {{ removeLabel || 'Remove' }}
+      </button>
+    </div>
+    <div class="card-body">
+      <!-- Fields are rendered here via default slot -->
+      <slot />
+    </div>
+  </div>
+</template>
+```
+
+`TFoormGroupComponentProps`:
+
+| Prop          | Type          | Description                                                |
+| ------------- | ------------- | ---------------------------------------------------------- |
+| `title`       | `string?`     | Group title (from `@foorm.title` or `@meta.label`)         |
+| `error`       | `string?`     | Group-level validation error                               |
+| `onRemove`    | `() => void?` | Remove callback — present only for array items             |
+| `canRemove`   | `boolean?`    | Whether removal is allowed (respects minLength)            |
+| `removeLabel` | `string?`     | Label for remove button (from `@foorm.array.remove.label`) |
+| `disabled`    | `boolean?`    | Whether this group is disabled                             |
+
+Usage:
+
+```vue
+<OoForm :def="def" :form-data="formData" :group-component="MyCard" @submit="onSubmit" />
+```
+
+### Custom Add Button
+
+Replaces the default add-item button for a specific array field. Triggered by the `@foorm.array.add.component` annotation, looked up in the `components` prop.
+
+```
+@foorm.array.add.component 'MyAddButton'
+scores: number[]
+```
+
+```vue
+<script setup lang="ts">
+import type { TFoormAddComponentProps } from '@foormjs/vue'
+
+defineProps<TFoormAddComponentProps>()
+const emit = defineEmits<{ (e: 'add', variantIndex: number): void }>()
+</script>
+
+<template>
+  <button type="button" :disabled="disabled" @click="emit('add', 0)">+ Add item</button>
+</template>
+```
+
+`TFoormAddComponentProps`:
+
+| Prop       | Type                  | Description                                                   |
+| ---------- | --------------------- | ------------------------------------------------------------- |
+| `disabled` | `boolean?`            | Whether adding is disabled (array at max length)              |
+| `variants` | `FoormArrayVariant[]` | Available variants (single for homogeneous, multi for unions) |
+
+The component **emits `add(variantIndex)`** to append a new item. For single-type arrays, always emit `0`. For union arrays, emit the index of the variant to add.
+
+### Custom Variant Picker
+
+Replaces the default variant selector buttons shown per-item in union arrays. Triggered by the `@foorm.array.variant.component` annotation, looked up in the `components` prop.
+
+```
+@foorm.array.variant.component 'MyVariantPicker'
+contacts: ({ fullName: string; email?: string } | string)[]
+```
+
+```vue
+<script setup lang="ts">
+import type { TFoormVariantComponentProps } from '@foormjs/vue'
+
+defineProps<TFoormVariantComponentProps>()
+const emit = defineEmits<{ (e: 'update:modelValue', index: number): void }>()
+</script>
+
+<template>
+  <div class="variant-picker">
+    <button
+      v-for="(v, i) in variants"
+      :key="i"
+      type="button"
+      :disabled="disabled || modelValue === i"
+      @click="emit('update:modelValue', i)"
+    >
+      {{ v.label }}
+    </button>
+  </div>
+</template>
+```
+
+`TFoormVariantComponentProps`:
+
+| Prop         | Type                  | Description                           |
+| ------------ | --------------------- | ------------------------------------- |
+| `variants`   | `FoormArrayVariant[]` | Available union variants              |
+| `modelValue` | `number`              | Index of the currently active variant |
+| `disabled`   | `boolean?`            | Whether the selector is disabled      |
+
+The component **emits `update:modelValue(index)`** to switch the item's variant.
+
+### Putting It All Together
+
+All custom component types can be combined on a single form:
+
+```vue
+<script setup lang="ts">
+import type { Component } from 'vue'
+import { OoForm, useFoorm } from '@foormjs/vue'
+import { MyForm } from './forms/my-form.as'
+import MyTextInput from './components/MyTextInput.vue'
+import MyCard from './components/MyCard.vue'
+import MyAddButton from './components/MyAddButton.vue'
+import MyVariantPicker from './components/MyVariantPicker.vue'
+
+const { def, formData } = useFoorm(MyForm)
+
+const types: Record<string, Component> = {
+  text: MyTextInput,
+}
+
+const components: Record<string, Component> = {
+  MyAddButton,
+  MyVariantPicker,
+}
+</script>
+
+<template>
+  <OoForm
+    :def="def"
+    :form-data="formData"
+    :types="types"
+    :components="components"
+    :group-component="MyCard"
+    @submit="handleSubmit"
+  />
+</template>
+```
+
+### Remove Button Responsibility
+
+The remove button for array items is **not** a standalone custom component. Instead, it is the responsibility of the wrapping component:
+
+- **Object array items** (e.g., `addresses: { street: string; city: string }[]`): The **group component** receives `onRemove`, `canRemove`, and `removeLabel` as props. If you use a custom `groupComponent`, you must render the remove button yourself.
+- **Primitive array items** (e.g., `tags: string[]`): The **field component** receives `onRemove`, `canRemove`, and `removeLabel` as props (since there is no group wrapper). Your custom field component must render the remove button when `onRemove` is present.
+
+If you don't render the remove button, users won't be able to remove items from the array.
 
 ---
 

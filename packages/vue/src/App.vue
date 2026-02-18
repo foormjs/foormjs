@@ -1,13 +1,19 @@
 <script setup lang="ts">
+import type { Component } from 'vue'
 import OoForm from '@/components/oo-form.vue'
-import CustomStarInput from '@/components/custom-star-input.vue'
+import CustomStarInput from './app-components/custom-star-input.vue'
+import CustomAddButton from './app-components/custom-add-button.vue'
+import CustomVariantPicker from './app-components/custom-variant-picker.vue'
+import CustomTextInput from './app-components/custom-text-input.vue'
+import CustomGroup from './app-components/custom-group.vue'
 import { useFoorm } from '@/composables/use-foorm'
 import { E2eTestForm } from './forms/e2e-test-form.as'
 import { NestedForm } from './forms/nested-form.as'
-import { ArrayForm } from './forms/array-form.as'
+import { ArrayForm, ArrayFormCustom } from './forms/array-form.as'
 const { def, formData } = useFoorm(E2eTestForm)
 const { def: nestedDef, formData: nestedFormData } = useFoorm(NestedForm)
 const { def: arrayDef, formData: arrayFormData } = useFoorm(ArrayForm)
+const { def: arrayCustomDef, formData: arrayCustomFormData } = useFoorm(ArrayFormCustom)
 
 const formContext = {
   cityOptions: [
@@ -25,6 +31,15 @@ const formContext = {
 
 const customComponents = {
   CustomInput: CustomStarInput,
+}
+
+const arrayCustomComponents: Record<string, Component> = {
+  CustomAddButton,
+  CustomVariantPicker,
+}
+
+const arrayCustomTypes: Record<string, Component> = {
+  text: CustomTextInput,
 }
 
 function handleSubmit(d: unknown) {
@@ -65,6 +80,17 @@ function onError(e: unknown) {
       class="form"
       :def="arrayDef"
       :form-data="arrayFormData"
+      first-validation="on-blur"
+      @submit="handleSubmit"
+      @error="onError"
+    />
+    <OoForm
+      class="form"
+      :def="arrayCustomDef"
+      :form-data="arrayCustomFormData"
+      :components="arrayCustomComponents"
+      :types="arrayCustomTypes"
+      :group-component="CustomGroup"
       first-validation="on-blur"
       @submit="handleSubmit"
       @error="onError"

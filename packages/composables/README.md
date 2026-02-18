@@ -31,12 +31,13 @@ Manages form state: field registry, submit handling, and validation state. Provi
 
 **Returns:**
 
-| Property      | Type                                                | Description                             |
-| ------------- | --------------------------------------------------- | --------------------------------------- |
-| `clearErrors` | `() => void`                                        | Clears all field errors and touch state |
-| `reset`       | `() => void`                                        | Resets all fields and clears errors     |
-| `submit`      | `() => true \| { path: string; message: string }[]` | Validates and returns result            |
-| `setErrors`   | `(errors: Record<string, string>) => void`          | Sets external errors on fields          |
+| Property      | Type                                                | Description                              |
+| ------------- | --------------------------------------------------- | ---------------------------------------- |
+| `clearErrors` | `() => void`                                        | Clears all field errors and touch state  |
+| `reset`       | `() => void`                                        | Resets all fields and clears errors      |
+| `submit`      | `() => true \| { path: string; message: string }[]` | Validates and returns result             |
+| `setErrors`   | `(errors: Record<string, string>) => void`          | Sets external errors on fields           |
+| `foormState`  | `ComputedRef<TFoormState>`                          | Reactive form state (provided to fields) |
 
 ### `useFoormField(options)`
 
@@ -94,8 +95,8 @@ The state object provided to child fields via `inject('__foorm_form')`:
 interface TFoormState<TFormData, TContext> {
   firstSubmitHappened: boolean
   firstValidation: 'on-change' | 'touched-on-blur' | 'on-blur' | 'on-submit' | 'none'
-  register: (reg: TFoormFieldRegistration) => void
-  unregister: (reg: TFoormFieldRegistration) => void
+  register: (id: symbol, registration: TFoormFieldRegistration) => void
+  unregister: (id: symbol) => void
   formData: TFormData
   formContext?: TContext
 }

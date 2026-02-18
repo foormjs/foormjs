@@ -1,4 +1,4 @@
-import type { FoormFieldDef, TFoormEntryOptions } from '@foormjs/atscript'
+import type { FoormArrayVariant, FoormFieldDef, TFoormEntryOptions } from '@foormjs/atscript'
 
 /**
  * Props contract for custom field components used with `OoForm` / `OoField`.
@@ -63,4 +63,54 @@ export interface TFoormComponentProps<V, TFormData, TFormContext> {
   canRemove?: boolean
   /** Label for the remove button (from `@foorm.array.remove.label`). */
   removeLabel?: string
+}
+
+/**
+ * Props contract for custom array "add" button components.
+ *
+ * Used with `@foorm.array.add.component` annotation.
+ * The component receives variant info and emits `add(variantIndex)` to append an item.
+ */
+export interface TFoormAddComponentProps {
+  /** Whether adding is disabled (array at max length or form disabled). */
+  disabled?: boolean
+  /** Available variants — single-element for homogeneous arrays, multiple for unions. */
+  variants: FoormArrayVariant[]
+}
+
+/**
+ * Props contract for custom array variant selector components.
+ *
+ * Used with `@foorm.array.variant.component` annotation.
+ * Rendered per-item in union arrays to let users switch between variant types.
+ */
+export interface TFoormVariantComponentProps {
+  /** Available variants for this union array. */
+  variants: FoormArrayVariant[]
+  /** Index of the currently active variant. */
+  modelValue: number
+  /** Whether the selector is disabled. */
+  disabled?: boolean
+}
+
+/**
+ * Props contract for custom group wrapper components.
+ *
+ * Passed via the `group-component` prop on `OoForm`. Wraps around group/array-item
+ * content, replacing the default `div.oo-group` markup. Fields are rendered in the
+ * default slot.
+ */
+export interface TFoormGroupComponentProps {
+  /** Resolved group title (from `@foorm.title` / `@meta.label`). */
+  title?: string
+  /** Group-level validation error message. */
+  error?: string
+  /** Callback to remove this group from its parent array. Present only for array items. */
+  onRemove?: () => void
+  /** Whether removal is allowed (respects minLength constraints). */
+  canRemove?: boolean
+  /** Label for the remove button (from `@foorm.array.remove.label`). */
+  removeLabel?: string
+  /** Whether this group is disabled. */
+  disabled?: boolean
 }

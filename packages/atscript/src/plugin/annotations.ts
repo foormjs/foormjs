@@ -119,6 +119,10 @@ export const annotations: TAnnotationsTree = {
           description: 'Submit button label',
         },
       }),
+      disabled: new AnnotationSpec({
+        description: 'Statically disable the submit button',
+        nodeType: ['interface'],
+      }),
     },
 
     // ── Field-level static annotations ───────────────────────
@@ -306,15 +310,6 @@ export const annotations: TAnnotationsTree = {
         }),
       },
       remove: {
-        component: new AnnotationSpec({
-          description: 'Custom component for the array remove-item button',
-          nodeType: ['prop'],
-          argument: {
-            name: 'name',
-            type: 'string',
-            description: 'Component name from the components registry',
-          },
-        }),
         label: new AnnotationSpec({
           description: 'Label for the remove-item button (default: "Remove")',
           nodeType: ['prop'],

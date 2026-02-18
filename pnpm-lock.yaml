@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@atscript/core':
+        specifier: ^0.1.16
+        version: 0.1.16
       '@prostojs/dye':
         specifier: ^0.3.0
         version: 0.3.0

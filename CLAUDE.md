@@ -71,7 +71,7 @@ The `@atscript/typescript` compiler generates `.as.d.ts` declarations and runtim
 - `utils.ts` — `resolveFieldProp()`, `resolveFormProp()`, `resolveOptions()`, `resolveAttrs()`, `createFormData()`, `evalComputed()`, `getByPath()`/`setByPath()`. Properties are resolved lazily on demand — `resolveFieldProp(prop, fnKey, staticKey, scope)` checks `foorm.fn.*` first (compiles fn string), then falls back to static metadata key.
 - `fn-compiler.ts` — `compileFieldFn()`, `compileTopFn()`, `compileValidatorFn()` using `FNPool` from `@prostojs/deserialize-fn` for cached function compilation.
 - `validate.ts` — `getFormValidator(def)` returns a reusable validator using ATScript's `Validator` class + `foormValidatorPlugin`.
-- `validator-plugin.ts` — `foormValidatorPlugin()` ATScript validator plugin handling disabled/hidden skip, required checks, and `@foorm.validate` custom validators.
+- `validator-plugin.ts` — `foormValidatorPlugin()` ATScript validator plugin for `@foorm.validate` custom validators.
 - `types.ts` — `FoormDef`, `FoormFieldDef`, `TFoormFnScope`, `TComputed`, `TFoormFieldEvaluated`, `TFoormEntryOptions`.
 
 **`src/plugin/`** — ATScript plugin (exported as `@foormjs/atscript/plugin`):

@@ -43,7 +43,6 @@ declare global {
     'foorm.validate': string[]
     'foorm.array.add.component': string
     'foorm.array.add.label': string
-    'foorm.array.remove.component': string
     'foorm.array.remove.label': string
     'foorm.array.sortable': boolean
     'foorm.fn.title': string

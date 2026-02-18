@@ -114,14 +114,14 @@ Supported item types: primitives (`string[]`, `number[]`, `boolean[]`), objects 
 
 #### Array Annotations
 
-| Annotation                          | Description                               |
-| ----------------------------------- | ----------------------------------------- |
-| `@foorm.array.add.label 'text'`     | Label for the add button (default: "Add") |
-| `@foorm.array.add.component 'Name'` | Custom add button component               |
-| `@foorm.array.remove.label 'text'`  | Label for the remove button               |
-| `@foorm.array.remove.component 'N'` | Custom remove button component            |
-| `@expect.minLength N, 'msg'`        | Minimum number of items                   |
-| `@expect.maxLength N, 'msg'`        | Maximum number of items                   |
+| Annotation                              | Description                                        |
+| --------------------------------------- | -------------------------------------------------- |
+| `@foorm.array.add.label 'text'`         | Label for the add button (default: "Add item")     |
+| `@foorm.array.add.component 'Name'`     | Custom add button component                        |
+| `@foorm.array.remove.label 'text'`      | Label for the remove button (default: "Remove")    |
+| `@foorm.array.variant.component 'Name'` | Custom variant selector component for union arrays |
+| `@expect.minLength N, 'msg'`            | Minimum number of items                            |
+| `@expect.maxLength N, 'msg'`            | Maximum number of items                            |
 
 ### Nested Groups
 
@@ -351,9 +351,9 @@ const attrs = resolveAttrs(field.prop, scope)
 
 ### Validator Plugin
 
-| Export                        | Description                                                |
-| ----------------------------- | ---------------------------------------------------------- |
-| `foormValidatorPlugin(opts?)` | Creates an ATScript validator plugin for foorm annotations |
+| Export                   | Description                                                            |
+| ------------------------ | ---------------------------------------------------------------------- |
+| `foormValidatorPlugin()` | Creates an ATScript validator plugin for `@foorm.validate` annotations |
 
 ### Types
 
@@ -369,7 +369,6 @@ const attrs = resolveAttrs(field.prop, scope)
 | `TFoormEntryOptions`        | Option for select/radio fields (`string` or `{ key, label }`)                |
 | `TComputed<T>`              | A value that is either static or a function of scope                         |
 | `TResolveOptions<T>`        | Options for resolve utilities (staticAsBoolean, transform)                   |
-| `TFoormPluginOptions`       | Validator plugin options                                                     |
 | `TFormValidatorCallOptions` | Per-call options for `getFormValidator` return fn (data, context?)           |
 | `TFoormValidatorContext`    | Per-call validator context (data, context)                                   |
 
@@ -378,7 +377,7 @@ const attrs = resolveAttrs(field.prop, scope)
 | Export                | Description                                               |
 | --------------------- | --------------------------------------------------------- |
 | `foormPlugin(opts?)`  | ATScript plugin for `@foorm.*` annotations and primitives |
-| `TFoormPluginOptions` | Build-time plugin options (extraTypes, components)        |
+| `TFoormPluginOptions` | Plugin options (`{ extraTypes?, components? }`)           |
 | `annotations`         | Raw annotation definitions tree                           |
 | `primitives`          | Raw primitive definitions                                 |
 
