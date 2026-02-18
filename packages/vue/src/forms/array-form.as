@@ -4,7 +4,7 @@ export interface ArrayForm {
     @meta.label 'Name'
     @meta.placeholder 'Project name'
     @foorm.type 'text'
-    @foorm.validate '(v) => !!v || "Name is required"'
+    @meta.required 'Name is required'
     @foorm.order 1
     name: string
 
@@ -26,7 +26,6 @@ export interface ArrayForm {
 
     // ── Object array (addresses) ─────────────────────────
     @meta.label 'Addresses'
-    @foorm.title 'Addresses'
     @foorm.order 4
     @foorm.array.add.label 'Add address'
     @foorm.array.remove.label 'Remove address'
@@ -34,13 +33,13 @@ export interface ArrayForm {
         @meta.label 'Street'
         @meta.placeholder '123 Main St'
         @foorm.type 'text'
-        @foorm.validate '(v) => !!v || "Street is required"'
+        @meta.required 'Street is required'
         street: string
 
         @meta.label 'City'
         @meta.placeholder 'New York'
         @foorm.type 'text'
-        @foorm.validate '(v) => !!v || "City is required"'
+        @meta.required 'City is required'
         city: string
 
         @meta.label 'ZIP'
@@ -74,7 +73,7 @@ export interface ArrayForm {
         @meta.label 'Full Name'
         @meta.placeholder 'Jane Doe'
         @foorm.type 'text'
-        @foorm.validate '(v) => !!v || "Name is required"'
+        @meta.required 'Name is required'
         fullName: string
 
         @meta.label 'Email'
@@ -87,4 +86,10 @@ export interface ArrayForm {
         @foorm.type 'text'
         phone?: string
     } | string)[]
+}
+
+
+export annotate ArrayForm as ArrayFormCustom {
+    @foorm.array.variant 'CustomVariantPicker'
+    contacts
 }

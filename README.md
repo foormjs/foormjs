@@ -22,7 +22,7 @@ Define a form in ATScript:
 export interface RegistrationForm {
     @meta.label 'First Name'
     @meta.placeholder 'John'
-    @foorm.validate '(v) => !!v || "Required"'
+    @meta.required
     @foorm.order 1
     firstName: string
 
@@ -61,10 +61,11 @@ const { def, formData } = useFoorm(RegistrationForm)
 
 ## Packages
 
-| Package                        | Description                                                    | Docs                               |
-| ------------------------------ | -------------------------------------------------------------- | ---------------------------------- |
-| [`foorm`](packages/foorm)      | Core form model — definitions, validation, metadata resolution | [README](packages/foorm/README.md) |
-| [`@foormjs/vue`](packages/vue) | Renderless Vue components — `OoForm`, `OoField`, `useFoorm`    | [README](packages/vue/README.md)   |
+| Package                                        | Description                                                           | Docs                                     |
+| ---------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------- |
+| [`@foormjs/atscript`](packages/atscript)       | Core form model — definitions, validation, metadata resolution        | [README](packages/atscript/README.md)    |
+| [`@foormjs/composables`](packages/composables) | Framework-agnostic form composables (`useFoormForm`, `useFoormField`) | [README](packages/composables/README.md) |
+| [`@foormjs/vue`](packages/vue)                 | Renderless Vue components — `OoForm`, `OoField`, `useFoorm`           | [README](packages/vue/README.md)         |
 
 ## ATScript
 

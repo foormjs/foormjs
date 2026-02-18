@@ -13,7 +13,7 @@ Forms are defined in ATScript `.as` files — a TypeScript superset with custom 
 ```bash
 pnpm install                    # Install dependencies
 node ./scripts/build            # Build all public packages (rollup, parallel)
-node ./scripts/build foorm      # Build a specific package
+node ./scripts/build atscript   # Build a specific package
 pnpm test                       # Run tests (vitest + Playwright e2e)
 pnpm test:cov                   # Run tests with coverage
 pnpm lint                       # Lint with oxlint
@@ -27,14 +27,15 @@ The Vue package (`packages/vue`) uses Vite — run `pnpm dev` and `pnpm build` f
 
 ## Monorepo Structure
 
-| Package          | Published Name | Build Tool | Description                                          |
-| ---------------- | -------------- | ---------- | ---------------------------------------------------- |
-| `packages/foorm` | `foorm`        | rollup     | ATScript-first form model with validation            |
-| `packages/vue`   | `@foormjs/vue` | vite       | Renderless Vue components built on top of foorm core |
+| Package                | Published Name         | Build Tool | Description                                                      |
+| ---------------------- | ---------------------- | ---------- | ---------------------------------------------------------------- |
+| `packages/atscript`    | `@foormjs/atscript`    | rollup     | ATScript-first form model with validation                        |
+| `packages/composables` | `@foormjs/composables` | vite       | Framework-agnostic form composables (useFoormForm/Field)         |
+| `packages/vue`         | `@foormjs/vue`         | vite       | Renderless Vue components built on top of atscript + composables |
 
-Two export paths for foorm: `foorm` (runtime) and `foorm/plugin` (ATScript plugin for build-time/IDE usage).
+Two export paths for atscript: `@foormjs/atscript` (runtime) and `@foormjs/atscript/plugin` (ATScript plugin for build-time/IDE usage).
 
-Workspace managed by pnpm (`pnpm-workspace.yaml`). Path aliases in `tsconfig.json`: `foorm` → `packages/foorm/src`, `@foormjs/*` → `packages/*/src`.
+Workspace managed by pnpm (`pnpm-workspace.yaml`). Path aliases in `tsconfig.json`: `@foormjs/atscript` → `packages/atscript/src`, `@foormjs/*` → `packages/*/src`.
 
 ## Architecture
 
@@ -48,7 +49,7 @@ ATScript is the foundation. Forms are defined as annotated interfaces in `.as` f
 export interface MyForm {
     @meta.label 'First Name'
     @foorm.type 'text'
-    @foorm.validate '(v) => !!v || "First name is required"'
+    @meta.required 'First name is required'
     firstName: string
 
     @foorm.fn.placeholder '(v, data) => data.firstName ? "Same as " + data.firstName + "?" : "Doe"'
@@ -62,9 +63,9 @@ export interface MyForm {
 
 The `@atscript/typescript` compiler generates `.as.d.ts` declarations and runtime annotated type objects where metadata is accessible via `prop.metadata.get('key')`. The `unplugin-atscript` Vite plugin handles `.as` file processing at build time.
 
-### Core (`packages/foorm`)
+### Core (`packages/atscript`)
 
-**`src/runtime/`** — Main runtime (exported as `foorm`):
+**`src/runtime/`** — Main runtime (exported as `@foormjs/atscript`):
 
 - `create-foorm.ts` — `createFoormDef(annotatedType)` converts an ATScript annotated type into a `FoormDef` (thin `{ type, fields, flatMap }` object). Fields are `FoormFieldDef` pointers to ATScript props, not copies.
 - `utils.ts` — `resolveFieldProp()`, `resolveFormProp()`, `resolveOptions()`, `resolveAttrs()`, `createFormData()`, `evalComputed()`, `getByPath()`/`setByPath()`. Properties are resolved lazily on demand — `resolveFieldProp(prop, fnKey, staticKey, scope)` checks `foorm.fn.*` first (compiles fn string), then falls back to static metadata key.
@@ -73,18 +74,26 @@ The `@atscript/typescript` compiler generates `.as.d.ts` declarations and runtim
 - `validator-plugin.ts` — `foormValidatorPlugin()` ATScript validator plugin handling disabled/hidden skip, required checks, and `@foorm.validate` custom validators.
 - `types.ts` — `FoormDef`, `FoormFieldDef`, `TFoormFnScope`, `TComputed`, `TFoormFieldEvaluated`, `TFoormEntryOptions`.
 
-**`src/plugin/`** — ATScript plugin (exported as `foorm/plugin`):
+**`src/plugin/`** — ATScript plugin (exported as `@foormjs/atscript/plugin`):
 
 - `foorm-plugin.ts` — `foormPlugin(opts?)` registers all foorm annotations and primitives with `@atscript/core`. Used in `atscript.config.ts` for IDE annotation completion/validation.
 - `annotations.ts` — Full `AnnotationSpec` tree for `@foorm.*` and `@foorm.fn.*` annotations (title, submit, type, component, label, disabled, hidden, validate, options, attrs, etc.).
 - `primitives.ts` — ATScript primitive types: `foorm.action`, `foorm.paragraph`, `foorm.select`, `foorm.radio`, `foorm.checkbox`.
+
+### Composables (`packages/composables`)
+
+Framework-agnostic form composables (exported as `@foormjs/composables`):
+
+- `src/composables/use-foorm-form.ts` — `useFoormForm()` manages form state, field registry, submit validation. Provides `TFoormState` via `provide('__foorm_form', ...)`.
+- `src/composables/use-foorm-field.ts` — `useFoormField()` manages single field validation, touch tracking, error display. Injects from `'__foorm_form'`.
+- `src/types.ts` — `TFoormState`, `TFoormRule`, `TFoormFieldCallbacks`, `TFoormFieldRegistration`, `TFoormSubmitValidator`, `UseFoormFieldOptions`.
 
 ### Vue (`packages/vue`)
 
 Renderless wrapper components letting users plug in their own UI components.
 
 - `src/composables/use-foorm.ts` — `useFoorm(annotatedType)` returns `{ def, formData }` where `def` is `FoormDef` and `formData` is reactive.
-- `src/components/oo-form.vue` — `OoForm` wraps `VuilessForm`, resolves form-level props via `resolveFormProp()`, renders `OoField` per field. Slots: `form.header`, `form.before`, `field:{type}`, `form.after`, `form.submit`, `form.footer`. Component resolution: `@foorm.component` → `components` prop → `types` prop → built-in defaults.
+- `src/components/oo-form.vue` — `OoForm` uses `useFoormForm` composable, resolves form-level props via `resolveFormProp()`, delegates field rendering to `OoGroup`. Slots: `form.header`, `form.before`, `field:{type}`, `form.after`, `form.submit`, `form.footer`. Component resolution: `@foorm.component` → `components` prop → `types` prop → built-in defaults.
 - `src/components/oo-field.vue` — `OoField` resolves all field properties through ATScript metadata. Two-path optimization: `allStatic` fast path (no Vue computeds) vs dynamic path (per-property computed detection via `foorm.fn.*`). Lazy scope construction: `baseScope` for constraints, `fullScope` for display/validators.
 - `src/components/types.ts` — `TFoormComponentProps` interface that custom components must satisfy.
 - `src/forms/` — ATScript `.as` form definitions (e.g. `e2e-test-form.as` for E2E testing).
@@ -106,13 +115,13 @@ Field-level computed (`@foorm.fn.*`): `label`, `description`, `hint`, `placehold
 
 All `@foorm.fn.*` take a JS function string `(v, data, context, entry) => result`.
 
-Standard ATScript metadata also used: `@meta.label`, `@meta.description`, `@meta.hint`, `@meta.placeholder`, `@expect.maxLength`, `@expect.min`, etc.
+Standard ATScript metadata also used: `@meta.label`, `@meta.description`, `@meta.hint`, `@meta.placeholder`, `@meta.required`, `@expect.maxLength`, `@expect.min`, etc.
 
 ## Post-Implementation Workflow
 
 After completing a feature, bug fix, or refactoring, use the available agents to verify everything works:
 
-1. **`lint-and-test`** — Run lint, format check, TypeScript type checks (both foorm and vue), and tests. Use after any code changes.
+1. **`lint-and-test`** — Run lint, format check, TypeScript type checks (both atscript and vue), and tests. Use after any code changes.
 2. **`build`** — Build all packages. Use after changes that affect exports, types, or package structure.
 3. **`readme-check`** — Find discrepancies between documentation (READMEs + foorm skill) and actual code. Use after significant API changes or refactoring.
 

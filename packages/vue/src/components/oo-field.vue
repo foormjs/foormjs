@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="TFormData = any, TFormContext = any">
-import { VuilessField, type TVuilessState } from '@foormjs/vuiless'
+import { useFoormField, type TFoormState } from '@foormjs/composables'
 import { Validator } from '@atscript/typescript/utils'
-import type { FoormFieldDef, TFoormFnScope } from 'foorm'
+import type { FoormFieldDef, TFoormFnScope } from '@foormjs/atscript'
 import {
   resolveFieldProp,
   resolveOptions,
@@ -10,28 +10,80 @@ import {
   getByPath,
   setByPath,
   foormValidatorPlugin,
-} from 'foorm'
+} from '@foormjs/atscript'
 import { computed, inject, ref, watch, type ComputedRef } from 'vue'
 
-const props = defineProps<{ field: FoormFieldDef; error?: string }>()
+const props = defineProps<{
+  field: FoormFieldDef
+  error?: string
+  onRemove?: () => void
+  canRemove?: boolean
+  removeLabel?: string
+}>()
 
-const vuiless = inject<ComputedRef<TVuilessState<TFormData, TFormContext>>>(
-  'vuiless'
-) as ComputedRef<TVuilessState<TFormData, TFormContext>>
+defineSlots<{
+  default(props: {
+    onBlur: () => void
+    error: string | undefined
+    model: { value: unknown }
+    formData: TFormData
+    formContext: TFormContext | undefined
+    label: string
+    description: string | undefined
+    hint: string | undefined
+    placeholder: string | undefined
+    value: unknown
+    classes: Record<string, boolean>
+    styles: unknown
+    optional: boolean
+    disabled: boolean
+    hidden: boolean
+    readonly: boolean
+    type: string
+    altAction: string | undefined
+    component: string | undefined
+    vName: string
+    field: FoormFieldDef
+    options: unknown
+    maxLength: number | undefined
+    required: boolean | undefined
+    autocomplete: string | undefined
+    attrs: Record<string, unknown> | undefined
+    onRemove: (() => void) | undefined
+    canRemove: boolean | undefined
+    removeLabel: string | undefined
+  }): unknown
+}>()
 
-// Root form data for fn scope (ensures `data` in fn strings always references root)
+const foormState = inject<ComputedRef<TFoormState<TFormData, TFormContext>>>(
+  '__foorm_form'
+) as ComputedRef<TFoormState<TFormData, TFormContext>>
+
+// Root form data (always root — never overridden)
 const rootData = inject<ComputedRef<TFormData>>(
-  'oo-root-data',
+  '__foorm_root_data',
   undefined as unknown as ComputedRef<TFormData>
 )
+
+// Path prefix from parent OoGroup
+const pathPrefix = inject<ComputedRef<string>>(
+  '__foorm_path_prefix',
+  computed(() => '')
+)
+
+// Absolute path: prefix + field.path (or just prefix when field.path is undefined = root)
+const absolutePath = computed<string | undefined>(() => {
+  if (props.field.path === undefined) return pathPrefix.value || undefined
+  return pathPrefix.value ? `${pathPrefix.value}.${props.field.path}` : props.field.path
+})
 
 // Helper to unwrap value (handles both static and computed)
 const unwrap = <T,>(v: T | ComputedRef<T>): T =>
   typeof v === 'object' && v !== null && 'value' in v ? (v as ComputedRef<T>).value : (v as T)
 
-/** Returns the data object to use in fn scopes — root data if available, else local form data. */
-function scopeData(): Record<string, unknown> {
-  return (rootData?.value ?? vuiless.value.formData) as Record<string, unknown>
+/** Returns root form data for fn scopes. */
+function rootFormData(): Record<string, unknown> {
+  return (rootData?.value ?? foormState.value.formData) as Record<string, unknown>
 }
 
 const prop = props.field.prop
@@ -48,13 +100,15 @@ const altAction = getFieldMeta<string>(prop, 'foorm.altAction')
 const validatorPlugin = foormValidatorPlugin()
 let cachedValidator: InstanceType<typeof Validator> | undefined
 
-// ── Helpers for v-model with dot-path support ──────────────
+// ── Helpers for v-model with absolute path support ──────────
 function getModel() {
-  return getByPath(vuiless.value.formData as Record<string, unknown>, props.field.path)
+  const p = absolutePath.value
+  return p === undefined ? rootFormData() : getByPath(rootFormData(), p)
 }
 
 function setModel(value: unknown) {
-  setByPath(vuiless.value.formData as Record<string, unknown>, props.field.path, value)
+  const p = absolutePath.value
+  if (p !== undefined) setByPath(rootFormData(), p, value)
 }
 
 // ── Declare all field properties ────────────────────────────
@@ -83,6 +137,9 @@ const emptyScope: TFoormFnScope = {
   entry: undefined,
 }
 
+// Whether @meta.required is present (static — shared by both paths)
+const hasMetaRequired = getFieldMeta(prop, 'meta.required') !== undefined
+
 if (props.field.allStatic) {
   // ══════════════════════════════════════════════════════════
   // FAST PATH: all properties are static — no scope, no computeds
@@ -95,8 +152,8 @@ if (props.field.allStatic) {
   optional = props.field.prop.optional ?? false
   readonly = getFieldMeta(prop, 'foorm.readonly') !== undefined
 
-  // Required: static boolean (skip for phantom)
-  required = props.field.phantom ? undefined : !optional
+  // Required: based on @meta.required (skip for phantom)
+  required = props.field.phantom ? undefined : hasMetaRequired
 
   // Display: static reads
   label = getFieldMeta<string>(prop, 'meta.label') ?? props.field.name
@@ -115,7 +172,7 @@ if (props.field.allStatic) {
       ? { [staticClassValue]: true }
       : (staticClassValue as Record<string, boolean> | undefined)),
     disabled: disabled as boolean,
-    required: !(optional as boolean),
+    required: hasMetaRequired,
   }
 
   // Phantom value: static
@@ -157,12 +214,12 @@ if (props.field.allStatic) {
   const needsScope = needsBaseScope || needsFullScope
 
   // Base scope for constraints (no entry)
-  // Uses scopeData() so fn strings always reference root form data
+  // Always uses root form data for fn scopes
   const baseScope = needsScope
     ? computed<TFoormFnScope>(() => ({
-        v: getByPath(vuiless.value.formData as Record<string, unknown>, props.field.path),
-        data: scopeData(),
-        context: (vuiless.value.formContext ?? {}) as Record<string, unknown>,
+        v: getModel(),
+        data: rootFormData(),
+        context: (foormState.value.formContext ?? {}) as Record<string, unknown>,
         entry: undefined,
       }))
     : undefined
@@ -207,12 +264,8 @@ if (props.field.allStatic) {
       )
     : getFieldMeta(prop, 'foorm.readonly') !== undefined
 
-  // Derived: required (skip for phantom fields)
-  required = props.field.phantom
-    ? undefined
-    : typeof optional === 'boolean'
-      ? !optional
-      : computed(() => !unwrap(optional))
+  // Derived: required based on @meta.required (skip for phantom)
+  required = props.field.phantom ? undefined : hasMetaRequired
 
   // ── Full scope with entry (derived from baseScope) ─────────
   const scope = needsFullScope
@@ -276,7 +329,7 @@ if (props.field.allStatic) {
 
   // ── Classes — conditional computed ─────────────────────────
   classesBase =
-    hasFn.classes || typeof disabled !== 'boolean' || typeof optional !== 'boolean'
+    hasFn.classes || typeof disabled !== 'boolean'
       ? computed(() => {
           const classValue = hasFn.classes
             ? resolveFieldProp(prop, 'foorm.fn.classes', undefined, fs.value)
@@ -287,7 +340,7 @@ if (props.field.allStatic) {
               ? { [classValue]: true }
               : (classValue as Record<string, boolean> | undefined)),
             disabled: unwrap(disabled),
-            required: !unwrap(optional),
+            required: hasMetaRequired,
           }
         })
       : (() => {
@@ -297,7 +350,7 @@ if (props.field.allStatic) {
               ? { [staticClassValue]: true }
               : (staticClassValue as Record<string, boolean> | undefined)),
             disabled: disabled as boolean,
-            required: !(optional as boolean),
+            required: hasMetaRequired,
           }
         })()
 
@@ -318,8 +371,10 @@ if (props.field.allStatic) {
     watch(
       computedValue,
       newVal => {
-        if (newVal !== undefined && unwrap(readonly))
-          setByPath(vuiless.value.formData as Record<string, unknown>, props.field.path, newVal)
+        if (newVal !== undefined && unwrap(readonly)) {
+          const p = absolutePath.value
+          if (p !== undefined) setByPath(rootFormData(), p, newVal)
+        }
       },
       { immediate: true }
     )
@@ -327,77 +382,90 @@ if (props.field.allStatic) {
 }
 
 // ── Validation rule (shared by both paths) ──────────────────
-function vuilessRule(v: unknown) {
+function foormRule(v: unknown) {
   cachedValidator ??= new Validator(prop, { plugins: [validatorPlugin] })
   const isValid = cachedValidator.validate(
     v,
     true,
     hasCustomValidators
       ? {
-          data: scopeData(),
-          context: (vuiless.value.formContext ?? {}) as Record<string, unknown>,
+          data: rootFormData(),
+          context: (foormState.value.formContext ?? {}) as Record<string, unknown>,
         }
       : undefined
   )
   if (!isValid) {
-    // For array/group fields, only report root-level errors (path === '').
-    // Child errors are handled by their own OoField validators.
-    if (props.field.type === 'array' || props.field.type === 'group') {
-      const rootError = cachedValidator.errors?.find(e => e.path === '')
-      if (rootError) return rootError.message
-      return true
-    }
     return cachedValidator.errors?.[0]?.message || 'Invalid value'
   }
   return true
 }
 
-const rules = [vuilessRule]
+// ── Vuiless field composable ────────────────────────────────
+const {
+  model,
+  error: foormError,
+  onBlur,
+} = useFoormField({
+  getValue: getModel,
+  setValue: setModel,
+  rules: [foormRule],
+  path: () => absolutePath.value,
+})
+
+// Merged error: external prop > foorm composable error
+const mergedError = computed(() => props.error || foormError.value)
+
+// Stable model wrapper — plain object with getter/setter so Vue's template
+// auto-unwrapping doesn't strip the ref. Slot consumers use v-model="field.model.value".
+const slotModel = {
+  get value() {
+    return model.value
+  },
+  set value(v: unknown) {
+    model.value = v
+  },
+}
 
 // Function to merge classes with error flag
-function getClasses(error: string | undefined, vuilessError: string | undefined) {
+function getClasses() {
   return {
     ...unwrap(classesBase),
-    error: !!error || !!vuilessError,
+    error: !!mergedError.value,
   }
 }
 </script>
 
 <template>
-  <VuilessField
-    :model-value="getModel()"
-    @update:model-value="setModel($event)"
-    :rules="rules"
-    v-slot="vuilessField"
+  <slot
+    :on-blur="onBlur"
+    :error="mergedError"
+    :model="slotModel"
+    :form-data="foormState.formData"
+    :form-context="foormState.formContext"
+    :label="unwrap(label)"
+    :description="unwrap(description)"
+    :hint="unwrap(hint)"
+    :placeholder="unwrap(placeholder)"
+    :value="unwrap(phantomValue)"
+    :classes="getClasses()"
+    :styles="unwrap(styles)"
+    :optional="unwrap(optional)"
+    :disabled="unwrap(disabled)"
+    :hidden="unwrap(hidden)"
+    :readonly="unwrap(readonly)"
+    :type="field.type"
+    :alt-action="altAction"
+    :component="component"
+    :v-name="field.name"
+    :field="field"
+    :options="unwrap(options)"
+    :max-length="maxLength"
+    :required="required !== undefined ? unwrap(required) : undefined"
+    :autocomplete="autocomplete"
+    :attrs="unwrap(attrs)"
+    :on-remove="onRemove"
+    :can-remove="canRemove"
+    :remove-label="removeLabel"
   >
-    <slot
-      :on-blur="vuilessField.onBlur"
-      :error="error || vuilessField.error"
-      :model="vuilessField.model"
-      :form-data="vuiless.formData"
-      :form-context="vuiless.formContext"
-      :label="label"
-      :description="description"
-      :hint="hint"
-      :placeholder="placeholder"
-      :value="phantomValue"
-      :classes="getClasses(error, vuilessField.error)"
-      :styles="styles"
-      :optional="optional"
-      :disabled="disabled"
-      :hidden="hidden"
-      :readonly="readonly"
-      :type="field.type"
-      :alt-action="altAction"
-      :component="component"
-      :v-name="field.name"
-      :field="field"
-      :options="options"
-      :max-length="maxLength"
-      :required="required"
-      :autocomplete="autocomplete"
-      :attrs="attrs"
-    >
-    </slot>
-  </VuilessField>
+  </slot>
 </template>

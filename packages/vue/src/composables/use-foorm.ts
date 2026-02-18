@@ -3,7 +3,7 @@ import type {
   TAtscriptTypeObject,
   InferDataType,
 } from '@atscript/typescript/utils'
-import { createFoormDef, createFormData } from 'foorm'
+import { createFoormDef, createFormData } from '@foormjs/atscript'
 import { reactive } from 'vue'
 
 /**

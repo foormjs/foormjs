@@ -14,8 +14,9 @@ ATScript annotations are metadata that follow the `@namespace.name` syntax (e.g.
 
 ### Built-in Annotation Namespaces
 
-- `@meta.*` — Descriptive metadata (label, description, documentation, placeholder, sensitive, readonly, id, isKey)
+- `@meta.*` — Descriptive metadata (label, description, documentation, placeholder, sensitive, readonly, id, isKey, required)
 - `@expect.*` — Validation constraints (minLength, maxLength, min, max, int, pattern) — all except `@expect.int` accept an optional custom error message as the last argument
+- Note: `@meta.required` is a validation annotation under `@meta.*` (not `@expect.*`). It validates non-blank strings or `true` booleans. Assignable to boolean props.
 - `@emit.*` — Code generation directives (e.g., `@emit.jsonSchema` to force build-time JSON Schema embedding)
 
 ### Custom Annotations

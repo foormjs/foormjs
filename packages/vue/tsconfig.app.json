@@ -1,7 +1,15 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "../foorm/src/**/*", "../vuiless/src/index.ts", "../vuiless/src/components/**/*", "../vuiless/src/components/**/*.vue"],
-  "exclude": ["src/**/__tests__/*", "node_modules", "../foorm/src/**/*.spec.ts"],
+  "include": [
+    "env.d.ts",
+    "src/**/*",
+    "src/**/*.vue",
+    "../atscript/src/**/*",
+    "../composables/src/index.ts",
+    "../composables/src/types.ts",
+    "../composables/src/composables/**/*"
+  ],
+  "exclude": ["src/**/__tests__/*", "node_modules", "../atscript/src/**/*.spec.ts"],
   "compilerOptions": {
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
@@ -13,8 +21,8 @@
     "resolvePackageJsonImports": true,
     "paths": {
       "@/*": ["./src/*"],
-      "foorm": ["../foorm/src"],
-      "@foormjs/vuiless": ["../vuiless/src"]
+      "@foormjs/atscript": ["../atscript/src"],
+      "@foormjs/composables": ["../composables/src"]
     }
   }
 }

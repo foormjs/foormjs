@@ -9,26 +9,27 @@ foormjs provides ATScript-first validatable forms for Vue. Define forms declarat
 
 ## Sub-Files
 
-| File                 | When to Read                                                                                          |
-| -------------------- | ----------------------------------------------------------------------------------------------------- |
-| `getting-started.md` | Project setup, installation, ATScript config, Vite config, first form                                 |
+| File                 | When to Read                                                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `getting-started.md` | Project setup, installation, ATScript config, Vite config, first form                                                        |
 | `schema.md`          | Writing `.as` form schemas — annotations, primitives, computed properties, validators, options, attrs, arrays, nested groups |
-| `vue-components.md`  | `OoForm`, `OoField`, `OoGroup`, `OoArray`, `useFoorm`, slots, events, custom components, arrays, nested groups |
-| `core-api.md`        | `foorm` package API — `createFoormDef`, `getFormValidator`, resolve utilities, array/group types       |
-| `serialization.md`   | Backend-driven forms — serializing/deserializing annotated types, sending schemas over the wire       |
+| `vue-components.md`  | `OoForm`, `OoField`, `OoGroup`, `OoArray`, `useFoorm`, slots, events, custom components, arrays, nested groups               |
+| `core-api.md`        | `@foormjs/atscript` package API — `createFoormDef`, `getFormValidator`, resolve utilities, array/group types                 |
+| `serialization.md`   | Backend-driven forms — serializing/deserializing annotated types, sending schemas over the wire                              |
 
 ## Packages
 
-| Package        | npm               | Description                                                                     |
-| -------------- | ----------------- | ------------------------------------------------------------------------------- |
-| `foorm`        | `foorm`           | Core form model — definitions, validation, metadata resolution                  |
-| `foorm/plugin` | `foorm` (subpath) | ATScript plugin — registers `@foorm.*` annotations and primitives for IDE/build |
-| `@foormjs/vue` | `@foormjs/vue`    | Renderless Vue components — `OoForm`, `OoField`, `OoGroup`, `OoArray`, `useFoorm` composable |
+| Package                    | npm                    | Description                                                                                  |
+| -------------------------- | ---------------------- | -------------------------------------------------------------------------------------------- |
+| `@foormjs/atscript`        | `@foormjs/atscript`    | Core form model — definitions, validation, metadata resolution                               |
+| `@foormjs/atscript/plugin` | `@foormjs/atscript`    | ATScript plugin — registers `@foorm.*` annotations and primitives for IDE/build              |
+| `@foormjs/composables`     | `@foormjs/composables` | Framework-agnostic form composables (`useFoormForm`, `useFoormField`)                        |
+| `@foormjs/vue`             | `@foormjs/vue`         | Renderless Vue components — `OoForm`, `OoField`, `OoGroup`, `OoArray`, `useFoorm` composable |
 
 ## How It Works
 
 ```
-.as schema file          foorm core              @foormjs/vue
+.as schema file          @foormjs/atscript       @foormjs/vue
 ─────────────────    ─────────────────────    ─────────────────────
 @foorm.title '...'   createFoormDef(type)     useFoorm(Type)
 @meta.label '...'    → FoormDef { fields }    → { def, formData }
@@ -48,7 +49,7 @@ email: string.email  → (data) => { passed }   <OoForm :def :form-data>
 
 ```bash
 # Install (Vue project)
-pnpm add @foormjs/vue foorm @atscript/core @atscript/typescript
+pnpm add @foormjs/vue @foormjs/atscript @atscript/core @atscript/typescript
 pnpm add -D unplugin-atscript @vitejs/plugin-vue
 ```
 
@@ -56,7 +57,7 @@ pnpm add -D unplugin-atscript @vitejs/plugin-vue
 // atscript.config.ts
 import { defineConfig } from '@atscript/core'
 import ts from '@atscript/typescript'
-import { foormPlugin } from 'foorm/plugin'
+import { foormPlugin } from '@foormjs/atscript/plugin'
 
 export default defineConfig({
   rootDir: 'src',
@@ -91,7 +92,7 @@ const { def, formData } = useFoorm(MyForm)
 ## Key Caveats
 
 - **ATScript is required** — forms are defined in `.as` files, not TypeScript. The `unplugin-atscript` Vite plugin must be installed for `.as` imports to work.
-- **`foorm/plugin`** is build-time only — import it in `atscript.config.ts`, never in runtime code.
+- **`@foormjs/atscript/plugin`** is build-time only — import it in `atscript.config.ts`, never in runtime code.
 - **`@foorm.fn.*` functions are strings** — they're compiled at runtime via `new Function()`. This means no imports, no closures — only pure expressions using `v`, `data`, `context`, `entry`.
 - **Component resolution priority**: `@foorm.component` (named) > `components` prop > `types` prop > built-in defaults.
 - **Phantom fields** (`foorm.action`, `foorm.paragraph`) are excluded from form data, validation, and TypeScript types — they only exist in the rendered field list.

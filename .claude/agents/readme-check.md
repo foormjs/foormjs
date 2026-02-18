@@ -13,9 +13,9 @@ You are a documentation auditor for the foormjs monorepo. Your job is to find di
 ### READMEs
 
 - `README.md` (root)
-- `packages/foorm/README.md`
+- `packages/atscript/README.md`
+- `packages/composables/README.md`
 - `packages/vue/README.md`
-- `packages/vuiless/README.md`
 
 ### Foorm Skill (`.claude/skills/foorm/`)
 
@@ -25,7 +25,7 @@ This skill is copied to other projects to enable foormjs usage. It must stay acc
 - `.claude/skills/foorm/getting-started.md` — installation, config files, project setup
 - `.claude/skills/foorm/schema.md` — annotations, primitives, computed fns, validators, options
 - `.claude/skills/foorm/vue-components.md` — OoForm/OoField API, props, slots, events, custom components
-- `.claude/skills/foorm/core-api.md` — foorm runtime API, resolve utilities, types
+- `.claude/skills/foorm/core-api.md` — @foormjs/atscript runtime API, resolve utilities, types
 - `.claude/skills/foorm/serialization.md` — serialize/deserialize, JSON Schema, manual type building
 
 ## What to Check
@@ -35,7 +35,7 @@ For each file, verify:
 1. **Exported APIs** — Do all documented functions, classes, components, and types actually exist and are exported?
 2. **Code examples** — Do code snippets use correct import paths, function signatures, and option names?
 3. **File paths and structure** — Do referenced files and directories exist?
-4. **Package names** — Are `foorm` and `@foormjs/vue` correct in install commands?
+4. **Package names** — Are `@foormjs/atscript`, `@foormjs/composables`, and `@foormjs/vue` correct in install commands?
 5. **CLI commands** — Do documented commands (`pnpm test`, `pnpm build`, etc.) match `package.json` scripts?
 6. **Component props and slots** — Do Vue component docs match the actual component definitions?
 7. **Annotations and primitives** — Do documented ATScript annotations match what the foorm plugin actually registers?
@@ -45,15 +45,15 @@ For each file, verify:
 
 ## Key Source Files to Verify Against
 
-- `packages/foorm/src/index.ts` — all foorm exports
-- `packages/foorm/src/runtime/types.ts` — FoormDef, FoormFieldDef, TFoormFnScope, etc.
-- `packages/foorm/src/runtime/utils.ts` — resolve utilities, createFormData
-- `packages/foorm/src/runtime/validate.ts` — getFormValidator, supportsAltAction
-- `packages/foorm/src/runtime/validator-plugin.ts` — foormValidatorPlugin
-- `packages/foorm/src/runtime/create-foorm.ts` — createFoormDef
-- `packages/foorm/src/plugin/foorm-plugin.ts` — foormPlugin options
-- `packages/foorm/src/plugin/annotations.ts` — registered annotations
-- `packages/foorm/src/plugin/primitives.ts` — registered primitives
+- `packages/atscript/src/index.ts` — all atscript exports
+- `packages/atscript/src/runtime/types.ts` — FoormDef, FoormFieldDef, TFoormFnScope, etc.
+- `packages/atscript/src/runtime/utils.ts` — resolve utilities, createFormData
+- `packages/atscript/src/runtime/validate.ts` — getFormValidator, supportsAltAction
+- `packages/atscript/src/runtime/validator-plugin.ts` — foormValidatorPlugin
+- `packages/atscript/src/runtime/create-foorm.ts` — createFoormDef
+- `packages/atscript/src/plugin/foorm-plugin.ts` — foormPlugin options
+- `packages/atscript/src/plugin/annotations.ts` — registered annotations
+- `packages/atscript/src/plugin/primitives.ts` — registered primitives
 - `packages/vue/src/index.ts` — vue package exports
 - `packages/vue/src/components/oo-form.vue` — OoForm props, slots, events
 - `packages/vue/src/components/oo-field.vue` — OoField behavior
@@ -62,13 +62,12 @@ For each file, verify:
 - `packages/vue/src/components/oo-group.vue` — OoGroup props
 - `packages/vue/src/components/oo-array.vue` — OoArray props
 
-### Vuiless Package
+### Composables Package
 
-- `packages/vuiless/src/index.ts` — all vuiless exports
-- `packages/vuiless/src/components/vuiless.types.ts` — TVuilessState, TVuilessRule, etc.
-- `packages/vuiless/src/components/VuilessForm.vue` — VuilessForm props, slots, events
-- `packages/vuiless/src/components/VuilessField.vue` — VuilessField props, slots
-- `packages/vuiless/src/rules.ts` — built-in validation rules (if any)
+- `packages/composables/src/index.ts` — all composables exports
+- `packages/composables/src/types.ts` — TFoormState, TFoormRule, etc.
+- `packages/composables/src/composables/use-foorm-form.ts` — useFoormForm composable
+- `packages/composables/src/composables/use-foorm-field.ts` — useFoormField composable
 
 ## How to Check
 

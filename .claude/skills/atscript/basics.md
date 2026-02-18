@@ -169,13 +169,14 @@ Primitives use dot notation for type refinement and implicit validation.
 
 #### String Extensions
 
-| Extension        | Description             | Validation Pattern                       |
-| ---------------- | ----------------------- | ---------------------------------------- |
-| `string.email`   | Email format            | `^[^\s@]+@[^\s@]+\.[^\s@]+$`             |
-| `string.phone`   | Phone number format     | `^\+?[0-9\s-]{10,15}$`                   |
-| `string.date`    | Common date formats     | YYYY-MM-DD, MM/DD/YYYY, DD-MM-YYYY, etc. |
-| `string.isoDate` | ISO 8601 date with time | `2024-01-15T10:30:00Z`                   |
-| `string.uuid`    | UUID format             | `^[0-9a-f]{8}-...-[0-9a-f]{12}$`         |
+| Extension         | Description             | Validation Pattern                       |
+| ----------------- | ----------------------- | ---------------------------------------- |
+| `string.email`    | Email format            | `^[^\s@]+@[^\s@]+\.[^\s@]+$`             |
+| `string.phone`    | Phone number format     | `^\+?[0-9\s-]{10,15}$`                   |
+| `string.date`     | Common date formats     | YYYY-MM-DD, MM/DD/YYYY, DD-MM-YYYY, etc. |
+| `string.isoDate`  | ISO 8601 date with time | `2024-01-15T10:30:00Z`                   |
+| `string.uuid`     | UUID format             | `^[0-9a-f]{8}-...-[0-9a-f]{12}$`         |
+| `string.required` | Non-blank string        | Implicitly adds `@meta.required`         |
 
 #### Number Extensions
 
@@ -199,8 +200,9 @@ score: number.int.negative     // Negative integers
 #### Boolean Extensions
 
 ```atscript
-alwaysOn: boolean.true    // Must be true
-disabled: boolean.false   // Must be false
+alwaysOn: boolean.true       // Must be true
+disabled: boolean.false      // Must be false
+agreeToTerms: boolean.required  // Must be true (implicitly adds @meta.required)
 ```
 
 ### Phantom Type
@@ -291,16 +293,17 @@ export type Username = string
 
 #### Meta Annotations (`@meta.*`)
 
-| Annotation                      | Description                            |
-| ------------------------------- | -------------------------------------- |
-| `@meta.label 'text'`            | Human-readable label                   |
-| `@meta.id` or `@meta.id 'name'` | Marks identifier field                 |
-| `@meta.isKey`                   | Key field in arrays for lookups        |
-| `@meta.description 'text'`      | Field description                      |
-| `@meta.documentation 'text'`    | Multi-line docs (repeatable)           |
-| `@meta.placeholder 'text'`      | UI placeholder text                    |
-| `@meta.sensitive`               | Marks sensitive data (e.g., passwords) |
-| `@meta.readonly`                | Read-only field                        |
+| Annotation                      | Description                                                                |
+| ------------------------------- | -------------------------------------------------------------------------- |
+| `@meta.label 'text'`            | Human-readable label                                                       |
+| `@meta.id` or `@meta.id 'name'` | Marks identifier field                                                     |
+| `@meta.isKey`                   | Key field in arrays for lookups                                            |
+| `@meta.description 'text'`      | Field description                                                          |
+| `@meta.documentation 'text'`    | Multi-line docs (repeatable)                                               |
+| `@meta.placeholder 'text'`      | UI placeholder text                                                        |
+| `@meta.sensitive`               | Marks sensitive data (e.g., passwords)                                     |
+| `@meta.readonly`                | Read-only field                                                            |
+| `@meta.required 'msg'`          | Required: non-blank string or `true` boolean. Assignable to boolean props. |
 
 #### Validation Annotations (`@expect.*`)
 

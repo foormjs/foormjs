@@ -25,6 +25,7 @@ export { isArrayField, isGroupField } from './runtime/types'
 // Core
 export { createFoormDef, buildVariants } from './runtime/create-foorm'
 export { getFormValidator, supportsAltAction } from './runtime/validate'
+export type { TFormValidatorCallOptions } from './runtime/validate'
 
 // Resolve utilities
 export {

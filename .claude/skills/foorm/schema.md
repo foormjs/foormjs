@@ -93,8 +93,18 @@ Any field property can be dynamic. Function strings receive `(v, data, context, 
 ### Validation
 
 ```
+// Required non-blank string (rejects '' and whitespace-only)
+@meta.required
+name: string
+
+// Required non-blank string with custom error message
+@meta.required 'First name is required'
+firstName: string
+
+// Or use the string.required primitive (implicitly adds @meta.required)
+email: string.required
+
 // Custom validators (return true or error string)
-@foorm.validate '(v) => !!v || "Required"'
 @foorm.validate '(v) => v.length >= 3 || "Too short"'
 @foorm.validate '(v, data) => v !== data.firstName || "Cannot match first name"'
 
@@ -104,7 +114,9 @@ Any field property can be dynamic. Function strings receive `(v, data, context, 
 @expect.pattern '^[a-z]+$', '', 'Only lowercase letters'
 ```
 
-Multiple `@foorm.validate` annotations stack — all must pass. They run alongside ATScript's `@expect.*` validators.
+`@meta.required` validates that a string contains at least one non-whitespace character, or that a boolean is `true`. Default error: `"Must not be empty"`. Pass a custom message as argument: `@meta.required 'Name is required'`. The `@meta.required` annotation is assignable to boolean props.
+
+Multiple `@foorm.validate` annotations stack — all must pass. They run alongside ATScript's `@expect.*` and `@meta.required` validators.
 
 ### Options (select/radio)
 
@@ -202,12 +214,12 @@ Primitive array items render as inline inputs with a remove button.
 addresses: {
     @meta.label 'Street'
     @foorm.type 'text'
-    @foorm.validate '(v) => !!v || "Street is required"'
+    @meta.required 'Street is required'
     street: string
 
     @meta.label 'City'
     @foorm.type 'text'
-    @foorm.validate '(v) => !!v || "City is required"'
+    @meta.required 'City is required'
     city: string
 
     @meta.label 'ZIP'
@@ -227,7 +239,7 @@ Arrays can contain multiple types. Each union member becomes a selectable varian
 @foorm.array.add.label 'Add contact'
 contacts: ({
     @meta.label 'Full Name'
-    @foorm.validate '(v) => !!v || "Name is required"'
+    @meta.required 'Name is required'
     fullName: string
 
     @meta.label 'Email'
@@ -239,14 +251,14 @@ The add button shows one option per variant. Items include a variant selector dr
 
 ### Array Annotations
 
-| Annotation                            | Description                                           |
-| ------------------------------------- | ----------------------------------------------------- |
-| `@foorm.array.add.label 'text'`       | Label for the add-item button (default: "Add")        |
-| `@foorm.array.add.component 'Name'`   | Named component for a custom add button               |
-| `@foorm.array.remove.label 'text'`    | Label for the remove-item button (default: "Remove")  |
-| `@foorm.array.remove.component 'Name'`| Named component for a custom remove button            |
-| `@expect.minLength N, 'msg'`          | Minimum number of items (validated on submit)         |
-| `@expect.maxLength N, 'msg'`          | Maximum number of items (add button disabled at max)  |
+| Annotation                             | Description                                          |
+| -------------------------------------- | ---------------------------------------------------- |
+| `@foorm.array.add.label 'text'`        | Label for the add-item button (default: "Add")       |
+| `@foorm.array.add.component 'Name'`    | Named component for a custom add button              |
+| `@foorm.array.remove.label 'text'`     | Label for the remove-item button (default: "Remove") |
+| `@foorm.array.remove.component 'Name'` | Named component for a custom remove button           |
+| `@expect.minLength N, 'msg'`           | Minimum number of items (validated on submit)        |
+| `@expect.maxLength N, 'msg'`           | Maximum number of items (add button disabled at max) |
 
 ---
 
@@ -290,6 +302,7 @@ address: {
 ```
 
 `@foorm.title` works at three levels:
+
 - **Interface-level** (`@foorm.title 'Registration'`): form title, rendered as `<h2>`
 - **Field-level on objects** (`@foorm.title 'Settings'`): group title, rendered as `<h3>`
 - **Field-level on arrays** (`@foorm.title 'Addresses'`): array section title, rendered as `<h3>`
@@ -302,11 +315,25 @@ address: {
 // Required — validator checks for non-empty value
 email: string.email
 
+// Required non-blank string — rejects '' and whitespace-only
+name: string.required
+
+// Required with custom error message
+@meta.required 'First name is required'
+firstName: string
+
+// Boolean that must be true (e.g. "agree to terms")
+agreeToTerms: boolean.required
+
 // Optional — validator skips if empty
 nickname?: string
 ```
 
 The `?:` syntax in ATScript makes a field optional. Non-optional fields produce a `'Required'` error when empty.
+
+For strings, `'Required'` only checks for `undefined`/`null` — empty strings `''` and whitespace-only strings pass. Use `string.required` or `@meta.required` to reject blank strings. This is the recommended approach for form fields where "required" means "non-blank".
+
+For booleans, `@meta.required` (or `boolean.required`) enforces `true` — useful for "agree to terms" checkboxes.
 
 ---
 
@@ -314,16 +341,18 @@ The `?:` syntax in ATScript makes a field optional. Non-optional fields produce 
 
 ATScript infers the field type for rendering:
 
-| Schema Type       | Resolved `@foorm.type` |
-| ----------------- | ---------------------- |
-| `string`          | `'text'`               |
-| `number`          | `'number'`             |
-| `boolean`         | `'checkbox'`           |
-| `foorm.select`    | `'select'`             |
-| `foorm.radio`     | `'radio'`              |
-| `foorm.checkbox`  | `'checkbox'`           |
-| `foorm.action`    | `'action'`             |
-| `foorm.paragraph` | `'paragraph'`          |
+| Schema Type        | Resolved `@foorm.type` |
+| ------------------ | ---------------------- |
+| `string`           | `'text'`               |
+| `string.required`  | `'text'`               |
+| `number`           | `'number'`             |
+| `boolean`          | `'checkbox'`           |
+| `boolean.required` | `'checkbox'`           |
+| `foorm.select`     | `'select'`             |
+| `foorm.radio`      | `'radio'`              |
+| `foorm.checkbox`   | `'checkbox'`           |
+| `foorm.action`     | `'action'`             |
+| `foorm.paragraph`  | `'paragraph'`          |
 
 Override with `@foorm.type 'password'` or `@foorm.type 'textarea'` etc.
 

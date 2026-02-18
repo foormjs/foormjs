@@ -116,7 +116,7 @@ function createConfig(target, type, entry = 'src/index.ts', fileName = 'index') 
             '*.spec.ts',
             'explorations',
             'packages/vue',
-            'packages/vuiless',
+            'packages/composables',
           ],
         },
       }),

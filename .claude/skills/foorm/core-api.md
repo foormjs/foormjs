@@ -1,6 +1,6 @@
-# Core API (`foorm` package)
+# Core API (`@foormjs/atscript` package)
 
-The `foorm` package provides the runtime form model — form definitions, validation, and metadata resolution. It has no Vue dependency and can be used in any JavaScript/TypeScript environment.
+The `@foormjs/atscript` package provides the runtime form model — form definitions, validation, and metadata resolution. It has no Vue dependency and can be used in any JavaScript/TypeScript environment.
 
 ## Imports
 
@@ -21,7 +21,7 @@ import {
   getByPath,
   setByPath,
   foormValidatorPlugin,
-} from 'foorm'
+} from '@foormjs/atscript'
 
 // Types
 import type {
@@ -34,13 +34,13 @@ import type {
   TFoormFieldEvaluated,
   TFoormEntryOptions,
   TComputed,
-} from 'foorm'
+} from '@foormjs/atscript'
 
 // Type guards
-import { isArrayField, isGroupField } from 'foorm'
+import { isArrayField, isGroupField } from '@foormjs/atscript'
 
 // Build-time plugin (atscript.config.ts only — never import at runtime)
-import { foormPlugin } from 'foorm/plugin'
+import { foormPlugin } from '@foormjs/atscript/plugin'
 ```
 
 ---
@@ -52,7 +52,7 @@ import { foormPlugin } from 'foorm/plugin'
 Converts an ATScript annotated type into a form definition with ordered fields.
 
 ```ts
-import { createFoormDef } from 'foorm'
+import { createFoormDef } from '@foormjs/atscript'
 import { MyForm } from './forms/my-form.as'
 
 const def = createFoormDef(MyForm)
@@ -66,7 +66,7 @@ const def = createFoormDef(MyForm)
 Creates a plain data object with default values from the schema.
 
 ```ts
-import { createFormData } from 'foorm'
+import { createFormData } from '@foormjs/atscript'
 
 const data = createFormData(MyForm, def.fields)
 // { firstName: '', email: '', country: '' }  — defaults based on types
@@ -74,29 +74,27 @@ const data = createFormData(MyForm, def.fields)
 
 ### `getFormValidator(def, opts?)`
 
-Returns a reusable validator function that combines `@foorm.validate` + `@expect.*` constraints.
+Returns a reusable validator function that combines `@foorm.validate` + `@expect.*` constraints. The validator instance is created once; per-call data/context is passed at call time.
 
 ```ts
-import { getFormValidator } from 'foorm'
+import { getFormValidator } from '@foormjs/atscript'
 
 const validate = getFormValidator(def)
-const { passed, errors } = validate(data)
-// passed: boolean
-// errors: Record<string, string>  — keyed by field path
+const errors = validate({ data })
+// errors: Record<string, string> — empty object = passed
 
-// With external context
-const validate = getFormValidator(def, {
+// With external context (per-call)
+const errors = validate({
+  data,
   context: { maxAge: 120 },
 })
 ```
 
 The validator:
 
-- Skips disabled/hidden fields
-- Checks required (non-optional) fields for non-empty values
-- Runs `@foorm.validate` custom validators
+- Evaluates `@foorm.validate` custom validators
 - Falls through to ATScript `@expect.*` validators
-- Returns `{ passed: boolean, errors: Record<string, string> }`
+- Returns `Record<string, string>` keyed by field path (empty = passed)
 
 ### `supportsAltAction(def, action)`
 
@@ -117,16 +115,16 @@ import {
   buildVariants,
   isArrayField,
   isGroupField,
-} from 'foorm'
+} from '@foormjs/atscript'
 ```
 
-| Function                          | Description                                                    |
-| --------------------------------- | -------------------------------------------------------------- |
-| `createItemData(variant)`         | Creates a default data value for an array item variant         |
-| `detectVariant(value, variants)`  | Detects which variant index matches an existing item value     |
-| `buildVariants(itemType)`         | Builds variant definitions for an array item type              |
-| `isArrayField(field)`             | Type guard: true if `field` is `FoormArrayFieldDef`            |
-| `isGroupField(field)`             | Type guard: true if `field` is `FoormGroupFieldDef`            |
+| Function                         | Description                                                |
+| -------------------------------- | ---------------------------------------------------------- |
+| `createItemData(variant)`        | Creates a default data value for an array item variant     |
+| `detectVariant(value, variants)` | Detects which variant index matches an existing item value |
+| `buildVariants(itemType)`        | Builds variant definitions for an array item type          |
+| `isArrayField(field)`            | Type guard: true if `field` is `FoormArrayFieldDef`        |
+| `isGroupField(field)`            | Type guard: true if `field` is `FoormGroupFieldDef`        |
 
 ---
 
@@ -208,7 +206,7 @@ interface FoormDef {
 
 ```ts
 interface FoormFieldDef {
-  path: string // Dot-separated path (e.g., 'address.street')
+  path?: string // Dot-separated path (e.g., 'address.street'). undefined = root (primitive array items)
   prop: TAtscriptAnnotatedType // ATScript prop with metadata
   type: string // Resolved input type ('text', 'select', etc.)
   phantom: boolean // True for foorm.action, foorm.paragraph
@@ -233,8 +231,8 @@ interface TFoormFnScope<V = unknown, D = Record<string, unknown>, C = Record<str
 
 ```ts
 interface FoormArrayFieldDef extends FoormFieldDef {
-  itemType: TAtscriptAnnotatedType  // ATScript type of array items
-  variants: FoormArrayVariant[]     // Variant definitions (one per union branch, or single)
+  itemType: TAtscriptAnnotatedType // ATScript type of array items
+  variants: FoormArrayVariant[] // Variant definitions (one per union branch, or single)
 }
 ```
 
@@ -242,7 +240,7 @@ interface FoormArrayFieldDef extends FoormFieldDef {
 
 ```ts
 interface FoormGroupFieldDef extends FoormFieldDef {
-  groupDef: FoormDef  // Pre-built FoormDef for the nested object's fields
+  groupDef: FoormDef // Pre-built FoormDef for the nested object's fields
 }
 ```
 
@@ -250,10 +248,11 @@ interface FoormGroupFieldDef extends FoormFieldDef {
 
 ```ts
 interface FoormArrayVariant {
-  label: string                     // Display label (from @meta.label or auto-generated)
-  type: TAtscriptAnnotatedType      // The annotated type for this variant
-  def?: FoormDef                    // Pre-built FoormDef for object variants (undefined for primitives)
-  designType?: string               // Design type for primitives ('string', 'number', 'boolean')
+  label: string // Display label (from @meta.label or auto-generated)
+  type: TAtscriptAnnotatedType // The annotated type for this variant
+  def?: FoormDef // Pre-built FoormDef for object variants (undefined for primitives)
+  itemField?: FoormFieldDef // Pre-built field def for primitive variants (undefined for objects)
+  designType?: string // Design type for primitives ('string', 'number', 'boolean')
 }
 ```
 
@@ -270,7 +269,7 @@ type TFoormEntryOptions = { key: string; label: string } | string
 The `foormValidatorPlugin()` creates an ATScript validator plugin. Used internally by `getFormValidator()`, but also available for custom validator setups:
 
 ```ts
-import { foormValidatorPlugin } from 'foorm'
+import { foormValidatorPlugin } from '@foormjs/atscript'
 import { Validator } from '@atscript/typescript/utils'
 
 // Per-field validation
@@ -279,12 +278,9 @@ const validator = new Validator(field.prop, { plugins: [plugin] })
 validator.validate(value, true, { data: formData, context })
 
 // Whole-form validation (what getFormValidator does internally)
-const plugin = foormValidatorPlugin({ skipDisabledHidden: true, checkRequired: true })
+const plugin = foormValidatorPlugin()
 const validator = new Validator(def.type, { plugins: [plugin], unknwonProps: 'ignore' })
 validator.validate(formData, true, { data: formData, context })
 ```
 
-Options:
-
-- `skipDisabledHidden: true` — skip validation for disabled/hidden fields
-- `checkRequired: true` — check non-optional fields for non-empty values
+The plugin processes `@foorm.validate` custom validators and evaluates disabled/hidden/optional constraints from `@foorm.fn.*` annotations.

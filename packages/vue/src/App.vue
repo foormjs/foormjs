@@ -5,7 +5,6 @@ import { useFoorm } from '@/composables/use-foorm'
 import { E2eTestForm } from './forms/e2e-test-form.as'
 import { NestedForm } from './forms/nested-form.as'
 import { ArrayForm } from './forms/array-form.as'
-
 const { def, formData } = useFoorm(E2eTestForm)
 const { def: nestedDef, formData: nestedFormData } = useFoorm(NestedForm)
 const { def: arrayDef, formData: arrayFormData } = useFoorm(ArrayForm)
@@ -35,6 +34,10 @@ function handleSubmit(d: unknown) {
 function handleAction(name: string, d: unknown) {
   console.log('action', name, d)
 }
+
+function onError(e: unknown) {
+  console.log('error', e)
+}
 </script>
 
 <template>
@@ -48,6 +51,7 @@ function handleAction(name: string, d: unknown) {
       first-validation="on-blur"
       @submit="handleSubmit"
       @action="handleAction"
+      @error="onError"
     />
     <OoForm
       class="form"
@@ -55,6 +59,7 @@ function handleAction(name: string, d: unknown) {
       :form-data="nestedFormData"
       first-validation="on-blur"
       @submit="handleSubmit"
+      @error="onError"
     />
     <OoForm
       class="form"
@@ -62,6 +67,7 @@ function handleAction(name: string, d: unknown) {
       :form-data="arrayFormData"
       first-validation="on-blur"
       @submit="handleSubmit"
+      @error="onError"
     />
   </main>
 </template>

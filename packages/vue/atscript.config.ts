@@ -1,6 +1,6 @@
 import { defineConfig } from '@atscript/core'
 import ts from '@atscript/typescript'
-import { foormPlugin } from 'foorm/plugin'
+import { foormPlugin } from '@foormjs/atscript/plugin'
 
 export default defineConfig({
   rootDir: 'src',

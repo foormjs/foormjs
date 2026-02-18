@@ -146,6 +146,14 @@ export function buildVariants(itemType: TAtscriptAnnotatedType): FoormArrayVaria
         {
           label: capitalize(dt === 'phantom' ? 'item' : dt),
           type: def,
+          itemField: {
+            path: undefined,
+            prop: def,
+            type: dt === 'number' ? 'number' : dt === 'boolean' ? 'checkbox' : 'text',
+            phantom: false,
+            name: 'value',
+            allStatic: !hasComputedAnnotations(def),
+          },
           designType: dt,
         },
       ]
@@ -156,6 +164,14 @@ export function buildVariants(itemType: TAtscriptAnnotatedType): FoormArrayVaria
         {
           label: 'Item',
           type: def,
+          itemField: {
+            path: undefined,
+            prop: def,
+            type: 'text',
+            phantom: true,
+            name: 'value',
+            allStatic: !hasComputedAnnotations(def),
+          },
           designType: 'phantom',
         },
       ]
@@ -166,11 +182,22 @@ export function buildVariants(itemType: TAtscriptAnnotatedType): FoormArrayVaria
         getFieldMeta<string>(def, 'meta.label') ??
         getFieldMeta<string>(def, 'foorm.title') ??
         'Structure'
+      const hasComponent = getFieldMeta<string>(def, 'foorm.component') !== undefined
       return [
         {
           label,
           type: def,
           def: createFoormDef(def as TAtscriptAnnotatedType<TAtscriptTypeObject>),
+          itemField: hasComponent
+            ? {
+                path: undefined,
+                prop: def,
+                type: 'group',
+                phantom: false,
+                name: 'value',
+                allStatic: !hasComputedAnnotations(def),
+              }
+            : undefined,
         },
       ]
     },

@@ -766,7 +766,7 @@ describe('createFormData', () => {
       },
     })
     const def = createFoormDef(type)
-    expect(createFormData(type, def.fields)).toEqual({ name: undefined, active: false })
+    expect(createFormData(type, def.fields)).toEqual({ name: '', active: false })
   })
 
   it('applies static default values from metadata', () => {
@@ -792,7 +792,7 @@ describe('createFormData', () => {
     })
     const def = createFoormDef(type)
     expect(createFormData(type, def.fields)).toEqual({
-      address: { city: undefined, zip: undefined },
+      address: { city: '', zip: '' },
     })
   })
 
@@ -805,7 +805,7 @@ describe('createFormData', () => {
     })
     const def = createFoormDef(type)
     const data = createFormData(type, def.fields)
-    expect(data).toEqual({ name: undefined })
+    expect(data).toEqual({ name: '' })
     expect('save' in (data as any)).toBe(false)
   })
 })
@@ -817,39 +817,68 @@ describe('getFormValidator', () => {
     const type = makeType({
       props: { name: { metadata: {}, designType: 'string' } },
     })
-    const result = getFormValidator(createFoormDef(type))({ name: 'Alice' })
-    expect(result.passed).toBe(true)
-    expect(result.errors).toEqual({})
+    const errors = getFormValidator(createFoormDef(type))({ data: { name: 'Alice' } })
+    expect(errors).toEqual({})
   })
 
-  it('fails validation for missing required fields', () => {
+  it('accepts empty string as valid (type-level validation only)', () => {
     const type = makeType({
       props: { name: { metadata: {}, designType: 'string' } },
     })
-    const result = getFormValidator(createFoormDef(type))({ name: '' })
-    expect(result.passed).toBe(false)
-    expect(result.errors.name).toBe('Required')
+    const errors = getFormValidator(createFoormDef(type))({ data: { name: '' } })
+    expect(errors).toEqual({})
+  })
+
+  it('fails validation with @foorm.validate custom rule', () => {
+    const type = makeType({
+      props: {
+        name: {
+          metadata: { 'foorm.validate': '(v) => !!v || "Name is required"' },
+          designType: 'string',
+        },
+      },
+    })
+    const errors = getFormValidator(createFoormDef(type))({ data: { name: '' } })
+    expect(errors.name).toBe('Name is required')
   })
 
   it('skips optional fields when empty', () => {
     const type = makeType({
       props: { bio: { metadata: {}, optional: true, designType: 'string' } },
     })
-    expect(getFormValidator(createFoormDef(type))({ bio: '' }).passed).toBe(true)
+    expect(getFormValidator(createFoormDef(type))({ data: { bio: '' } })).toEqual({})
   })
 
-  it('skips disabled fields', () => {
+  it('validates disabled fields normally', () => {
     const type = makeType({
-      props: { locked: { metadata: { 'foorm.disabled': true }, designType: 'string' } },
+      props: {
+        locked: {
+          metadata: {
+            'foorm.disabled': true,
+            'foorm.validate': '(v) => !!v || "Required"',
+          },
+          designType: 'string',
+        },
+      },
     })
-    expect(getFormValidator(createFoormDef(type))({ locked: '' }).passed).toBe(true)
+    const errors = getFormValidator(createFoormDef(type))({ data: { locked: '' } })
+    expect(errors.locked).toBe('Required')
   })
 
-  it('skips hidden fields', () => {
+  it('validates hidden fields normally', () => {
     const type = makeType({
-      props: { secret: { metadata: { 'foorm.hidden': true }, designType: 'string' } },
+      props: {
+        secret: {
+          metadata: {
+            'foorm.hidden': true,
+            'foorm.validate': '(v) => !!v || "Required"',
+          },
+          designType: 'string',
+        },
+      },
     })
-    expect(getFormValidator(createFoormDef(type))({ secret: '' }).passed).toBe(true)
+    const errors = getFormValidator(createFoormDef(type))({ data: { secret: '' } })
+    expect(errors.secret).toBe('Required')
   })
 
   it('skips non-data types (action, paragraph)', () => {
@@ -859,7 +888,7 @@ describe('getFormValidator', () => {
         info: { metadata: {}, tags: ['paragraph'], designType: 'phantom' },
       },
     })
-    expect(getFormValidator(createFoormDef(type))({}).passed).toBe(true)
+    expect(getFormValidator(createFoormDef(type))({ data: {} })).toEqual({})
   })
 
   it('validates with @expect constraints', () => {
@@ -867,35 +896,50 @@ describe('getFormValidator', () => {
       props: { name: { metadata: { 'expect.minLength': 3 }, designType: 'string' } },
     })
     const validate = getFormValidator(createFoormDef(type))
-    expect(validate({ name: 'Alice' }).passed).toBe(true)
-    expect(validate({ name: 'Al' }).passed).toBe(false)
+    expect(validate({ data: { name: 'Alice' } })).toEqual({})
+    expect(Object.keys(validate({ data: { name: 'Al' } })).length).toBeGreaterThan(0)
   })
 
-  it('validates nested field paths', () => {
+  it('validates nested field paths with @expect', () => {
     const type = makeType({
       props: {
         address: {
           kind: 'object',
           metadata: {},
-          nestedProps: { city: { metadata: {}, designType: 'string' } },
+          nestedProps: {
+            city: { metadata: { 'expect.minLength': 1 }, designType: 'string' },
+          },
         },
       },
     })
     const validate = getFormValidator(createFoormDef(type))
-    expect(validate({ address: { city: 'NYC' } }).passed).toBe(true)
-    const fail = validate({ address: { city: '' } })
-    expect(fail.passed).toBe(false)
-    expect(fail.errors['address.city']).toBe('Required')
+    expect(validate({ data: { address: { city: 'NYC' } } })).toEqual({})
+    const errors = validate({ data: { address: { city: '' } } })
+    expect(errors['address.city']).toBeDefined()
   })
 
-  it('accepts 0 and false as valid non-empty values', () => {
+  it('accepts 0 and false as valid values', () => {
     const type = makeType({
       props: {
         count: { metadata: {}, designType: 'number' },
         flag: { metadata: {}, designType: 'boolean' },
       },
     })
-    expect(getFormValidator(createFoormDef(type))({ count: 0, flag: false }).passed).toBe(true)
+    expect(getFormValidator(createFoormDef(type))({ data: { count: 0, flag: false } })).toEqual({})
+  })
+
+  it('passes context to @foorm.validate functions', () => {
+    const type = makeType({
+      props: {
+        code: {
+          metadata: { 'foorm.validate': '(v, data, context) => v === context.expected || "Wrong"' },
+          designType: 'string',
+        },
+      },
+    })
+    const validate = getFormValidator(createFoormDef(type))
+    expect(validate({ data: { code: 'abc' }, context: { expected: 'abc' } })).toEqual({})
+    expect(validate({ data: { code: 'xyz' }, context: { expected: 'abc' } }).code).toBe('Wrong')
   })
 })
 

@@ -1,0 +1,92 @@
+import { computed, nextTick, provide, ref, toValue, type MaybeRef } from 'vue'
+import type { TFoormFieldRegistration, TFoormState } from '../types'
+
+/** Custom form-level validator. Returns `Record<path, message>` (empty = passed). */
+export type TFoormSubmitValidator = () => Record<string, string>
+
+export function useFoormForm<TFormData, TContext>(opts: {
+  formData: MaybeRef<TFormData>
+  formContext?: MaybeRef<TContext>
+  firstValidation?: MaybeRef<TFoormState<TFormData, TContext>['firstValidation'] | undefined>
+  /** When provided, replaces per-field iteration on submit. */
+  submitValidator?: TFoormSubmitValidator
+}) {
+  const fieldsById = new Map<symbol, TFoormFieldRegistration>()
+  const firstSubmitHappened = ref(false)
+
+  // Stable functions — outside computed to avoid re-creation on reactivity ticks
+  const register = (id: symbol, registration: TFoormFieldRegistration) => {
+    fieldsById.set(id, registration)
+  }
+  const unregister = (id: symbol) => {
+    fieldsById.delete(id)
+  }
+
+  const foormState = computed<TFoormState<TFormData, TContext>>(() => ({
+    firstSubmitHappened: firstSubmitHappened.value,
+    firstValidation: toValue(opts.firstValidation) ?? 'on-change',
+    register,
+    unregister,
+    formData: toValue(opts.formData),
+    formContext: opts.formContext ? toValue(opts.formContext) : undefined,
+  }))
+
+  provide('__foorm_form', foormState)
+
+  function clearErrors() {
+    firstSubmitHappened.value = false
+    for (const reg of fieldsById.values()) {
+      reg.callbacks.clearErrors()
+    }
+  }
+
+  async function reset() {
+    for (const reg of fieldsById.values()) {
+      reg.callbacks.reset()
+    }
+    await nextTick()
+    clearErrors()
+  }
+
+  function submit(): true | { path: string; message: string }[] {
+    firstSubmitHappened.value = true
+    const fv = toValue(opts.firstValidation) ?? 'on-change'
+    if (fv === 'none') return true
+
+    // Custom form-level validator — replaces per-field iteration
+    if (opts.submitValidator) {
+      const errors = opts.submitValidator()
+      const entries = Object.entries(errors)
+      if (entries.length === 0) return true
+      setErrors(errors)
+      return entries.map(([path, message]) => ({ path, message }))
+    }
+
+    // Fallback: per-field iteration
+    const errors: { path: string; message: string }[] = []
+    for (const reg of fieldsById.values()) {
+      const result = reg.callbacks.validate()
+      if (result !== true) {
+        const path = reg.path()
+        errors.push({ path: path ?? '', message: result as string })
+      }
+    }
+    return errors.length > 0 ? errors : true
+  }
+
+  function setErrors(errors: Record<string, string>) {
+    // Clear all previous external errors
+    for (const reg of fieldsById.values()) {
+      reg.callbacks.setExternalError(undefined)
+    }
+    // Distribute by path
+    for (const reg of fieldsById.values()) {
+      const p = reg.path()
+      if (p !== undefined && p in errors) {
+        reg.callbacks.setExternalError(errors[p])
+      }
+    }
+  }
+
+  return { clearErrors, reset, submit, setErrors, foormState }
+}

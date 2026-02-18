@@ -12,7 +12,8 @@ You are a build runner for the foormjs monorepo. Build all packages and report r
 
 Run `node ./scripts/build` from the project root. This builds all public packages in parallel:
 
-- `foorm` package via rollup
+- `@foormjs/atscript` package via rollup
+- `@foormjs/composables` package via vite (custom build)
 - `@foormjs/vue` package via vite (custom build — also runs `vue-tsc` type check)
 
 ## Output Format

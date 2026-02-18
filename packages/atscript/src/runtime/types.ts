@@ -27,7 +27,7 @@ export type TComputed<T> = T | ((scope: TFoormFnScope) => T)
  * computed functions as `entry`.
  */
 export interface TFoormFieldEvaluated {
-  field: string
+  field?: string
   type: string
   component?: string
   name: string
@@ -48,7 +48,8 @@ export type TFoormEntryOptions = { key: string; label: string } | string
  * and is resolved on demand via resolve utilities.
  */
 export interface FoormFieldDef {
-  path: string
+  /** Dot-separated path relative to the parent data context. `undefined` = root (value IS the data at the path prefix level, e.g. primitive array items). */
+  path?: string
   prop: TAtscriptAnnotatedType
   type: string
   phantom: boolean
@@ -77,6 +78,8 @@ export interface FoormArrayVariant {
   type: TAtscriptAnnotatedType
   /** Pre-built FoormDef for object variants (undefined for primitives) */
   def?: FoormDef
+  /** Pre-built field def for primitive variants (undefined for objects) */
+  itemField?: FoormFieldDef
   /** Design type for primitive variants ('string', 'number', 'boolean') */
   designType?: string
 }

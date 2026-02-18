@@ -353,6 +353,8 @@ function getDefaultForDesignType(prop: TAtscriptAnnotatedType): unknown {
   switch (prop.type.designType) {
     case 'boolean':
       return false
+    case 'string':
+      return ''
     default:
       return undefined
   }

@@ -9,7 +9,7 @@ import { compileValidatorFn, compileFieldFn } from './fn-compiler'
  * via `validator.validate(value, safe, context)` and read from `ctx.context`.
  *
  * Usage:
- *   // Per-field validation (vuiless rule) — only @foorm.validate
+ *   // Per-field validation (foorm rule) — only @foorm.validate
  *   const plugin = foormValidatorPlugin()
  *   const validator = new Validator(field.prop, { plugins: [plugin] })
  *   validator.validate(value, true, { data: formData, context })
@@ -143,8 +143,8 @@ function evalOptions(
   const staticOpts = metadata?.get('foorm.options')
   if (staticOpts) {
     const items = Array.isArray(staticOpts) ? staticOpts : [staticOpts]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return items.map((item: any) => {
-      // eslint-disable-line @typescript-eslint/no-explicit-any
       if (typeof item === 'object' && item !== null && 'label' in item) {
         const { label, value } = item as { label: string; value?: string }
         return value !== undefined ? { key: value, label } : label

@@ -75,16 +75,17 @@ const validator = Product.validator({
 
 Annotations from `.as` files are automatically enforced by the validator:
 
-| Annotation                                | Applies To    | Validates                        |
-| ----------------------------------------- | ------------- | -------------------------------- |
-| `@expect.minLength value, 'msg'`          | string, array | Minimum length                   |
-| `@expect.maxLength value, 'msg'`          | string, array | Maximum length                   |
-| `@expect.min value, 'msg'`                | number        | Minimum value                    |
-| `@expect.max value, 'msg'`                | number        | Maximum value                    |
-| `@expect.int`                             | number        | Must be integer                  |
-| `@expect.pattern 'regex', 'flags', 'msg'` | string        | Regex match (repeatable, append) |
+| Annotation                                | Applies To      | Validates                                   |
+| ----------------------------------------- | --------------- | ------------------------------------------- |
+| `@expect.minLength value, 'msg'`          | string, array   | Minimum length                              |
+| `@expect.maxLength value, 'msg'`          | string, array   | Maximum length                              |
+| `@expect.min value, 'msg'`                | number          | Minimum value                               |
+| `@expect.max value, 'msg'`                | number          | Maximum value                               |
+| `@expect.int`                             | number          | Must be integer                             |
+| `@expect.pattern 'regex', 'flags', 'msg'` | string          | Regex match (repeatable, append)            |
+| `@meta.required 'msg'`                    | string, boolean | String: non-blank. Boolean: must be `true`. |
 
-All `@expect.*` annotations except `@expect.int` accept an optional custom error message as the last argument.
+All `@expect.*` annotations except `@expect.int` accept an optional custom error message as the last argument. `@meta.required` also accepts an optional custom error message.
 
 ```atscript
 export interface User {

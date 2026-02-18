@@ -5,9 +5,9 @@ Renderless Vue components for ATScript-defined forms. Bring your own UI componen
 ## Install
 
 ```bash
-pnpm add @foormjs/vue foorm vue @atscript/core @atscript/typescript
+pnpm add @foormjs/vue @foormjs/atscript vue @atscript/core @atscript/typescript
 # or
-npm install @foormjs/vue foorm vue @atscript/core @atscript/typescript
+npm install @foormjs/vue @foormjs/atscript vue @atscript/core @atscript/typescript
 ```
 
 You also need the ATScript Vite plugin for `.as` file support:
@@ -24,7 +24,7 @@ pnpm add -D unplugin-atscript @vitejs/plugin-vue
 // atscript.config.ts
 import { defineConfig } from '@atscript/core'
 import ts from '@atscript/typescript'
-import { foormPlugin } from 'foorm/plugin'
+import { foormPlugin } from '@foormjs/atscript/plugin'
 
 export default defineConfig({
   rootDir: 'src',
@@ -55,14 +55,14 @@ export interface LoginForm {
     @meta.label 'Email'
     @meta.placeholder 'you@example.com'
     @foorm.autocomplete 'email'
-    @foorm.validate '(v) => !!v || "Email is required"'
+    @meta.required 'Email is required'
     @foorm.order 1
     email: string.email
 
     @meta.label 'Password'
     @meta.placeholder 'Enter password'
     @foorm.type 'password'
-    @foorm.validate '(v) => !!v || "Password is required"'
+    @meta.required 'Password is required'
     @foorm.order 2
     password: string
 }
@@ -196,6 +196,9 @@ Key props available to your component:
 | `maxLength`    | `number?`                 | Max length constraint                              |
 | `autocomplete` | `string?`                 | HTML autocomplete value                            |
 | `field`        | `FoormFieldDef?`          | Full field definition for advanced use             |
+| `onRemove`     | `() => void?`             | Callback to remove this item from its parent array |
+| `canRemove`    | `boolean?`                | Whether removal is allowed (respects minLength)    |
+| `removeLabel`  | `string?`                 | Label for the remove button                        |
 
 ### Arrays
 
@@ -213,7 +216,7 @@ tags: string[]
 @foorm.array.add.label 'Add address'
 addresses: {
     @meta.label 'Street'
-    @foorm.validate '(v) => !!v || "Street is required"'
+    @meta.required 'Street is required'
     street: string
 
     @meta.label 'City'
@@ -403,22 +406,23 @@ Renderless form wrapper component.
 
 **Events:**
 
-| Event                | Payload          | Description                                                     |
-| -------------------- | ---------------- | --------------------------------------------------------------- |
-| `submit`             | `formData`       | Emitted on valid form submission                                |
-| `action`             | `name, formData` | Emitted when an action button is clicked (supported alt action) |
-| `unsupported-action` | `name, formData` | Emitted for unrecognized action names                           |
+| Event                | Payload                               | Description                                                     |
+| -------------------- | ------------------------------------- | --------------------------------------------------------------- |
+| `submit`             | `formData`                            | Emitted on valid form submission                                |
+| `error`              | `{ path: string; message: string }[]` | Emitted when validation fails on submit                         |
+| `action`             | `name, formData`                      | Emitted when an action button is clicked (supported alt action) |
+| `unsupported-action` | `name, formData`                      | Emitted for unrecognized action names                           |
 
 **Slots:**
 
-| Slot           | Scope                                                  | Description                                  |
-| -------------- | ------------------------------------------------------ | -------------------------------------------- |
-| `field:{type}` | Field bindings                                         | Override rendering for a specific field type |
-| `form.header`  | `{ title, clearErrors, reset, formContext, disabled }` | Before fields                                |
-| `form.before`  | `{ clearErrors, reset }`                               | After header, before fields                  |
-| `form.after`   | `{ clearErrors, reset, disabled, formContext }`        | After fields, before submit                  |
-| `form.submit`  | `{ text, disabled, clearErrors, reset, formContext }`  | Submit button                                |
-| `form.footer`  | `{ disabled, clearErrors, reset, formContext }`        | After submit                                 |
+| Slot           | Scope                                                            | Description                                  |
+| -------------- | ---------------------------------------------------------------- | -------------------------------------------- |
+| `field:{type}` | Field bindings                                                   | Override rendering for a specific field type |
+| `form.header`  | `{ clearErrors, reset, setErrors, formContext, disabled }`       | Before fields                                |
+| `form.before`  | `{ clearErrors, reset, setErrors }`                              | After header, before fields                  |
+| `form.after`   | `{ clearErrors, reset, setErrors, disabled, formContext }`       | After fields, before submit                  |
+| `form.submit`  | `{ text, disabled, clearErrors, reset, setErrors, formContext }` | Submit button                                |
+| `form.footer`  | `{ disabled, clearErrors, reset, setErrors, formContext }`       | After submit                                 |
 
 ### `OoGroup`
 
@@ -426,32 +430,34 @@ Recursive field renderer. Used internally by `OoForm` to iterate fields, render 
 
 **Props:**
 
-| Prop         | Type                        | Description                                         |
-| ------------ | --------------------------- | --------------------------------------------------- |
-| `def`        | `FoormDef`                  | Field definitions to iterate                        |
-| `field`      | `FoormFieldDef?`            | Source field (for title/component). Absent at root   |
-| `formData`   | `unknown?`                  | Overrides parent vuiless formData (nested context)  |
-| `components` | `Record<string, Component>` | Named components map                                |
-| `types`      | `Record<string, Component>` | Type-to-component map                               |
-| `errors`     | `Record<string, string>?`   | External error overrides (path to message)          |
-| `error`      | `string?`                   | Validation error for this group/array itself        |
-| `disabled`   | `boolean?`                  | Whether this group is disabled                      |
-| `hidden`     | `boolean?`                  | Whether this group is hidden                        |
+| Prop          | Type                        | Description                                                    |
+| ------------- | --------------------------- | -------------------------------------------------------------- |
+| `def`         | `FoormDef?`                 | Field definitions to iterate                                   |
+| `field`       | `FoormFieldDef?`            | Source field (for title/component/validation). Absent at root  |
+| `pathPrefix`  | `string?`                   | Explicit path prefix from OoArray (per-item index)             |
+| `components`  | `Record<string, Component>` | Named components map                                           |
+| `types`       | `Record<string, Component>` | Type-to-component map                                          |
+| `errors`      | `Record<string, string>?`   | External error overrides (path to message)                     |
+| `disabled`    | `boolean?`                  | Whether this group is disabled                                 |
+| `hidden`      | `boolean?`                  | Whether this group is hidden                                   |
+| `onRemove`    | `() => void?`               | Callback to remove this item from its parent array             |
+| `canRemove`   | `boolean?`                  | Whether removal is allowed (respects minLength)                |
+| `removeLabel` | `string?`                   | Label for the remove button (from `@foorm.array.remove.label`) |
 
 ### `OoArray`
 
-Array field renderer. Handles add/remove buttons, variant selection for unions, and delegates item rendering to `OoGroup` (objects) or inline inputs (primitives).
+Array field renderer. Handles add/remove buttons, variant selection for unions, and delegates item rendering to `OoGroup` for both objects and primitives.
 
 **Props:**
 
-| Prop         | Type                        | Description                                |
-| ------------ | --------------------------- | ------------------------------------------ |
-| `field`      | `FoormArrayFieldDef`        | Array field definition (required)          |
-| `components` | `Record<string, Component>` | Named components map                       |
-| `types`      | `Record<string, Component>` | Type-to-component map                      |
-| `errors`     | `Record<string, string>?`   | External error overrides                   |
-| `error`      | `string?`                   | Array-level validation error               |
-| `disabled`   | `boolean?`                  | Whether the array is disabled              |
+| Prop         | Type                        | Description                                 |
+| ------------ | --------------------------- | ------------------------------------------- |
+| `field`      | `FoormArrayFieldDef`        | Array field definition (required)           |
+| `components` | `Record<string, Component>` | Named components map                        |
+| `types`      | `Record<string, Component>` | Type-to-component map                       |
+| `errors`     | `Record<string, string>?`   | External error overrides                    |
+| `error`      | `string?`                   | Array-level validation error (from OoGroup) |
+| `disabled`   | `boolean?`                  | Whether the array is disabled               |
 
 ### `OoField`
 
@@ -459,31 +465,19 @@ Renderless field wrapper (used internally by `OoForm`, can also be used standalo
 
 **Props:**
 
-| Prop    | Type            | Description                        |
-| ------- | --------------- | ---------------------------------- |
-| `field` | `FoormFieldDef` | Field definition from `def.fields` |
-| `error` | `string?`       | External error message             |
+| Prop          | Type            | Description                                                    |
+| ------------- | --------------- | -------------------------------------------------------------- |
+| `field`       | `FoormFieldDef` | Field definition from `def.fields`                             |
+| `error`       | `string?`       | External error message                                         |
+| `onRemove`    | `() => void?`   | Callback to remove this item from its parent array             |
+| `canRemove`   | `boolean?`      | Whether removal is allowed (respects minLength)                |
+| `removeLabel` | `string?`       | Label for the remove button (from `@foorm.array.remove.label`) |
 
 **Default Slot Bindings:** All `TFoormComponentProps` fields plus `classes`, `styles`, `value` (phantom), `vName`, `attrs`.
 
 ### `TFoormComponentProps`
 
 TypeScript interface for custom field components. See the "Building a Custom Component" section above.
-
-### `TFoormGroupComponentProps`
-
-TypeScript interface for custom group/array components registered via `@foorm.component` on object or array fields:
-
-| Prop          | Type                      | Description                                      |
-| ------------- | ------------------------- | ------------------------------------------------ |
-| `field`       | `FoormFieldDef`           | The field definition (array or group)            |
-| `model`       | `{ value: unknown }`      | Reactive model for the group/array value         |
-| `formData`    | `TFormData`               | The full reactive form data                      |
-| `formContext`  | `TFormContext?`           | External context                                 |
-| `disabled`    | `boolean?`                | Whether the field is disabled                    |
-| `hidden`      | `boolean?`                | Whether the field is hidden                      |
-| `label`       | `string?`                 | Resolved title/label                             |
-| `errors`      | `Record<string, string>?` | External error overrides                         |
 
 For ATScript documentation, see [atscript.moost.org](https://atscript.moost.org).
 

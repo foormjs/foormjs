@@ -14,9 +14,9 @@ ATScript primitives are semantic type extensions that carry implicit validation 
 
 ### Built-in Primitives
 
-- **String**: `string.email`, `string.uuid`, `string.phone`, `string.date`, `string.isoDate`
+- **String**: `string.email`, `string.uuid`, `string.phone`, `string.date`, `string.isoDate`, `string.required`
 - **Number**: `number.int`, `number.positive`, `number.negative`, `number.single`, `number.double`, `number.timestamp`
-- **Boolean**: `boolean.true`, `boolean.false`
+- **Boolean**: `boolean.true`, `boolean.false`, `boolean.required`
 - **Phantom**: `phantom` — non-data elements for UI (excluded from types, validation, schema)
 
 ### Custom Primitives

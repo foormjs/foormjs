@@ -5,14 +5,14 @@
 ### Vue Project (most common)
 
 ```bash
-pnpm add @foormjs/vue foorm @atscript/core @atscript/typescript
+pnpm add @foormjs/vue @foormjs/atscript @atscript/core @atscript/typescript
 pnpm add -D unplugin-atscript @vitejs/plugin-vue
 ```
 
 ### Non-Vue / Server-Side (core only)
 
 ```bash
-pnpm add foorm @atscript/typescript
+pnpm add @foormjs/atscript @atscript/typescript
 ```
 
 `@atscript/typescript` is a peer dependency — it provides the runtime type system, validators, and serialization utilities.
@@ -28,7 +28,7 @@ Create `atscript.config.ts` in your project root:
 ```ts
 import { defineConfig } from '@atscript/core'
 import ts from '@atscript/typescript'
-import { foormPlugin } from 'foorm/plugin'
+import { foormPlugin } from '@foormjs/atscript/plugin'
 
 export default defineConfig({
   rootDir: 'src',
@@ -94,13 +94,13 @@ export interface LoginForm {
     @meta.label 'Email'
     @meta.placeholder 'you@example.com'
     @foorm.autocomplete 'email'
-    @foorm.validate '(v) => !!v || "Email is required"'
+    @meta.required 'Email is required'
     @foorm.order 1
     email: string.email
 
     @meta.label 'Password'
     @foorm.type 'password'
-    @foorm.validate '(v) => !!v || "Password is required"'
+    @meta.required 'Password is required'
     @foorm.order 2
     password: string
 }

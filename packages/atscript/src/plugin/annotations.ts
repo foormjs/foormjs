@@ -145,8 +145,8 @@ export const annotations: TAnnotationsTree = {
     }),
 
     component: new AnnotationSpec({
-      description: 'Named component override for rendering this field',
-      nodeType: ['prop'],
+      description: 'Named component override for rendering this field or type',
+      nodeType: ['prop', 'interface', 'type'],
       argument: {
         name: 'name',
         type: 'string',
@@ -291,6 +291,17 @@ export const annotations: TAnnotationsTree = {
             name: 'label',
             type: 'string',
             description: 'Button label text',
+          },
+        }),
+      },
+      variant: {
+        component: new AnnotationSpec({
+          description: 'Custom component for the array variant selector (union arrays)',
+          nodeType: ['prop'],
+          argument: {
+            name: 'name',
+            type: 'string',
+            description: 'Component name from the components registry',
           },
         }),
       },

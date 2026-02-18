@@ -4,30 +4,31 @@ export interface NestedForm {
     @meta.label 'Company Name'
     @meta.placeholder 'Acme Corp'
     @foorm.type 'text'
-    @foorm.validate '(v) => !!v || "Company name is required"'
+    @meta.required 'Company name is required'
     @foorm.order 1
     companyName: string
 
+    @foorm.title 'Headquarters'
     @foorm.order 2
     address: {
         @meta.label 'Street'
         @meta.placeholder '123 Main St'
         @foorm.type 'text'
-        @foorm.validate '(v) => !!v || "Street is required"'
+        @meta.required 'Street is required'
         @foorm.order 3
         street: string
 
         @meta.label 'City'
         @meta.placeholder 'New York'
         @foorm.type 'text'
-        @foorm.validate '(v) => !!v || "City is required"'
+        @meta.required 'City is required'
         @foorm.order 4
         city: string
 
         @meta.label 'ZIP Code'
         @meta.placeholder '10001'
         @foorm.type 'text'
-        @foorm.validate '(v) => !!v || "ZIP code is required"'
+        @meta.required 'ZIP code is required'
         @foorm.order 5
         zip: string
 
@@ -36,7 +37,7 @@ export interface NestedForm {
             @meta.label 'Country Name'
             @meta.placeholder 'United States'
             @foorm.type 'text'
-            @foorm.validate '(v) => !!v || "Country name is required"'
+            @meta.required 'Country name is required'
             @foorm.order 7
             name: string
 
@@ -44,7 +45,7 @@ export interface NestedForm {
             @meta.placeholder 'US'
             @foorm.type 'text'
             @foorm.fn.hint '(v) => v && v.length !== 2 ? "Use a 2-letter ISO code" : ""'
-            @foorm.validate '(v) => !!v || "Country code is required"'
+            @meta.required 'Country code is required'
             @foorm.order 8
             code: string
         }
@@ -55,7 +56,7 @@ export interface NestedForm {
         @meta.label 'Contact First Name'
         @meta.placeholder 'Jane'
         @foorm.type 'text'
-        @foorm.validate '(v) => !!v || "First name is required"'
+        @meta.required 'First name is required'
         @foorm.order 11
         firstName: string
 

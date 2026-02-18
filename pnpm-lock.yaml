@@ -72,71 +72,19 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0
 
-  packages/foorm:
+  packages/atscript:
     dependencies:
       '@atscript/core':
-        specifier: ^0.1.12
-        version: 0.1.12
+        specifier: ^0.1.16
+        version: 0.1.16
       '@atscript/typescript':
-        specifier: ^0.1.12
-        version: 0.1.12(@atscript/core@0.1.12)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)
+        specifier: ^0.1.16
+        version: 0.1.16(@atscript/core@0.1.16)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)
       '@prostojs/deserialize-fn':
         specifier: ^0.0.5
         version: 0.0.5
 
-  packages/vue:
-    dependencies:
-      '@foormjs/vuiless':
-        specifier: workspace:^
-        version: link:../vuiless
-      foorm:
-        specifier: workspace:^
-        version: link:../foorm
-      vue:
-        specifier: ^3.5.28
-        version: 3.5.28(typescript@5.4.5)
-    devDependencies:
-      '@atscript/core':
-        specifier: ^0.1.12
-        version: 0.1.12
-      '@atscript/typescript':
-        specifier: ^0.1.12
-        version: 0.1.12(@atscript/core@0.1.12)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)
-      '@playwright/test':
-        specifier: ^1.58.2
-        version: 1.58.2
-      '@tsconfig/node20':
-        specifier: ^20.1.9
-        version: 20.1.9
-      '@types/node':
-        specifier: ^20.19.33
-        version: 20.19.33
-      '@vitejs/plugin-vue':
-        specifier: ^5.2.4
-        version: 5.2.4(vite@5.4.21(@types/node@20.19.33))(vue@3.5.28(typescript@5.4.5))
-      '@vue/tsconfig':
-        specifier: ^0.5.1
-        version: 0.5.1
-      npm-run-all2:
-        specifier: ^6.2.6
-        version: 6.2.6
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-      unplugin-atscript:
-        specifier: ^0.1.12
-        version: 0.1.12(@atscript/core@0.1.12)(@atscript/typescript@0.1.12(@atscript/core@0.1.12)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2))
-      vite:
-        specifier: ^5.4.21
-        version: 5.4.21(@types/node@20.19.33)
-      vite-plugin-dts:
-        specifier: ^3.9.1
-        version: 3.9.1(@types/node@20.19.33)(rollup@4.57.1)(typescript@5.4.5)(vite@5.4.21(@types/node@20.19.33))
-      vue-tsc:
-        specifier: ^2.2.12
-        version: 2.2.12(typescript@5.4.5)
-
-  packages/vuiless:
+  packages/composables:
     dependencies:
       vue:
         specifier: ^3.5.28
@@ -175,6 +123,58 @@ importers:
       vue-tsc:
         specifier: ^3.2.4
         version: 3.2.4(typescript@5.9.3)
+
+  packages/vue:
+    dependencies:
+      '@foormjs/atscript':
+        specifier: workspace:^
+        version: link:../atscript
+      '@foormjs/composables':
+        specifier: workspace:^
+        version: link:../composables
+      vue:
+        specifier: ^3.5.28
+        version: 3.5.28(typescript@5.4.5)
+    devDependencies:
+      '@atscript/core':
+        specifier: ^0.1.16
+        version: 0.1.16
+      '@atscript/typescript':
+        specifier: ^0.1.16
+        version: 0.1.16(@atscript/core@0.1.16)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)
+      '@playwright/test':
+        specifier: ^1.58.2
+        version: 1.58.2
+      '@tsconfig/node20':
+        specifier: ^20.1.9
+        version: 20.1.9
+      '@types/node':
+        specifier: ^20.19.33
+        version: 20.19.33
+      '@vitejs/plugin-vue':
+        specifier: ^5.2.4
+        version: 5.2.4(vite@5.4.21(@types/node@20.19.33))(vue@3.5.28(typescript@5.4.5))
+      '@vue/tsconfig':
+        specifier: ^0.5.1
+        version: 0.5.1
+      npm-run-all2:
+        specifier: ^6.2.6
+        version: 6.2.6
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+      unplugin-atscript:
+        specifier: ^0.1.16
+        version: 0.1.16(@atscript/core@0.1.16)(@atscript/typescript@0.1.16(@atscript/core@0.1.16)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2))
+      vite:
+        specifier: ^5.4.21
+        version: 5.4.21(@types/node@20.19.33)
+      vite-plugin-dts:
+        specifier: ^3.9.1
+        version: 3.9.1(@types/node@20.19.33)(rollup@4.57.1)(typescript@5.4.5)(vite@5.4.21(@types/node@20.19.33))
+      vue-tsc:
+        specifier: ^2.2.12
+        version: 2.2.12(typescript@5.4.5)
 
 packages:
 
@@ -254,14 +254,14 @@ packages:
     resolution: {integrity: sha512-xcaCqbhupVWhuBP1nwbk1XNvwrGljozutEiLx06mvqDf3o8cHyEgQSHS4fKJM+UAggaWVnnFW+Nne5aQ8SUJXg==}
     engines: {node: '>= 14.0.0'}
 
-  '@atscript/core@0.1.12':
-    resolution: {integrity: sha512-DuQVbV24Nza3QZ9eGtXA+QYvZq1oDuPfhzCxL0c3wAovEwcLfnHDAYv63e1fAlop1yGq1zYU8qlLajCVkKPKmg==}
+  '@atscript/core@0.1.16':
+    resolution: {integrity: sha512-n58JsQtp1zmtjCVLDFeProEJjXOaHI6I8TL66pIVrj15l5W7VG5iBtHbIYqDfZxjYxaZTc1s/vlvVrIUwJBJNw==}
 
-  '@atscript/typescript@0.1.12':
-    resolution: {integrity: sha512-6+RXm/3iq9664sAmrhhJsEbcRppuwZIcMbO5s4JDGYblmRbiEAhP0N+313nq3n7nExfFbZg2G12ZCAqaE5JvHg==}
+  '@atscript/typescript@0.1.16':
+    resolution: {integrity: sha512-KxM5VYK0FBkp4IWgaj7Rks7P1KU5ckiuGY6wvzJsMpED+lpnDPA0bCUjaPkr05YhCtKxv7KktKXu6I2SatX0mg==}
     hasBin: true
     peerDependencies:
-      '@atscript/core': ^0.1.12
+      '@atscript/core': ^0.1.16
 
   '@babel/code-frame@7.29.0':
     resolution: {integrity: sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw==}
@@ -2947,11 +2947,11 @@ packages:
     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
     engines: {node: '>= 10.0.0'}
 
-  unplugin-atscript@0.1.12:
-    resolution: {integrity: sha512-1bIzglVVDLyp0xiH+riObE5MHXEuNL5mUY1OzG+HoudEYULY47PAffNzHMetoFSVsInJfDaes4YJvnJ09SZ3QA==}
+  unplugin-atscript@0.1.16:
+    resolution: {integrity: sha512-yJHfRqY1fLFz4iXfXmi4QDtCfw6nh0HhhzNzDIXm0tyxaj1OfuvdnLwkJ204lccYgspzlFDPvH0EREfdtVvt0A==}
     peerDependencies:
-      '@atscript/core': ^0.1.12
-      '@atscript/typescript': ^0.1.12
+      '@atscript/core': ^0.1.16
+      '@atscript/typescript': ^0.1.16
 
   unplugin@2.3.11:
     resolution: {integrity: sha512-5uKD0nqiYVzlmCRs01Fhs2BdkEgBS3SAVP6ndrBsuK42iC2+JHyxM05Rm9G8+5mkmRtzMZGY8Ct5+mliZxU/Ww==}
@@ -3342,16 +3342,16 @@ snapshots:
     dependencies:
       '@algolia/client-common': 5.48.1
 
-  '@atscript/core@0.1.12':
+  '@atscript/core@0.1.16':
     dependencies:
       '@prostojs/parser': 0.5.11
       defu: 6.1.4
       glob: 13.0.4
       rolldown: 1.0.0-rc.4
 
-  '@atscript/typescript@0.1.12(@atscript/core@0.1.12)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)':
+  '@atscript/typescript@0.1.16(@atscript/core@0.1.16)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)':
     dependencies:
-      '@atscript/core': 0.1.12
+      '@atscript/core': 0.1.16
       '@moostjs/event-cli': 0.5.33(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(moost@0.5.33)(wooks@0.6.2)
       moost: 0.5.33
     transitivePeerDependencies:
@@ -4327,7 +4327,7 @@ snapshots:
 
   '@vue/language-core@2.2.0(typescript@5.9.3)':
     dependencies:
-      '@volar/language-core': 2.4.15
+      '@volar/language-core': 2.4.27
       '@vue/compiler-dom': 3.5.28
       '@vue/compiler-vue2': 2.7.16
       '@vue/shared': 3.5.28
@@ -5878,10 +5878,10 @@ snapshots:
 
   universalify@2.0.1: {}
 
-  unplugin-atscript@0.1.12(@atscript/core@0.1.12)(@atscript/typescript@0.1.12(@atscript/core@0.1.12)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)):
+  unplugin-atscript@0.1.16(@atscript/core@0.1.16)(@atscript/typescript@0.1.16(@atscript/core@0.1.16)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)):
     dependencies:
-      '@atscript/core': 0.1.12
-      '@atscript/typescript': 0.1.12(@atscript/core@0.1.12)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)
+      '@atscript/core': 0.1.16
+      '@atscript/typescript': 0.1.16(@atscript/core@0.1.16)(@prostojs/logger@0.4.3)(@prostojs/router@0.2.1)(@wooksjs/event-core@0.6.2)(wooks@0.6.2)
       unplugin: 2.3.11
 
   unplugin@2.3.11:
@@ -5937,7 +5937,7 @@ snapshots:
     dependencies:
       '@microsoft/api-extractor': 7.56.3(@types/node@22.19.11)
       '@rollup/pluginutils': 5.3.0(rollup@4.57.1)
-      '@volar/typescript': 2.4.15
+      '@volar/typescript': 2.4.27
       '@vue/language-core': 2.2.0(typescript@5.9.3)
       compare-versions: 6.1.1
       debug: 4.4.3

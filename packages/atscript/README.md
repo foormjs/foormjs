@@ -1,13 +1,13 @@
-# foorm
+# @foormjs/atscript
 
 ATScript-first form model with validation. Define forms declaratively in `.as` files — fields, labels, validators, computed properties, and options — then create type-safe form definitions and validators at runtime.
 
 ## Install
 
 ```bash
-pnpm add foorm @atscript/typescript
+pnpm add @foormjs/atscript @atscript/typescript
 # or
-npm install foorm @atscript/typescript
+npm install @foormjs/atscript @atscript/typescript
 ```
 
 `@atscript/typescript` is a peer dependency required for type inference and validation utilities.
@@ -20,7 +20,7 @@ npm install foorm @atscript/typescript
 // atscript.config.ts
 import { defineConfig } from '@atscript/core'
 import ts from '@atscript/typescript'
-import { foormPlugin } from 'foorm/plugin'
+import { foormPlugin } from '@foormjs/atscript/plugin'
 
 export default defineConfig({
   rootDir: 'src',
@@ -39,7 +39,7 @@ export interface RegistrationForm {
     @meta.label 'First Name'
     @meta.placeholder 'John'
     @foorm.autocomplete 'given-name'
-    @foorm.validate '(v) => !!v || "First name is required"'
+    @meta.required 'First name is required'
     @foorm.order 1
     firstName: string
 
@@ -64,7 +64,7 @@ export interface RegistrationForm {
 ### 3. Create a form definition and validate
 
 ```ts
-import { createFoormDef, createFormData, getFormValidator } from 'foorm'
+import { createFoormDef, createFormData, getFormValidator } from '@foormjs/atscript'
 import { RegistrationForm } from './registration-form.as'
 
 // Create the form definition
@@ -75,7 +75,8 @@ const data = createFormData(RegistrationForm, def.fields)
 
 // Validate
 const validate = getFormValidator(def)
-const { passed, errors } = validate(data)
+const errors = validate({ data })
+// errors: Record<string, string> — empty object means passed
 ```
 
 ## Arrays and Nested Structures
@@ -97,11 +98,11 @@ tags: string[]
 @foorm.array.remove.label 'Remove address'
 addresses: {
     @meta.label 'Street'
-    @foorm.validate '(v) => !!v || "Street is required"'
+    @meta.required 'Street is required'
     street: string
 
     @meta.label 'City'
-    @foorm.validate '(v) => !!v || "City is required"'
+    @meta.required 'City is required'
     city: string
 
     @meta.label 'ZIP'
@@ -113,14 +114,14 @@ Supported item types: primitives (`string[]`, `number[]`, `boolean[]`), objects 
 
 #### Array Annotations
 
-| Annotation                          | Description                                 |
-| ----------------------------------- | ------------------------------------------- |
-| `@foorm.array.add.label 'text'`     | Label for the add button (default: "Add")   |
-| `@foorm.array.add.component 'Name'` | Custom add button component                 |
-| `@foorm.array.remove.label 'text'`  | Label for the remove button                 |
-| `@foorm.array.remove.component 'N'` | Custom remove button component              |
-| `@expect.minLength N, 'msg'`        | Minimum number of items                     |
-| `@expect.maxLength N, 'msg'`        | Maximum number of items                     |
+| Annotation                          | Description                               |
+| ----------------------------------- | ----------------------------------------- |
+| `@foorm.array.add.label 'text'`     | Label for the add button (default: "Add") |
+| `@foorm.array.add.component 'Name'` | Custom add button component               |
+| `@foorm.array.remove.label 'text'`  | Label for the remove button               |
+| `@foorm.array.remove.component 'N'` | Custom remove button component            |
+| `@expect.minLength N, 'msg'`        | Minimum number of items                   |
+| `@expect.maxLength N, 'msg'`        | Maximum number of items                   |
 
 ### Nested Groups
 
@@ -149,7 +150,7 @@ Arrays can contain multiple types. Each union member becomes a selectable varian
 @foorm.array.add.label 'Add contact'
 contacts: ({
     @meta.label 'Full Name'
-    @foorm.validate '(v) => !!v || "Name is required"'
+    @meta.required 'Name is required'
     fullName: string
 
     @meta.label 'Email'
@@ -183,12 +184,24 @@ export interface MyForm {
 }
 ```
 
-### Custom Validators
+### Validation
+
+Use `@meta.required` to require non-blank strings (rejects empty and whitespace-only values). For booleans, it enforces `true`:
+
+```
+@meta.required 'Name is required'
+name: string
+
+// Or use the string.required primitive (implicitly adds @meta.required)
+email: string.required
+
+// For boolean fields, @meta.required means "must be true"
+agreeToTerms: boolean.required
+```
 
 Use `@foorm.validate` for custom validation logic. The function returns `true` for pass or an error message string:
 
 ```
-@foorm.validate '(v) => !!v || "This field is required"'
 @foorm.validate '(v) => v.length >= 3 || "Must be at least 3 characters"'
 firstName: string
 ```
@@ -213,7 +226,9 @@ age: number
 Pass external data to computed functions and validators via context:
 
 ```ts
-const validate = getFormValidator(def, {
+const validate = getFormValidator(def)
+const errors = validate({
+  data,
   context: { maxAge: 120, allowedDomains: ['example.com'] },
 })
 ```
@@ -276,7 +291,7 @@ foormPlugin({
 Use resolve utilities to read metadata on demand from a field's ATScript prop:
 
 ```ts
-import { resolveFieldProp, resolveOptions, resolveAttrs } from 'foorm'
+import { resolveFieldProp, resolveOptions, resolveAttrs } from '@foormjs/atscript'
 
 const scope = { v: currentValue, data: formData, context, entry }
 
@@ -294,17 +309,17 @@ const attrs = resolveAttrs(field.prop, scope)
 
 ### Core
 
-| Export                           | Description                                                               |
-| -------------------------------- | ------------------------------------------------------------------------- |
-| `createFoormDef(type)`           | Converts an ATScript annotated type into a `FoormDef` with ordered fields |
-| `createFormData(type, fields)`   | Creates a data object with defaults from the schema                       |
-| `createItemData(variant)`        | Creates a default data value for an array item variant                    |
-| `detectVariant(value, variants)` | Detects which variant an existing array item value matches                |
-| `buildVariants(itemType)`        | Builds variant definitions for an array item type                         |
-| `getFormValidator(def, opts?)`   | Returns a reusable `(data) => { passed, errors }` validator function      |
-| `supportsAltAction(def, action)` | Checks if any field supports a given alternate action                     |
-| `isArrayField(field)`            | Type guard: returns true if the field is an array field                   |
-| `isGroupField(field)`            | Type guard: returns true if the field is a group field                    |
+| Export                           | Description                                                                   |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| `createFoormDef(type)`           | Converts an ATScript annotated type into a `FoormDef` with ordered fields     |
+| `createFormData(type, fields)`   | Creates a data object with defaults from the schema                           |
+| `createItemData(variant)`        | Creates a default data value for an array item variant                        |
+| `detectVariant(value, variants)` | Detects which variant an existing array item value matches                    |
+| `buildVariants(itemType)`        | Builds variant definitions for an array item type                             |
+| `getFormValidator(def, opts?)`   | Returns a reusable `({ data, context? }) => Record<string, string>` validator |
+| `supportsAltAction(def, action)` | Checks if any field supports a given alternate action                         |
+| `isArrayField(field)`            | Type guard: returns true if the field is an array field                       |
+| `isGroupField(field)`            | Type guard: returns true if the field is a group field                        |
 
 ### Resolve Utilities
 
@@ -342,27 +357,28 @@ const attrs = resolveAttrs(field.prop, scope)
 
 ### Types
 
-| Export                   | Description                                                                 |
-| ------------------------ | --------------------------------------------------------------------------- |
-| `FoormDef`               | Complete form definition (type, fields, flatMap)                            |
-| `FoormFieldDef`          | Single field definition (path, prop, type, phantom, name, allStatic)        |
-| `FoormArrayFieldDef`     | Array field definition (extends FoormFieldDef with itemType, variants)      |
-| `FoormGroupFieldDef`     | Group field definition (extends FoormFieldDef with groupDef)                |
-| `FoormArrayVariant`      | Variant definition for array items (label, type, def, designType)           |
-| `TFoormFnScope`          | Scope object passed to computed functions (`v`, `data`, `context`, `entry`) |
-| `TFoormFieldEvaluated`   | Evaluated field snapshot passed as `entry` in scope                         |
-| `TFoormEntryOptions`     | Option for select/radio fields (`string` or `{ key, label }`)               |
-| `TComputed<T>`           | A value that is either static or a function of scope                        |
-| `TResolveOptions<T>`     | Options for resolve utilities (staticAsBoolean, transform)                  |
-| `TFoormPluginOptions`    | Validator plugin options (skipDisabledHidden, checkRequired)                |
-| `TFoormValidatorContext` | Per-call validator context (data, context)                                  |
+| Export                      | Description                                                                  |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| `FoormDef`                  | Complete form definition (type, fields, flatMap)                             |
+| `FoormFieldDef`             | Single field definition (path?, prop, type, phantom, name, allStatic)        |
+| `FoormArrayFieldDef`        | Array field definition (extends FoormFieldDef with itemType, variants)       |
+| `FoormGroupFieldDef`        | Group field definition (extends FoormFieldDef with groupDef)                 |
+| `FoormArrayVariant`         | Variant definition for array items (label, type, def, itemField, designType) |
+| `TFoormFnScope`             | Scope object passed to computed functions (`v`, `data`, `context`, `entry`)  |
+| `TFoormFieldEvaluated`      | Evaluated field snapshot passed as `entry` in scope                          |
+| `TFoormEntryOptions`        | Option for select/radio fields (`string` or `{ key, label }`)                |
+| `TComputed<T>`              | A value that is either static or a function of scope                         |
+| `TResolveOptions<T>`        | Options for resolve utilities (staticAsBoolean, transform)                   |
+| `TFoormPluginOptions`       | Validator plugin options                                                     |
+| `TFormValidatorCallOptions` | Per-call options for `getFormValidator` return fn (data, context?)           |
+| `TFoormValidatorContext`    | Per-call validator context (data, context)                                   |
 
 ### Build-time Plugin
 
 | Export                | Description                                               |
 | --------------------- | --------------------------------------------------------- |
 | `foormPlugin(opts?)`  | ATScript plugin for `@foorm.*` annotations and primitives |
-| `TFoormPluginOptions` | Plugin options (extraTypes, components)                   |
+| `TFoormPluginOptions` | Build-time plugin options (extraTypes, components)        |
 | `annotations`         | Raw annotation definitions tree                           |
 | `primitives`          | Raw primitive definitions                                 |
 

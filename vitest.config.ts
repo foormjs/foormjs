@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   resolve: {
     alias: {
-      'foorm': path.resolve(__dirname, 'packages/foorm/src'),
+      '@foormjs/atscript': path.resolve(__dirname, 'packages/atscript/src'),
       '@foormjs/': `${path.resolve(__dirname, 'packages/')}/`,
     },
   },

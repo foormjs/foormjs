@@ -331,7 +331,7 @@ describe('createItemData', () => {
     const variant = buildVariants(obj.$type)[0]
 
     const data = createItemData(variant) as Record<string, unknown>
-    expect(data).toEqual({ name: undefined, active: false })
+    expect(data).toEqual({ name: '', active: false })
   })
 })
 
@@ -375,6 +375,6 @@ describe('createFormData with arrays', () => {
 
     const def = createFoormDef(type)
     const data = createFormData(type, def.fields)
-    expect(data).toEqual({ name: undefined, tags: [] })
+    expect(data).toEqual({ name: '', tags: [] })
   })
 })

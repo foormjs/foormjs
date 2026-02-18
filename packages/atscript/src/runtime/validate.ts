@@ -4,6 +4,12 @@ import type { FoormDef } from './types'
 import { getFieldMeta } from './utils'
 import { foormValidatorPlugin } from './validator-plugin'
 
+/** Per-call options for the form validator function. */
+export interface TFormValidatorCallOptions {
+  data: Record<string, unknown>
+  context?: Record<string, unknown>
+}
+
 /**
  * Returns a reusable validator function for a whole FoormDef.
  *
@@ -11,41 +17,37 @@ import { foormValidatorPlugin } from './validator-plugin'
  * Per-call data/context is passed via ATScript's external context mechanism.
  *
  * The foormValidatorPlugin handles:
- * - Skipping disabled/hidden fields (skipDisabledHidden)
- * - Foorm-style required check (checkRequired)
  * - Custom @foorm.validate validators
+ * - Disabled/hidden/required constraint evaluation
  * ATScript's @expect.* validation runs for remaining fields.
  *
  * @param def - The FoormDef produced by createFoormDef
- * @param opts - Optional configuration: external context object and ATScript validator options
- * @returns A function that validates form data and returns `{ passed, errors }`
+ * @param opts - Optional ATScript validator options
+ * @returns A function that validates form data and returns `Record<string, string>` (empty = passed)
  */
 export function getFormValidator(
   def: FoormDef,
-  opts?: {
-    context?: unknown
-    validatorOptions?: Partial<TValidatorOptions>
-  }
-): (data: Record<string, unknown>) => { passed: boolean; errors: Record<string, string> } {
-  const plugin = foormValidatorPlugin({ skipDisabledHidden: true, checkRequired: true })
+  opts?: Partial<TValidatorOptions>
+): (callOpts: TFormValidatorCallOptions) => Record<string, string> {
+  const plugin = foormValidatorPlugin()
   const validator = new Validator(def.type, {
     plugins: [plugin],
     unknwonProps: 'ignore',
-    ...opts?.validatorOptions,
+    ...opts,
   })
 
-  return (data: Record<string, unknown>) => {
-    const isValid = validator.validate(data, true, {
-      data,
-      context: (opts?.context ?? {}) as Record<string, unknown>,
+  return (callOpts: TFormValidatorCallOptions) => {
+    const isValid = validator.validate(callOpts.data, true, {
+      data: callOpts.data,
+      context: callOpts.context ?? {},
     })
-    if (isValid) return { passed: true, errors: {} as Record<string, string> }
+    if (isValid) return {}
 
     const errors: Record<string, string> = {}
     for (const err of validator.errors) {
       errors[err.path] = err.message
     }
-    return { passed: false, errors }
+    return errors
   }
 }
 

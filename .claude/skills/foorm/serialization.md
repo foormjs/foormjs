@@ -46,7 +46,7 @@ const serialized = serializeAnnotatedType(RegistrationForm, {
 
 ```ts
 import { deserializeAnnotatedType } from '@atscript/typescript/utils'
-import { createFoormDef, createFormData } from 'foorm'
+import { createFoormDef, createFormData } from '@foormjs/atscript'
 
 // Fetch the serialized type from the backend
 const response = await fetch('/api/form/registration')
@@ -66,9 +66,9 @@ const data = createFormData(type, def.fields)
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { deserializeAnnotatedType } from '@atscript/typescript/utils'
-import { createFoormDef, createFormData } from 'foorm'
+import { createFoormDef, createFormData } from '@foormjs/atscript'
 import { OoForm } from '@foormjs/vue'
-import type { FoormDef } from 'foorm'
+import type { FoormDef } from '@foormjs/atscript'
 
 const def = ref<FoormDef>()
 const formData = ref<Record<string, unknown>>({})

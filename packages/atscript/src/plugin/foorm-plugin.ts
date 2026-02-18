@@ -41,7 +41,7 @@ const BUILTIN_TYPES = [
  * @example
  * ```ts
  * // atscript.config.ts
- * import { foormPlugin } from 'foorm/plugin'
+ * import { foormPlugin } from '@foormjs/atscript/plugin'
  *
  * export default {
  *   plugins: [
@@ -80,8 +80,8 @@ export function foormPlugin(opts?: TFoormPluginOptions): TAtscriptPlugin {
 
       if (opts.components?.length) {
         overrides.component = new AnnotationSpec({
-          description: 'Named component override for rendering this field',
-          nodeType: ['prop'],
+          description: 'Named component override for rendering this field or type',
+          nodeType: ['prop', 'interface', 'type'],
           argument: {
             name: 'name',
             type: 'string',

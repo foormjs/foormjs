@@ -20,7 +20,7 @@
     "experimentalDecorators": true,
     "removeComments": false,
     "paths": {
-      "foorm": ["packages/foorm/src"],
+      "@foormjs/atscript": ["packages/atscript/src"],
       "@foormjs/*": ["packages/*/src"]
     }
   },

@@ -17,7 +17,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(import.meta.dirname, 'src/index.ts'),
-      name: 'FoormjsVuiless',
+      name: 'FoormjsComposables',
       fileName: 'index',
     },
     rollupOptions: {

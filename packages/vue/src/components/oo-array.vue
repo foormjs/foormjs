@@ -1,8 +1,7 @@
 <script setup lang="ts" generic="TFormData = any, TFormContext = any">
-import type { FoormArrayFieldDef, FoormArrayVariant } from 'foorm'
-import { getFieldMeta, createItemData, detectVariant } from 'foorm'
+import type { FoormArrayFieldDef, FoormArrayVariant, FoormDef } from '@foormjs/atscript'
+import { getFieldMeta, createItemData, detectVariant, getByPath } from '@foormjs/atscript'
 import { computed, inject, reactive, watch, type Component, type ComputedRef } from 'vue'
-import type { TVuilessState } from '@foormjs/vuiless'
 // eslint-disable-next-line import/no-cycle -- OoArray ↔ OoGroup recursive component pattern
 import OoGroup from './oo-group.vue'
 
@@ -19,20 +18,25 @@ export interface OoArrayProps {
 
 const props = defineProps<OoArrayProps>()
 
-const vuiless = inject<ComputedRef<TVuilessState<TFormData, TFormContext>>>(
-  'vuiless'
-) as ComputedRef<TVuilessState<TFormData, TFormContext>>
+// ── Root data + path prefix ──────────────────────────────────
+const rootData = inject<ComputedRef<TFormData>>(
+  '__foorm_root_data',
+  undefined as unknown as ComputedRef<TFormData>
+)
+const pathPrefix = inject<ComputedRef<string>>(
+  '__foorm_path_prefix',
+  computed(() => '')
+)
+
+function rootFormData(): Record<string, unknown> {
+  return (rootData?.value ?? {}) as Record<string, unknown>
+}
 
 // ── Array value reference ───────────────────────────────────
+// pathPrefix already includes the array field's path (e.g. 'addresses')
 const arrayValue = computed<unknown[]>(() => {
-  const fd = vuiless.value.formData as Record<string, unknown>
-  const keys = props.field.path.split('.')
-  let current: unknown = fd
-  for (const key of keys) {
-    if (current === null || current === undefined || typeof current !== 'object') return []
-    current = (current as Record<string, unknown>)[key]
-  }
-  return (Array.isArray(current) ? current : []) as unknown[]
+  const v = getByPath(rootFormData(), pathPrefix.value)
+  return Array.isArray(v) ? v : []
 })
 
 // ── Stable keys for v-for ───────────────────────────────────
@@ -43,7 +47,6 @@ function generateKey(): string {
   return `oo-item-${keyCounter++}`
 }
 
-// Initialize keys for existing items
 function syncKeys() {
   while (itemKeys.length < arrayValue.value.length) {
     itemKeys.push(generateKey())
@@ -67,7 +70,6 @@ const variantIndices: number[] = reactive(
 watch(
   () => arrayValue.value.length,
   () => {
-    // Sync variant indices with array length
     while (variantIndices.length < arrayValue.value.length) {
       const i = variantIndices.length
       variantIndices.push(detectVariant(arrayValue.value[i], variants))
@@ -80,6 +82,22 @@ watch(
 
 function currentVariant(index: number): FoormArrayVariant {
   return variants[variantIndices[index] ?? 0] ?? variants[0]
+}
+
+// ── Item def resolution ─────────────────────────────────────
+// Prioritize itemField (for type-level @foorm.component and primitives),
+// fall back to variant.def for standard objects.
+function itemDef(index: number): FoormDef | undefined {
+  const variant = currentVariant(index)
+  if (variant.itemField) {
+    return {
+      type: variant.type as FoormDef['type'],
+      fields: [variant.itemField],
+      flatMap: new Map(),
+    }
+  }
+  if (variant.def) return variant.def
+  return undefined
 }
 
 // ── Length constraints ──────────────────────────────────────
@@ -111,15 +129,26 @@ function changeVariant(index: number, newVariantIndex: number) {
   const variant = variants[newVariantIndex]
   arrayValue.value[index] = createItemData(variant)
   variantIndices[index] = newVariantIndex
+  // Regenerate key to force OoGroup re-creation — clean state for the new variant
+  itemKeys[index] = generateKey()
 }
 
 // ── Labels from annotations ─────────────────────────────────
 const addLabel = getFieldMeta<string>(props.field.prop, 'foorm.array.add.label') ?? 'Add item'
 const removeLabel = getFieldMeta<string>(props.field.prop, 'foorm.array.remove.label') ?? 'Remove'
 
-// ── Custom components ───────────────────────────────────────
+// ── Custom variant selector component ────────────────────────
+const variantComponentName = getFieldMeta<string>(props.field.prop, 'foorm.array.variant.component')
+
+const variantComponent = computed(() => {
+  if (variantComponentName && props.components?.[variantComponentName]) {
+    return props.components[variantComponentName]
+  }
+  return undefined
+})
+
+// ── Custom add component ───────────────────────────────────
 const addComponentName = getFieldMeta<string>(props.field.prop, 'foorm.array.add.component')
-const removeComponentName = getFieldMeta<string>(props.field.prop, 'foorm.array.remove.component')
 
 const addComponent = computed(() => {
   if (addComponentName && props.components?.[addComponentName]) {
@@ -127,41 +156,6 @@ const addComponent = computed(() => {
   }
   return undefined
 })
-
-const removeComponent = computed(() => {
-  if (removeComponentName && props.components?.[removeComponentName]) {
-    return props.components[removeComponentName]
-  }
-  return undefined
-})
-
-// ── Error path mapping ──────────────────────────────────────
-function getItemErrors(index: number): Record<string, string | undefined> | undefined {
-  if (!props.errors) return undefined
-  const prefix = `${props.field.path}.${index}.`
-  const result: Record<string, string | undefined> = {}
-  let hasErrors = false
-  for (const [key, value] of Object.entries(props.errors) as [string, string | undefined][]) {
-    if (key.startsWith(prefix)) {
-      result[key.slice(prefix.length)] = value
-      hasErrors = true
-    }
-  }
-  return hasErrors ? result : undefined
-}
-
-// ── Primitive input type ────────────────────────────────────
-function primitiveInputType(index: number): string {
-  const variant = currentVariant(index)
-  switch (variant.designType) {
-    case 'number':
-      return 'number'
-    case 'boolean':
-      return 'checkbox'
-    default:
-      return 'text'
-  }
-}
 </script>
 
 <template>
@@ -170,61 +164,44 @@ function primitiveInputType(index: number): string {
     <div
       v-for="(_item, i) in arrayValue"
       :key="itemKeys[i]"
-      :class="currentVariant(i).def ? 'oo-array-item' : 'oo-array-scalar-row'"
+      class="oo-array-item"
+      :class="{ 'oo-array-item--primitive': !currentVariant(i).def }"
     >
-      <!-- Variant selector (union arrays — always visible so user can switch back) -->
-      <select
-        v-if="isUnion"
-        class="oo-array-variant-select"
-        :value="variantIndices[i]"
-        :disabled="disabled"
-        @change="changeVariant(i, +($event.target as HTMLSelectElement).value)"
-      >
-        <option v-for="(v, vi) in variants" :key="vi" :value="vi">{{ v.label }}</option>
-      </select>
-
-      <!-- Primitive item → inline input -->
-      <template v-if="!currentVariant(i).def">
-        <input
-          v-if="currentVariant(i).designType !== 'boolean'"
-          v-model="arrayValue[i]"
-          :type="primitiveInputType(i)"
-          :disabled="disabled"
-          class="oo-array-scalar-input"
-        />
-        <label v-else class="oo-array-checkbox-label">
-          <input type="checkbox" v-model="arrayValue[i]" :disabled="disabled" />
-        </label>
-      </template>
-
-      <!-- Object item → OoGroup sub-fields -->
-      <template v-else>
-        <OoGroup
-          :def="currentVariant(i).def!"
-          :form-data="arrayValue[i] as Record<string, unknown>"
-          :components="components"
-          :types="types"
-          :errors="getItemErrors(i)"
-        />
-      </template>
-
-      <!-- Remove button -->
+      <!-- Variant selector (union arrays) -->
       <component
-        v-if="removeComponent"
-        :is="removeComponent"
-        :index="i"
-        :disabled="!canRemove"
-        @remove="removeItem(i)"
+        v-if="isUnion && variantComponent"
+        :is="variantComponent"
+        :variants="variants"
+        :model-value="variantIndices[i]"
+        :disabled="disabled"
+        @update:model-value="changeVariant(i, $event)"
       />
-      <button
-        v-else
-        type="button"
-        class="oo-array-remove-btn"
-        :disabled="!canRemove"
-        @click="removeItem(i)"
-      >
-        {{ removeLabel }}
-      </button>
+      <div v-else-if="isUnion" class="oo-array-variant-btns">
+        <button
+          v-for="(v, vi) in variants"
+          :key="vi"
+          type="button"
+          class="oo-array-variant-btn"
+          :class="{ 'oo-array-variant-btn--active': variantIndices[i] === vi }"
+          :disabled="disabled || variantIndices[i] === vi"
+          @click="changeVariant(i, vi)"
+        >
+          {{ v.label }}
+        </button>
+      </div>
+
+      <!-- Item content → OoGroup handles rendering + remove button -->
+      <OoGroup
+        :def="itemDef(i)"
+        :path-prefix="String(i)"
+        :components="components"
+        :types="types"
+        :errors="errors"
+        :disabled="disabled"
+        :on-remove="() => removeItem(i)"
+        :can-remove="canRemove"
+        :remove-label="removeLabel"
+      />
     </div>
 
     <!-- Add button -->
@@ -263,7 +240,7 @@ function primitiveInputType(index: number): string {
       </div>
     </div>
 
-    <!-- Array-level validation error (e.g., minLength / maxLength) -->
+    <!-- Array-level validation error -->
     <div v-if="error" class="oo-array-error">{{ error }}</div>
   </div>
 </template>
@@ -287,62 +264,55 @@ function primitiveInputType(index: number): string {
   background: #fafafa;
 }
 
-.oo-array-item > .oo-array-remove-btn {
-  margin-top: 4px;
+.oo-array-item--primitive {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
-.oo-array-item > .oo-array-variant-select {
-  margin-bottom: 8px;
-}
-
-.oo-array-variant-select {
-  padding: 4px 8px;
+.oo-array-variant-btns {
+  display: inline-flex;
+  margin-bottom: 6px;
   border: 1px solid #d1d5db;
   border-radius: 4px;
-  font-size: 13px;
-  background: #fff;
+  overflow: hidden;
 }
 
-.oo-array-remove-btn {
-  margin-left: auto;
-  padding: 4px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+.oo-array-variant-btn {
+  padding: 2px 8px;
+  border: none;
+  border-right: 1px solid #d1d5db;
+  font-size: 0.8rem;
+  line-height: 1.4;
   background: #fff;
-  font-size: 12px;
   color: #6b7280;
   cursor: pointer;
 }
 
-.oo-array-remove-btn:hover:not(:disabled) {
-  background: #fee2e2;
-  border-color: #fca5a5;
-  color: #dc2626;
+.oo-array-variant-btn:last-child {
+  border-right: none;
 }
 
-.oo-array-remove-btn:disabled {
+.oo-array-variant-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.oo-array-variant-btn--active {
+  background: #6366f1;
+  color: #fff;
+  cursor: default;
+}
+
+.oo-array-variant-btn--active:hover {
+  background: #6366f1;
+  color: #fff;
+}
+
+.oo-array-variant-btn:disabled:not(.oo-array-variant-btn--active) {
   opacity: 0.4;
   cursor: not-allowed;
-}
-
-.oo-array-scalar-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.oo-array-scalar-input {
-  width: 100%;
-  padding: 6px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  font-size: 14px;
-  outline: none;
-}
-
-.oo-array-scalar-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
 }
 
 .oo-array-add {
@@ -373,12 +343,5 @@ function primitiveInputType(index: number): string {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-}
-
-.oo-array-checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
 }
 </style>

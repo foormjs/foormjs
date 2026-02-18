@@ -1,7 +1,7 @@
 {
-  "name": "@foormjs/vuiless",
+  "name": "@foormjs/composables",
   "version": "0.0.1",
-  "description": "Renderless Vue form components with validation",
+  "description": "Framework-agnostic form composables with validation",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -22,7 +22,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/foormjs/foormjs.git",
-    "directory": "packages/vuiless"
+    "directory": "packages/composables"
   },
   "author": "Artem Maltsev",
   "license": "MIT",

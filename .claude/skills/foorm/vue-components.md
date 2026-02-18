@@ -48,11 +48,12 @@ Renderless form wrapper. Iterates fields, resolves metadata, renders components.
 
 ### Events
 
-| Event                | Payload          | Description                                         |
-| -------------------- | ---------------- | --------------------------------------------------- |
-| `submit`             | `formData`       | Valid form submission                               |
-| `action`             | `name, formData` | Action button clicked (matching `@foorm.altAction`) |
-| `unsupported-action` | `name, formData` | Action button clicked but no field supports it      |
+| Event                | Payload                               | Description                                         |
+| -------------------- | ------------------------------------- | --------------------------------------------------- |
+| `submit`             | `formData`                            | Valid form submission                               |
+| `error`              | `{ path: string; message: string }[]` | Validation failed on submit                         |
+| `action`             | `name, formData`                      | Action button clicked (matching `@foorm.altAction`) |
+| `unsupported-action` | `name, formData`                      | Action button clicked but no field supports it      |
 
 ### Component Resolution Order
 
@@ -72,23 +73,23 @@ For each field, `OoForm` resolves the component in this order:
   </template>
 
   <!-- Form structure slots -->
-  <template #form.header="{ title, disabled }">
-    <h1>{{ title }}</h1>
+  <template #form.header="{ clearErrors, reset, setErrors, disabled }">
+    <h1>Form Header</h1>
   </template>
 
-  <template #form.before="{ clearErrors, reset }">
+  <template #form.before="{ clearErrors, reset, setErrors }">
     <p>All fields required unless marked optional.</p>
   </template>
 
-  <template #form.after="{ disabled, formContext }">
+  <template #form.after="{ disabled, formContext, setErrors }">
     <p v-if="disabled">Please complete all fields.</p>
   </template>
 
-  <template #form.submit="{ text, disabled, clearErrors, reset }">
+  <template #form.submit="{ text, disabled, clearErrors, reset, setErrors }">
     <button type="submit" :disabled="disabled">{{ text }}</button>
   </template>
 
-  <template #form.footer="{ clearErrors, reset, formContext }">
+  <template #form.footer="{ clearErrors, reset, setErrors, formContext }">
     <p>Terms apply.</p>
   </template>
 </OoForm>
@@ -97,11 +98,11 @@ For each field, `OoForm` resolves the component in this order:
 | Slot           | Scope                                                                                          |
 | -------------- | ---------------------------------------------------------------------------------------------- |
 | `field:{type}` | All `TFoormComponentProps` + `classes`, `styles`, `value`, `vName`, `attrs`, `onBlur`, `model` |
-| `form.header`  | `{ title, clearErrors, reset, formContext, disabled }`                                         |
-| `form.before`  | `{ clearErrors, reset }`                                                                       |
-| `form.after`   | `{ clearErrors, reset, disabled, formContext }`                                                |
-| `form.submit`  | `{ text, disabled, clearErrors, reset, formContext }`                                          |
-| `form.footer`  | `{ disabled, clearErrors, reset, formContext }`                                                |
+| `form.header`  | `{ clearErrors, reset, setErrors, formContext, disabled }`                                     |
+| `form.before`  | `{ clearErrors, reset, setErrors }`                                                            |
+| `form.after`   | `{ clearErrors, reset, setErrors, disabled, formContext }`                                     |
+| `form.submit`  | `{ text, disabled, clearErrors, reset, setErrors, formContext }`                               |
+| `form.footer`  | `{ disabled, clearErrors, reset, setErrors, formContext }`                                     |
 
 ---
 
@@ -140,6 +141,9 @@ const props = defineProps<TFoormComponentProps<string, any, any>>()
 | `field`        | `FoormFieldDef?`          | Full field definition                              |
 | `formData`     | `TFormData`               | Full form data                                     |
 | `formContext`  | `TFormContext?`           | External context                                   |
+| `onRemove`     | `() => void?`             | Callback to remove this item from its parent array |
+| `canRemove`    | `boolean?`                | Whether removal is allowed (respects minLength)    |
+| `removeLabel`  | `string?`                 | Label for the remove button                        |
 
 ### Example: Text Input Component
 
@@ -319,32 +323,36 @@ Errors are keyed by field path (e.g., `email`, `address.street`).
 `OoForm` handles array and nested group fields automatically. The component tree is:
 
 ```
-OoForm (VuilessForm wrapper + form chrome)
+OoForm (useFoormForm composable + form chrome)
+  └─ provides '__foorm_form', '__foorm_root_data', '__foorm_path_prefix' (''), '__foorm_action_handler'
   └── OoGroup (recursive field renderer)
-        ├── OoField (leaf field)
+        ├── OoField (leaf field → useFoormField)
         ├── OoGroup (nested object with @foorm.title → group section)
         │     └── OoField ...
-        └── OoGroup (array field → delegates to OoArray)
+        └── OoGroup (array field → self-registers for array validation, delegates to OoArray)
               └── OoArray
-                    └── OoGroup (per object item → sub-fields)
+                    └── OoGroup (per item → provides path prefix e.g. 'addresses.0')
                           └── OoField ...
 ```
 
 ### OoGroup
 
-Recursive field renderer. Detects field type and either:
+Recursive field renderer. Provides path prefix (`__foorm_path_prefix`) for absolute path resolution. Detects field type and either:
+
 - **Iterates fields** (top-level or group) — renders `OoField` per leaf, nested `OoGroup` for sub-groups/arrays
 - **Delegates to OoArray** for array-typed fields
-- **Resolves `@foorm.component`** for custom group/array components
+- **Self-registers** via `useFoormField` for array/group-level validation (e.g., `@expect.minLength` on arrays)
+- **Resolves `@foorm.component`** — fields with custom components fall through to `OoField` for terminal delegation
 
-For nested groups, `OoGroup` provides a derived vuiless context that overrides `formData` while inheriting `register`/`unregister` from the root `VuilessForm`. This means all fields — including deeply nested ones — register with the root form for submit-time validation.
+All fields register with the single root foorm context (provided by `OoForm`). `OoGroup` only provides path prefix context — it never overrides the foorm form state.
 
 ### OoArray
 
 Array field renderer. Handles:
+
 - **Add/remove buttons** — labels from `@foorm.array.add.label` / `@foorm.array.remove.label`, or custom components from `@foorm.array.add.component` / `@foorm.array.remove.component`
-- **Primitive items** (`string[]`, `number[]`) — inline input + remove button
-- **Object items** (`{ ... }[]`) — card with sub-fields rendered by `OoGroup`
+- **Primitive items** (`string[]`, `number[]`) — rendered via `OoGroup` with `itemField` (compact inline input + remove button)
+- **Object items** (`{ ... }[]`) — rendered via `OoGroup` with sub-fields in a card
 - **Union arrays** (`(A | B)[]`) — variant selector per item, one add button per variant
 - **Array-level validation** — `@expect.minLength` / `@expect.maxLength` errors displayed below the add button
 - **Min/max enforcement** — add button disabled at maxLength, remove button disabled at minLength
@@ -359,24 +367,15 @@ Use `@foorm.component` on an object or array field to delegate rendering to a cu
 addresses: { ... }[]
 ```
 
-Custom group/array components receive `TFoormGroupComponentProps`:
+Custom group/array components receive the same `TFoormComponentProps` as leaf fields — they are rendered through `OoField` via terminal delegation:
 
 ```ts
-import type { TFoormGroupComponentProps } from '@foormjs/vue'
+import type { TFoormComponentProps } from '@foormjs/vue'
 
-const props = defineProps<TFoormGroupComponentProps>()
+const props = defineProps<TFoormComponentProps<unknown[], any, any>>()
+// model.value is the array/object value
+// field is the FoormArrayFieldDef or FoormGroupFieldDef
 ```
-
-| Prop          | Type                      | Description                               |
-| ------------- | ------------------------- | ----------------------------------------- |
-| `field`       | `FoormFieldDef`           | The field definition (array or group)     |
-| `model`       | `{ value: unknown }`      | Reactive model for the group/array value  |
-| `formData`    | `TFormData`               | Full reactive form data                   |
-| `formContext`  | `TFormContext?`           | External context                          |
-| `disabled`    | `boolean?`                | Disabled state                            |
-| `hidden`      | `boolean?`                | Hidden state                              |
-| `label`       | `string?`                 | Resolved title/label                      |
-| `errors`      | `Record<string, string>?` | External error overrides                  |
 
 ---
 

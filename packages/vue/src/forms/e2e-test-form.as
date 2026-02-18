@@ -14,7 +14,7 @@ export interface E2eTestForm {
     @meta.placeholder 'John'
     @foorm.type 'text'
     @foorm.autocomplete 'given-name'
-    @foorm.validate '(v) => !!v || "First name is required"'
+    @meta.required 'First name is required'
     @foorm.order 1
     firstName: string
 
@@ -23,7 +23,7 @@ export interface E2eTestForm {
     @meta.hint 'Real last name please'
     @foorm.fn.placeholder '(v, data) => data.firstName ? "Same as " + data.firstName + "?" : "Doe"'
     @foorm.type 'text'
-    @foorm.validate '(v) => !!v || "Last name is required"'
+    @meta.required 'Last name is required'
     @foorm.order 2
     lastName: string
 
@@ -56,7 +56,7 @@ export interface E2eTestForm {
     @meta.placeholder 'Enter password'
     @foorm.type 'password'
     @foorm.fn.disabled '(v, data) => !data.firstName || !data.lastName'
-    @foorm.validate '(v) => !!v || "Password is required"'
+    @meta.required 'Password is required'
     @foorm.order 6
     password: string
 
