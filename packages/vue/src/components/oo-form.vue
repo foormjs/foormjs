@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="TFormData = any, TFormContext = any">
-import { VuilessForm } from 'vuiless-forms'
-import type { TVuilessState } from 'vuiless-forms'
+import { VuilessForm } from '@foormjs/vuiless'
+import type { TVuilessState } from '@foormjs/vuiless'
 import OoGroup from './oo-group.vue'
 import type { FoormDef, TFoormFnScope } from 'foorm'
 import { resolveFormProp, supportsAltAction } from 'foorm'

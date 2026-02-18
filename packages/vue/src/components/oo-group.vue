@@ -16,7 +16,7 @@ import {
   getByPath,
 } from 'foorm'
 import { computed, inject, provide, type Component, type ComputedRef } from 'vue'
-import type { TVuilessState } from 'vuiless-forms'
+import type { TVuilessState } from '@foormjs/vuiless'
 import OoField from './oo-field.vue'
 // eslint-disable-next-line import/no-cycle -- OoGroup ↔ OoArray recursive component pattern
 import OoArray from './oo-array.vue'

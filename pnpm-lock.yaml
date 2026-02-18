@@ -86,15 +86,15 @@ importers:
 
   packages/vue:
     dependencies:
+      '@foormjs/vuiless':
+        specifier: workspace:^
+        version: link:../vuiless
       foorm:
         specifier: workspace:^
         version: link:../foorm
       vue:
         specifier: ^3.5.28
         version: 3.5.28(typescript@5.4.5)
-      vuiless-forms:
-        specifier: ^0.0.3
-        version: 0.0.3(typescript@5.4.5)
     devDependencies:
       '@atscript/core':
         specifier: ^0.1.12
@@ -3149,9 +3149,6 @@ packages:
       typescript:
         optional: true
 
-  vuiless-forms@0.0.3:
-    resolution: {integrity: sha512-IZimoveENSVvO5OeEwFFEh5zaq17rjnSH3tjHENbs1JwAe1hKCeZ1tPPNh+EXB6l3dxJLwjpHozDwiFfKiEvYA==}
-
   webpack-virtual-modules@0.6.2:
     resolution: {integrity: sha512-66/V2i5hQanC51vBQKPH4aI8NMAcBW59FVBs+rC7eGHupMyfn34q7rZIE+ETlJ+XTevqfUhVVBgSUNSW2flEUQ==}
 
@@ -6127,12 +6124,6 @@ snapshots:
       '@vue/shared': 3.5.28
     optionalDependencies:
       typescript: 5.9.3
-
-  vuiless-forms@0.0.3(typescript@5.4.5):
-    dependencies:
-      vue: 3.5.28(typescript@5.4.5)
-    transitivePeerDependencies:
-      - typescript
 
   webpack-virtual-modules@0.6.2: {}
 

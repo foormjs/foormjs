@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="TFormData = any, TFormContext = any">
-import { VuilessField, type TVuilessState } from 'vuiless-forms'
+import { VuilessField, type TVuilessState } from '@foormjs/vuiless'
 import { Validator } from '@atscript/typescript/utils'
 import type { FoormFieldDef, TFoormFnScope } from 'foorm'
 import {

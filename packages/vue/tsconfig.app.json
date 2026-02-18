@@ -1,6 +1,6 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "../foorm/src/**/*"],
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "../foorm/src/**/*", "../vuiless/src/index.ts", "../vuiless/src/components/**/*", "../vuiless/src/components/**/*.vue"],
   "exclude": ["src/**/__tests__/*", "node_modules", "../foorm/src/**/*.spec.ts"],
   "compilerOptions": {
     "composite": true,
@@ -13,7 +13,8 @@
     "resolvePackageJsonImports": true,
     "paths": {
       "@/*": ["./src/*"],
-      "foorm": ["../foorm/src"]
+      "foorm": ["../foorm/src"],
+      "@foormjs/vuiless": ["../vuiless/src"]
     }
   }
 }

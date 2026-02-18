@@ -2,7 +2,7 @@
 
 ## 1. Migrate vue package to use internal vuiless
 
-**Status**: Not started
+**Status**: Done
 
 The `@foormjs/vue` currently depends on the external npm package `vuiless-forms@^0.0.3`. The local `packages/vuiless/` is the in-monorepo port under the name `@foormjs/vuiless`.
 

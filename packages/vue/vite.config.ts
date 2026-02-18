@@ -41,7 +41,7 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      external: ['vue', 'vuiless-forms', 'foorm', '@atscript/core', '@atscript/typescript'],
+      external: ['vue', '@foormjs/vuiless', 'foorm', '@atscript/core', '@atscript/typescript'],
       output: {
         globals: {
           vue: 'Vue',

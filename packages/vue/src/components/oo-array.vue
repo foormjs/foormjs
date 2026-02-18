@@ -2,7 +2,7 @@
 import type { FoormArrayFieldDef, FoormArrayVariant } from 'foorm'
 import { getFieldMeta, createItemData, detectVariant } from 'foorm'
 import { computed, inject, reactive, watch, type Component, type ComputedRef } from 'vue'
-import type { TVuilessState } from 'vuiless-forms'
+import type { TVuilessState } from '@foormjs/vuiless'
 // eslint-disable-next-line import/no-cycle -- OoArray ↔ OoGroup recursive component pattern
 import OoGroup from './oo-group.vue'
 

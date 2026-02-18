@@ -49,7 +49,7 @@
   "dependencies": {
     "foorm": "workspace:^",
     "vue": "^3.5.28",
-    "vuiless-forms": "^0.0.3"
+    "@foormjs/vuiless": "workspace:^"
   },
   "peerDependencies": {
     "@atscript/core": "^0.1.12",
