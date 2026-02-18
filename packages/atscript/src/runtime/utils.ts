@@ -292,12 +292,16 @@ export function createFormData<T = Record<string, unknown>>(
   type: TAtscriptAnnotatedType<TAtscriptTypeObject>,
   fields: FoormFieldDef[]
 ): T {
-  return buildNestedData(type, fields, '') as T
+  const fieldsByPath = new Map<string, FoormFieldDef>()
+  for (const f of fields) {
+    if (f.path !== undefined) fieldsByPath.set(f.path, f)
+  }
+  return buildNestedData(type, fieldsByPath, '') as T
 }
 
 function buildNestedData(
   typeDef: TAtscriptAnnotatedType<TAtscriptTypeObject>,
-  fields: FoormFieldDef[],
+  fieldsByPath: Map<string, FoormFieldDef>,
   prefix: string
 ): Record<string, unknown> {
   const data: Record<string, unknown> = {}
@@ -310,13 +314,13 @@ function buildNestedData(
     if (prop.type.kind === 'object') {
       data[key] = buildNestedData(
         prop as TAtscriptAnnotatedType<TAtscriptTypeObject>,
-        fields,
+        fieldsByPath,
         fullPath
       )
     } else if (prop.type.kind === 'array') {
       data[key] = []
     } else {
-      const field = fields.find(f => f.path === fullPath)
+      const field = fieldsByPath.get(fullPath)
 
       if (field && NON_DATA_TYPES.has(field.type)) {
         continue
@@ -331,6 +335,7 @@ function buildNestedData(
           ? {
               field: field.path,
               type: field.type,
+              component: getFieldMeta<string>(prop, 'foorm.component'),
               name: field.name,
             }
           : undefined,
@@ -397,17 +402,18 @@ export function createItemData(variant: FoormArrayVariant): unknown {
 export function detectVariant(value: unknown, variants: FoormArrayVariant[]): number {
   if (variants.length <= 1) return 0
 
-  // Quick primitive matching by typeof
-  const vType = typeof value
+  // Quick matching by designType
+  const isArray = Array.isArray(value)
+  const vType = isArray ? 'array' : typeof value
   for (let i = 0; i < variants.length; i++) {
-    const v = variants[i]
+    const v = variants[i]!
     if (v.designType && v.designType === vType) return i
   }
 
   // Object variant matching via validator
   if (value !== null && typeof value === 'object') {
     for (let i = 0; i < variants.length; i++) {
-      const v = variants[i]
+      const v = variants[i]!
       if (v.def) {
         try {
           if (v.type.validator().validate(value, true)) return i

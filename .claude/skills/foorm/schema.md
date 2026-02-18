@@ -87,7 +87,19 @@ Any field property can be dynamic. Function strings receive `(v, data, context, 
 - `v` — current field value
 - `data` — full form data object
 - `context` — external context passed via `formContext` prop
-- `entry` — evaluated field snapshot (`{ field, type, component, name, disabled, optional, hidden, readonly, options }`)
+- `entry` — evaluated field snapshot (`TFoormFieldEvaluated`):
+
+| Property    | Type                   | Description                                   |
+| ----------- | ---------------------- | --------------------------------------------- |
+| `field`     | `string \| undefined`  | Field path (e.g., `'address.city'`)           |
+| `type`      | `string`               | Resolved input type (`'text'`, `'select'`...) |
+| `component` | `string \| undefined`  | Named component from `@foorm.component`       |
+| `name`      | `string`               | Field name (last segment of path)             |
+| `disabled`  | `boolean \| undefined` | Whether the field is disabled                 |
+| `optional`  | `boolean \| undefined` | Whether the field is optional                 |
+| `hidden`    | `boolean \| undefined` | Whether the field is hidden                   |
+| `readonly`  | `boolean \| undefined` | Whether the field is read-only                |
+| `options`   | `TFoormEntryOptions[]` | Resolved options for select/radio fields      |
 
 **Caveat:** Functions are strings compiled at runtime with `new Function()`. No imports, no closures — only pure expressions.
 

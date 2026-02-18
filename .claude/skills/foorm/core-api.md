@@ -256,6 +256,24 @@ interface FoormArrayVariant {
 }
 ```
 
+### TFoormFieldEvaluated
+
+Evaluated snapshot of a field's current state — passed as `entry` in `TFoormFnScope` to `@foorm.fn.*` and `@foorm.validate` functions.
+
+```ts
+interface TFoormFieldEvaluated {
+  field?: string // Field path (e.g., 'address.city')
+  type: string // Resolved input type ('text', 'select', etc.)
+  component?: string // Named component from @foorm.component
+  name: string // Field name (last segment of path)
+  disabled?: boolean // Whether the field is disabled
+  optional?: boolean // Whether the field is optional
+  hidden?: boolean // Whether the field is hidden
+  readonly?: boolean // Whether the field is read-only
+  options?: TFoormEntryOptions[] // Resolved options for select/radio fields
+}
+```
+
 ### TFoormEntryOptions
 
 ```ts

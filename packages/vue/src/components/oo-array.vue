@@ -4,6 +4,7 @@ import { getFieldMeta, createItemData, detectVariant, getByPath } from '@foormjs
 import { computed, inject, reactive, watch, type Component, type ComputedRef } from 'vue'
 // eslint-disable-next-line import/no-cycle -- OoArray ↔ OoGroup recursive component pattern
 import OoGroup from './oo-group.vue'
+import { useRootFormData } from '../composables/use-root-form-data'
 
 export interface OoArrayProps {
   field: FoormArrayFieldDef
@@ -20,18 +21,11 @@ export interface OoArrayProps {
 const props = defineProps<OoArrayProps>()
 
 // ── Root data + path prefix ──────────────────────────────────
-const rootData = inject<ComputedRef<TFormData>>(
-  '__foorm_root_data',
-  undefined as unknown as ComputedRef<TFormData>
-)
+const rootFormData = useRootFormData<TFormData, TFormContext>()
 const pathPrefix = inject<ComputedRef<string>>(
   '__foorm_path_prefix',
   computed(() => '')
 )
-
-function rootFormData(): Record<string, unknown> {
-  return (rootData?.value ?? {}) as Record<string, unknown>
-}
 
 // ── Array value reference ───────────────────────────────────
 // pathPrefix already includes the array field's path (e.g. 'addresses')
@@ -57,9 +51,6 @@ function syncKeys() {
   }
 }
 
-syncKeys()
-watch(() => arrayValue.value.length, syncKeys)
-
 // ── Variant tracking ────────────────────────────────────────
 const variants = props.field.variants
 const isUnion = variants.length > 1
@@ -68,37 +59,45 @@ const variantIndices: number[] = reactive(
   arrayValue.value.map(item => detectVariant(item, variants))
 )
 
+function syncVariantIndices() {
+  while (variantIndices.length < arrayValue.value.length) {
+    const i = variantIndices.length
+    variantIndices.push(detectVariant(arrayValue.value[i], variants))
+  }
+  while (variantIndices.length > arrayValue.value.length) {
+    variantIndices.pop()
+  }
+}
+
+syncKeys()
 watch(
   () => arrayValue.value.length,
   () => {
-    while (variantIndices.length < arrayValue.value.length) {
-      const i = variantIndices.length
-      variantIndices.push(detectVariant(arrayValue.value[i], variants))
-    }
-    while (variantIndices.length > arrayValue.value.length) {
-      variantIndices.pop()
-    }
+    syncKeys()
+    syncVariantIndices()
   }
 )
 
 function currentVariant(index: number): FoormArrayVariant {
-  return variants[variantIndices[index] ?? 0] ?? variants[0]
+  return variants[variantIndices[index] ?? 0] ?? variants[0]!
 }
 
 // ── Item def resolution ─────────────────────────────────────
-// Prioritize itemField (for type-level @foorm.component and primitives),
-// fall back to variant.def for standard objects.
+// Pre-build FoormDef for itemField variants once (avoids new Map() per render).
+const itemFieldDefs = new Map<FoormArrayVariant, FoormDef>()
+for (const v of variants) {
+  if (v.itemField) {
+    itemFieldDefs.set(v, {
+      type: v.type as FoormDef['type'],
+      fields: [v.itemField],
+      flatMap: new Map(),
+    })
+  }
+}
+
 function itemDef(index: number): FoormDef | undefined {
   const variant = currentVariant(index)
-  if (variant.itemField) {
-    return {
-      type: variant.type as FoormDef['type'],
-      fields: [variant.itemField],
-      flatMap: new Map(),
-    }
-  }
-  if (variant.def) return variant.def
-  return undefined
+  return itemFieldDefs.get(variant) ?? variant.def
 }
 
 // ── Length constraints ──────────────────────────────────────
@@ -112,7 +111,7 @@ const canRemove = computed(() => !props.disabled && arrayValue.value.length > mi
 // ── Array mutations ─────────────────────────────────────────
 function addItem(variantIndex = 0) {
   if (!canAdd.value) return
-  const variant = variants[variantIndex]
+  const variant = variants[variantIndex]!
   const newItem = createItemData(variant)
   arrayValue.value.push(newItem)
   itemKeys.push(generateKey())
@@ -127,7 +126,7 @@ function removeItem(index: number) {
 }
 
 function changeVariant(index: number, newVariantIndex: number) {
-  const variant = variants[newVariantIndex]
+  const variant = variants[newVariantIndex]!
   arrayValue.value[index] = createItemData(variant)
   variantIndices[index] = newVariantIndex
   // Regenerate key to force OoGroup re-creation — clean state for the new variant

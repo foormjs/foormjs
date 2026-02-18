@@ -244,7 +244,7 @@ function buildComplexVariants(
   const items = def.type.items
 
   for (let i = 0; i < items.length; i++) {
-    const item = items[i]
+    const item = items[i]!
     const innerVariants = buildVariants(item)
     // Each inner variant gets an indexed label prefix for union disambiguation
     for (const v of innerVariants) {

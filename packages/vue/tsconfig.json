@@ -8,9 +8,5 @@
       "path": "./tsconfig.app.json"
     }
   ],
-  "compilerOptions": {
-    "paths": {
-      "foorm": ["../foorm/src"]
-    }
-  }
+  "compilerOptions": {}
 }

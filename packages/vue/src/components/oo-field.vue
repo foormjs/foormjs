@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="TFormData = any, TFormContext = any">
 import { useFoormField, type TFoormState } from '@foormjs/composables'
 import { Validator } from '@atscript/typescript/utils'
-import type { FoormFieldDef, TFoormFnScope } from '@foormjs/atscript'
+import type { FoormFieldDef, TFoormFieldEvaluated, TFoormFnScope } from '@foormjs/atscript'
 import {
   resolveFieldProp,
   resolveOptions,
@@ -11,7 +11,8 @@ import {
   setByPath,
   foormValidatorPlugin,
 } from '@foormjs/atscript'
-import { computed, inject, ref, watch, type ComputedRef } from 'vue'
+import { computed, inject, isRef, watch, type ComputedRef } from 'vue'
+import { useRootFormData } from '../composables/use-root-form-data'
 
 const props = defineProps<{
   field: FoormFieldDef
@@ -55,15 +56,14 @@ defineSlots<{
   }): unknown
 }>()
 
-const foormState = inject<ComputedRef<TFoormState<TFormData, TFormContext>>>(
-  '__foorm_form'
-) as ComputedRef<TFoormState<TFormData, TFormContext>>
+const _foormState = inject<ComputedRef<TFoormState<TFormData, TFormContext>>>('__foorm_form')
+if (!_foormState) {
+  throw new Error('OoField must be used inside an OoForm component')
+}
+const foormState = _foormState
 
 // Root form data (always root — never overridden)
-const rootData = inject<ComputedRef<TFormData>>(
-  '__foorm_root_data',
-  undefined as unknown as ComputedRef<TFormData>
-)
+const rootFormData = useRootFormData<TFormData, TFormContext>()
 
 // Path prefix from parent OoGroup
 const pathPrefix = inject<ComputedRef<string>>(
@@ -78,13 +78,7 @@ const absolutePath = computed<string | undefined>(() => {
 })
 
 // Helper to unwrap value (handles both static and computed)
-const unwrap = <T,>(v: T | ComputedRef<T>): T =>
-  typeof v === 'object' && v !== null && 'value' in v ? (v as ComputedRef<T>).value : (v as T)
-
-/** Returns root form data for fn scopes. */
-function rootFormData(): Record<string, unknown> {
-  return (rootData?.value ?? foormState.value.formData) as Record<string, unknown>
-}
+const unwrap = <T,>(v: T | ComputedRef<T>): T => (isRef(v) ? v.value : v)
 
 const prop = props.field.prop
 
@@ -269,9 +263,8 @@ if (props.field.allStatic) {
 
   // ── Full scope with entry (derived from baseScope) ─────────
   const scope = needsFullScope
-    ? computed<TFoormFnScope>(() => ({
-        ...bs.value,
-        entry: {
+    ? computed<TFoormFnScope>(() => {
+        const entry: TFoormFieldEvaluated = {
           field: props.field.path,
           type: props.field.type,
           component,
@@ -280,8 +273,12 @@ if (props.field.allStatic) {
           disabled: unwrap(disabled),
           hidden: unwrap(hidden),
           readonly: unwrap(readonly),
-        },
-      }))
+        }
+        const s = { ...bs.value, entry }
+        // Resolve options into entry (after scope is built to avoid circular dep)
+        entry.options = resolveOptions(prop, s) ?? undefined
+        return s
+      })
     : undefined
 
   // Safe alias — guaranteed non-null when hasFn.* is true (implies needsFullScope)
@@ -426,13 +423,11 @@ const slotModel = {
   },
 }
 
-// Function to merge classes with error flag
-function getClasses() {
-  return {
-    ...unwrap(classesBase),
-    error: !!mergedError.value,
-  }
-}
+// Computed classes with error flag
+const classes = computed(() => ({
+  ...unwrap(classesBase),
+  error: !!mergedError.value,
+}))
 </script>
 
 <template>
@@ -447,7 +442,7 @@ function getClasses() {
     :hint="unwrap(hint)"
     :placeholder="unwrap(placeholder)"
     :value="unwrap(phantomValue)"
-    :classes="getClasses()"
+    :classes="classes"
     :styles="unwrap(styles)"
     :optional="unwrap(optional)"
     :disabled="unwrap(disabled)"

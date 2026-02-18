@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import MyInput from './components/MyInput.vue'
-import VuilessForm from './components/VuilessForm.vue'
-import VuilessField from './components/VuilessField.vue'
 import type { MyForm } from './form.type'
 import * as rules from './rules'
+import { useFoormForm } from './composables/use-foorm-form'
+import { useFoormField } from './composables/use-foorm-field'
 
 const data = ref<MyForm>({
   firstName: '',
@@ -16,13 +16,52 @@ const data = ref<MyForm>({
 const toSend = ref()
 
 const fv = ref<'on-change'>('on-change')
+
+const { clearErrors, reset, submit } = useFoormForm({
+  formData: data,
+  formContext: { nameIsRequired: true },
+  firstValidation: fv,
+})
+
+const firstName = useFoormField({
+  getValue: () => data.value.firstName,
+  setValue: v => (data.value.firstName = v),
+  rules: [rules.firstOrLastName],
+  path: () => 'firstName',
+})
+
+const lastName = useFoormField({
+  getValue: () => data.value.lastName,
+  setValue: v => (data.value.lastName = v),
+  rules: [rules.firstOrLastName],
+  path: () => 'lastName',
+})
+
+const email = useFoormField({
+  getValue: () => data.value.email,
+  setValue: v => (data.value.email = v),
+  rules: [rules.isRequired, rules.isEmail],
+  path: () => 'email',
+})
+
+const phone = useFoormField({
+  getValue: () => data.value.phone,
+  setValue: v => (data.value.phone = v),
+  rules: [rules.isRequired, rules.isNumber, rules.min(10), rules.max(12)],
+  path: () => 'phone',
+})
+
+function handleSubmit() {
+  const result = submit()
+  if (result === true) {
+    toSend.value = { ...data.value }
+  }
+}
 </script>
 
 <template>
   <div class="flex">
     <div>
-      <!-- form -->
-
       <h2>Form</h2>
 
       <label class="fv-select">
@@ -35,71 +74,48 @@ const fv = ref<'on-change'>('on-change')
           <option value="on-submit">On Submit</option>
         </select>
       </label>
-      <VuilessForm
-        :form-data="data"
-        :form-context="{
-          nameIsRequired: true,
-        }"
-        :first-validation="fv"
-        @submit="toSend = $event"
-        v-slot="form"
-      >
-        <VuilessField v-model="data.firstName" :rules="[rules.firstOrLastName]" v-slot="field">
-          <input v-model="field.model.value" hidden />
-        </VuilessField>
 
-        <VuilessField v-model="data.lastName" :rules="[rules.firstOrLastName]" v-slot="field">
-          <MyInput
-            label="Last Name (Cross Checks)"
-            v-model="field.model.value"
-            :error="field.error"
-            @blur="field.onBlur"
-          />
-        </VuilessField>
+      <form @submit.prevent="handleSubmit">
+        <MyInput
+          label="First Name"
+          v-model="firstName.model.value"
+          :error="firstName.error.value"
+          @blur="firstName.onBlur"
+        />
+        <MyInput
+          label="Last Name (Cross Checks)"
+          v-model="lastName.model.value"
+          :error="lastName.error.value"
+          @blur="lastName.onBlur"
+        />
+        <MyInput
+          label="Email"
+          v-model="email.model.value"
+          :error="email.error.value"
+          @blur="email.onBlur"
+        />
+        <MyInput
+          label="Phone"
+          v-model="phone.model.value"
+          :error="phone.error.value"
+          @blur="phone.onBlur"
+        />
 
-        <VuilessField
-          v-model="data.email"
-          :rules="[rules.isRequired, rules.isEmail]"
-          v-slot="field"
-        >
-          <MyInput
-            label="Email"
-            v-model="field.model.value"
-            :error="field.error"
-            @blur="field.onBlur"
-          />
-        </VuilessField>
-
-        <VuilessField
-          v-model="data.phone"
-          :rules="[rules.isRequired, rules.isNumber, rules.min(10), rules.max(12)]"
-          v-slot="field"
-        >
-          <MyInput
-            label="Phone"
-            v-model="field.model.value"
-            :error="field.error"
-            @blur="field.onBlur"
-          />
-        </VuilessField>
-
-        <button role="submit" class="primary">Submit</button>
+        <button type="submit" class="primary">Submit</button>
 
         <div class="buttons">
-          <button type="button" @click="form.clearErrors">Clear Errors</button>
-          <button type="button" @click="form.reset">Reset</button>
+          <button type="button" @click="clearErrors">Clear Errors</button>
+          <button type="button" @click="reset">Reset</button>
         </div>
-      </VuilessForm>
+      </form>
     </div>
 
     <div>
-      <!-- data -->
       <h2>Data</h2>
       <pre style="font-size: 10px">{{ data }}</pre>
     </div>
 
     <div v-if="!!toSend">
-      <!-- sent form -->
       <h2>Sent form</h2>
       <pre style="font-size: 10px">{{ toSend }}</pre>
     </div>

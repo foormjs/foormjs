@@ -1,5 +1,7 @@
-import type { TFoormFieldEvaluated, TFoormEntryOptions } from './types'
-import { compileValidatorFn, compileFieldFn } from './fn-compiler'
+import type { TValidatorPlugin } from '@atscript/typescript/utils'
+import type { TFoormFieldEvaluated } from './types'
+import { compileValidatorFn } from './fn-compiler'
+import { resolveFieldProp, resolveOptions, getFieldMeta } from './utils'
 
 /**
  * ATScript validator plugin that processes @foorm.validate annotations.
@@ -19,9 +21,6 @@ export interface TFoormValidatorContext {
   context: Record<string, unknown>
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TValidatorPlugin = (ctx: any, def: any, value: unknown) => boolean | undefined
-
 /**
  * Creates an ATScript validator plugin that processes `@foorm.validate` annotations.
  *
@@ -29,39 +28,48 @@ type TValidatorPlugin = (ctx: any, def: any, value: unknown) => boolean | undefi
  */
 export function foormValidatorPlugin(): TValidatorPlugin {
   return (ctx, def, value) => {
-    const hasValidators = def.metadata?.get('foorm.validate')
+    const hasValidators = getFieldMeta(def, 'foorm.validate')
     if (!hasValidators) return undefined
 
     const foormCtx = ctx.context as TFoormValidatorContext | undefined
     const data = foormCtx?.data ?? {}
     const context = foormCtx?.context ?? {}
 
-    // Base scope for evaluating constraints
+    // Field name from the validator's current path
+    const fieldName = ctx.path.split('.').pop() || ''
+
+    // Base scope for evaluating constraints (no entry yet)
     const baseScope = { v: value, data, context, entry: undefined }
 
-    // Resolve constraints for the entry object
-    const disabled = evalConstraint(def.metadata, 'foorm.disabled', 'foorm.fn.disabled', baseScope)
-    const hidden = evalConstraint(def.metadata, 'foorm.hidden', 'foorm.fn.hidden', baseScope)
+    // Resolve constraints for the entry snapshot
     const optional =
-      evalConstraint(def.metadata, 'foorm.optional', 'foorm.fn.optional', baseScope) ?? def.optional
+      resolveFieldProp<boolean>(def, 'foorm.fn.optional', 'foorm.optional', baseScope, {
+        staticAsBoolean: true,
+      }) ?? def.optional
 
     // Build entry object with field metadata
     const entry: TFoormFieldEvaluated = {
-      field: def.name || '',
-      type: (def.metadata?.get('foorm.type') as string) || 'text',
-      component: def.metadata?.get('foorm.component') as string | undefined,
-      name: def.name || '',
-      disabled,
+      field: ctx.path,
+      type: getFieldMeta<string>(def, 'foorm.type') || 'text',
+      component: getFieldMeta<string>(def, 'foorm.component'),
+      name: fieldName,
       optional,
-      hidden,
-      readonly: evalConstraint(def.metadata, 'foorm.readonly', 'foorm.fn.readonly', baseScope),
+      disabled: resolveFieldProp<boolean>(def, 'foorm.fn.disabled', 'foorm.disabled', baseScope, {
+        staticAsBoolean: true,
+      }),
+      hidden: resolveFieldProp<boolean>(def, 'foorm.fn.hidden', 'foorm.hidden', baseScope, {
+        staticAsBoolean: true,
+      }),
+      readonly: resolveFieldProp<boolean>(def, 'foorm.fn.readonly', 'foorm.readonly', baseScope, {
+        staticAsBoolean: true,
+      }),
     }
 
     // Full scope with evaluated entry
     const scope = { v: value, data, context, entry }
 
     // Evaluate options (static or computed)
-    entry.options = evalOptions(def.metadata, scope)
+    entry.options = resolveOptions(def, scope)
 
     // Run custom validators with full scope
     const fns = Array.isArray(hasValidators) ? hasValidators : [hasValidators]
@@ -81,45 +89,4 @@ export function foormValidatorPlugin(): TValidatorPlugin {
 
     return undefined // fall through to @expect.* validation
   }
-}
-
-/** Helper to evaluate a boolean constraint (static or computed) */
-function evalConstraint(
-  metadata: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-  staticKey: string,
-  fnKey: string,
-  scope: any // eslint-disable-line @typescript-eslint/no-explicit-any
-): boolean | undefined {
-  const fnStr = metadata?.get(fnKey)
-  if (typeof fnStr === 'string') {
-    return compileFieldFn<boolean>(fnStr)(scope)
-  }
-  const staticVal = metadata?.get(staticKey)
-  return staticVal !== undefined ? true : undefined
-}
-
-/** Helper to evaluate options (static or computed) */
-function evalOptions(
-  metadata: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-  scope: any // eslint-disable-line @typescript-eslint/no-explicit-any
-): TFoormEntryOptions[] | undefined {
-  const fnStr = metadata?.get('foorm.fn.options')
-  if (typeof fnStr === 'string') {
-    return compileFieldFn<TFoormEntryOptions[]>(fnStr)(scope)
-  }
-
-  const staticOpts = metadata?.get('foorm.options')
-  if (staticOpts) {
-    const items = Array.isArray(staticOpts) ? staticOpts : [staticOpts]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return items.map((item: any) => {
-      if (typeof item === 'object' && item !== null && 'label' in item) {
-        const { label, value } = item as { label: string; value?: string }
-        return value !== undefined ? { key: value, label } : label
-      }
-      return String(item)
-    })
-  }
-
-  return undefined
 }

@@ -1,6 +1,6 @@
 {
   "name": "@foormjs/composables",
-  "version": "0.0.1",
+  "version": "0.2.4",
   "description": "Framework-agnostic form composables with validation",
   "type": "module",
   "main": "dist/index.js",
@@ -34,11 +34,12 @@
     "type-check": "vue-tsc --build --force",
     "pub": "pnpm publish --access public --no-git-checks"
   },
-  "dependencies": {
-    "vue": "^3.5.28"
+  "peerDependencies": {
+    "vue": "^3.5.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
+    "vue": "^3.5.28",
     "@tsconfig/node20": "^20.1.9",
     "@types/node": "^22.15.33",
     "@vitejs/plugin-vue": "^6.0.4",

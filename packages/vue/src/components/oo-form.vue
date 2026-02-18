@@ -77,6 +77,13 @@ const _submitDisabled = computed(
     ) ?? false
 )
 
+const emit = defineEmits<{
+  (e: 'submit', data: TFormData): void
+  (e: 'error', errors: { path: string; message: string }[]): void
+  (e: 'action', name: string, data: TFormData): void
+  (e: 'unsupported-action', name: string, data: TFormData): void
+}>()
+
 // ── Action handler (provided to OoGroup tree) ──────────────
 function handleAction(name: string) {
   if (supportsAltAction(props.def, name)) {
@@ -87,13 +94,6 @@ function handleAction(name: string) {
 }
 
 provide('__foorm_action_handler', handleAction)
-
-const emit = defineEmits<{
-  (e: 'submit', data: TFormData): void
-  (e: 'error', errors: { path: string; message: string }[]): void
-  (e: 'action', name: string, data: TFormData): void
-  (e: 'unsupported-action', name: string, data: TFormData): void
-}>()
 
 function onSubmit() {
   const result = submit()

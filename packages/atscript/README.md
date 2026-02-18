@@ -164,7 +164,7 @@ The add button offers one option per variant. Items include a variant selector d
 
 ### Computed Properties
 
-Any field property can be made dynamic with `@foorm.fn.*` annotations. The function receives `(value, data, context, entry)`:
+Any field property can be made dynamic with `@foorm.fn.*` annotations. The function receives `(value, data, context, entry)` where `entry` is a `TFoormFieldEvaluated` snapshot of the field's current state:
 
 ```
 @meta.label 'Email'
@@ -365,12 +365,30 @@ const attrs = resolveAttrs(field.prop, scope)
 | `FoormGroupFieldDef`        | Group field definition (extends FoormFieldDef with groupDef)                 |
 | `FoormArrayVariant`         | Variant definition for array items (label, type, def, itemField, designType) |
 | `TFoormFnScope`             | Scope object passed to computed functions (`v`, `data`, `context`, `entry`)  |
-| `TFoormFieldEvaluated`      | Evaluated field snapshot passed as `entry` in scope                          |
+| `TFoormFieldEvaluated`      | Evaluated field snapshot passed as `entry` in scope (see below)              |
 | `TFoormEntryOptions`        | Option for select/radio fields (`string` or `{ key, label }`)                |
 | `TComputed<T>`              | A value that is either static or a function of scope                         |
 | `TResolveOptions<T>`        | Options for resolve utilities (staticAsBoolean, transform)                   |
 | `TFormValidatorCallOptions` | Per-call options for `getFormValidator` return fn (data, context?)           |
 | `TFoormValidatorContext`    | Per-call validator context (data, context)                                   |
+
+#### TFoormFieldEvaluated
+
+Evaluated snapshot of a field's current state, passed as `entry` to `@foorm.fn.*` and `@foorm.validate` function strings:
+
+```ts
+interface TFoormFieldEvaluated {
+  field?: string // Field path (e.g., 'address.city')
+  type: string // Resolved input type ('text', 'select', etc.)
+  component?: string // Named component from @foorm.component
+  name: string // Field name (last segment of path)
+  disabled?: boolean // Whether the field is disabled
+  optional?: boolean // Whether the field is optional
+  hidden?: boolean // Whether the field is hidden
+  readonly?: boolean // Whether the field is read-only
+  options?: TFoormEntryOptions[] // Resolved options for select/radio fields
+}
+```
 
 ### Build-time Plugin
 

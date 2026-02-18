@@ -75,16 +75,9 @@ export function useFoormForm<TFormData, TContext>(opts: {
   }
 
   function setErrors(errors: Record<string, string>) {
-    // Clear all previous external errors
-    for (const reg of fieldsById.values()) {
-      reg.callbacks.setExternalError(undefined)
-    }
-    // Distribute by path
     for (const reg of fieldsById.values()) {
       const p = reg.path()
-      if (p !== undefined && p in errors) {
-        reg.callbacks.setExternalError(errors[p])
-      }
+      reg.callbacks.setExternalError(p !== undefined ? errors[p] : undefined)
     }
   }
 

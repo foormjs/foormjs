@@ -19,7 +19,8 @@ import {
 } from '@foormjs/atscript'
 import { Validator } from '@atscript/typescript/utils'
 import { computed, inject, provide, type Component, type ComputedRef } from 'vue'
-import { useFoormField } from '@foormjs/composables'
+import { useFoormField, type TFoormState } from '@foormjs/composables'
+import { useRootFormData } from '../composables/use-root-form-data'
 import OoField from './oo-field.vue'
 // eslint-disable-next-line import/no-cycle -- OoGroup ↔ OoArray recursive component pattern
 import OoArray from './oo-array.vue'
@@ -56,15 +57,15 @@ export interface OoGroupProps<TF, TC> {
 
 const props = defineProps<OoGroupProps<TFormData, TFormContext>>()
 
-// ── Root data (for fn scopes and model access) ──────────────
-const rootData = inject<ComputedRef<TFormData>>(
-  '__foorm_root_data',
-  undefined as unknown as ComputedRef<TFormData>
-)
-
-function rootFormData(): Record<string, unknown> {
-  return (rootData?.value ?? {}) as Record<string, unknown>
+// ── Form state (for context access) ─────────────────────────
+const _foormState = inject<ComputedRef<TFoormState<TFormData, TFormContext>>>('__foorm_form')
+if (!_foormState) {
+  throw new Error('OoGroup must be used inside an OoForm component')
 }
+const foormState = _foormState
+
+// ── Root data (for fn scopes and model access) ──────────────
+const rootFormData = useRootFormData<TFormData, TFormContext>()
 
 // ── Path prefix ─────────────────────────────────────────────
 const parentPrefix = inject<ComputedRef<string>>(
@@ -104,7 +105,10 @@ if (props.field && (arrayField || groupField)) {
 
   function selfValidationRule(v: unknown) {
     cachedValidator ??= new Validator(fieldProp, { plugins: [validatorPlugin] })
-    const isValid = cachedValidator.validate(v, true)
+    const isValid = cachedValidator.validate(v, true, {
+      data: rootFormData(),
+      context: (foormState.value.formContext ?? {}) as Record<string, unknown>,
+    })
     if (!isValid) {
       // Only report root-level errors (path === ''); child errors handled by their own fields
       const rootError = cachedValidator.errors?.find(e => e.path === '')
@@ -129,7 +133,7 @@ const title = computed(() => {
   const scope: TFoormFnScope = {
     v: undefined,
     data: rootFormData(),
-    context: {} as Record<string, unknown>,
+    context: (foormState.value.formContext ?? {}) as Record<string, unknown>,
     entry: undefined,
   }
 
@@ -151,7 +155,7 @@ const title = computed(() => {
 // For objects (multiple fields), render remove in the header.
 const isPrimitiveWrapper = computed(() => {
   const d = effectiveDef.value
-  return !!d && d.fields.length === 1 && d.fields[0].path === undefined
+  return !!d && d.fields.length === 1 && d.fields[0]?.path === undefined
 })
 
 // ── Custom group component ──────────────────────────────────
@@ -183,6 +187,12 @@ function fieldHasComponent(f: FoormFieldDef): boolean {
 }
 
 // ── Option helpers ─────────────────────────────────────────
+/** Resolves the custom component for a field: named component first, then type-based. */
+function resolveFieldComponent(field: { component?: string; type: string }): Component | undefined {
+  if (field.component) return props.components?.[field.component]
+  return props.types?.[field.type]
+}
+
 function optKey(opt: TFoormEntryOptions): string {
   return typeof opt === 'string' ? opt : opt.key
 }
@@ -270,10 +280,10 @@ function optLabel(opt: TFoormEntryOptions): string {
           v-slot="field"
           :error="errors?.[absoluteFieldPath(f)!]"
         >
-          <!-- Custom named component (@foorm.component) — terminal delegation -->
+          <!-- Custom component: named (@foorm.component) or type-based (types prop) -->
           <component
-            v-if="field.component && components?.[field.component]"
-            :is="components[field.component]"
+            v-if="resolveFieldComponent(field)"
+            :is="resolveFieldComponent(field)!"
             :on-blur="field.onBlur"
             :error="field.error"
             :model="field.model"
@@ -304,43 +314,9 @@ function optLabel(opt: TFoormEntryOptions): string {
             v-model="field.model.value"
           />
 
-          <div v-else-if="field.component && !components?.[field.component]">
+          <div v-else-if="field.component">
             [{{ field.label }}] Component "{{ field.component }}" not supplied
           </div>
-
-          <!-- Custom type component (types prop) -->
-          <component
-            v-else-if="types?.[field.type]"
-            :is="types[field.type]"
-            :on-blur="field.onBlur"
-            :error="field.error"
-            :model="field.model"
-            :form-data="field.formData"
-            :form-context="field.formContext"
-            :label="field.label"
-            :description="field.description"
-            :hint="field.hint"
-            :placeholder="field.placeholder"
-            :class="field.classes"
-            :style="field.styles"
-            :optional="field.optional"
-            :required="field.required"
-            :disabled="field.disabled"
-            :hidden="field.hidden"
-            :type="field.type"
-            :alt-action="field.altAction"
-            :name="field.vName"
-            :field="field"
-            :options="field.options"
-            :max-length="field.maxLength"
-            :autocomplete="field.autocomplete"
-            :on-remove="field.onRemove"
-            :can-remove="field.canRemove"
-            :remove-label="field.removeLabel"
-            @action="handleAction"
-            v-bind="field.attrs"
-            v-model="field.model.value"
-          />
 
           <!-- Default: text/password/number input -->
           <div
@@ -379,7 +355,7 @@ function optLabel(opt: TFoormEntryOptions): string {
           </div>
 
           <!-- Default: paragraph -->
-          <p v-else-if="field.type === 'paragraph'">{{ field.value }}</p>
+          <p v-else-if="field.type === 'paragraph'" v-show="!field.hidden">{{ field.value }}</p>
 
           <!-- Default: select -->
           <div
@@ -474,8 +450,9 @@ function optLabel(opt: TFoormEntryOptions): string {
             class="oo-default-field oo-action-field"
             :class="field.classes"
             v-else-if="field.type === 'action'"
+            v-show="!field.hidden"
           >
-            <button type="button" @click="handleAction(field.altAction!)">
+            <button type="button" @click="field.altAction && handleAction(field.altAction)">
               {{ field.label }}
             </button>
           </div>

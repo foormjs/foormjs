@@ -266,7 +266,7 @@ export const annotations: TAnnotationsTree = {
       argument: {
         name: 'fn',
         type: 'string',
-        description: 'JS function string: (value, data, context) => boolean | string',
+        description: 'JS function string: (value, data, context, entry) => boolean | string',
       },
       validate(token, args) {
         if (args[0]) {

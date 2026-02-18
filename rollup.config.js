@@ -27,7 +27,7 @@ const dyeModifiers = [
 ]
 const dyeColors = ['red', 'green', 'cyan', 'blue', 'yellow', 'white', 'magenta', 'black']
 
-const external = ['url', 'crypto', 'stream', 'packages/*/src', 'http', 'path']
+const external = ['url', 'crypto', 'stream', 'http', 'path', /^packages\/[^/]+\/src/]
 
 const replacePlugin = replace({
   values: {
