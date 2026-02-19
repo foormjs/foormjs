@@ -41,6 +41,12 @@ export interface TFoormFieldEvaluated {
 /** An option for select/radio fields — either a plain string or a `{ key, label }` pair. */
 export type TFoormEntryOptions = { key: string; label: string } | string
 
+/** Alt-action metadata — the action id and display label. */
+export interface TFoormAltAction {
+  id: string
+  label: string
+}
+
 /**
  * A single form field definition — thin pointer to the ATScript prop.
  *

@@ -40,7 +40,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: 'index',
+      formats: ['es', 'cjs'],
       fileName: 'index',
     },
     rollupOptions: {
@@ -51,11 +51,6 @@ export default defineConfig({
         '@atscript/core',
         '@atscript/typescript',
       ],
-      output: {
-        globals: {
-          vue: 'Vue',
-        },
-      },
     },
   },
   resolve: {

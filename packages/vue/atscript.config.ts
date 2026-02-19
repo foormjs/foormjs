@@ -7,7 +7,13 @@ export default defineConfig({
   plugins: [
     ts(),
     foormPlugin({
-      components: ['CustomInput', 'DatePicker', 'RichTextEditor'],
+      components: [
+        'CustomInput',
+        'DatePicker',
+        'RichTextEditor',
+        'CustomParagraph',
+        'CustomActionButton',
+      ],
     }),
   ],
 })

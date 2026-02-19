@@ -18,6 +18,7 @@ export default defineConfig({
     lib: {
       entry: resolve(import.meta.dirname, 'src/index.ts'),
       name: 'FoormjsComposables',
+      formats: ['es', 'cjs', 'umd'],
       fileName: 'index',
     },
     rollupOptions: {

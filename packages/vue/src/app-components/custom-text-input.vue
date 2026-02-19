@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useId } from 'vue'
 import type { TFoormComponentProps } from '../components/types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -7,6 +8,11 @@ defineProps<TFoormComponentProps<string, any, any>>()
 defineEmits<{
   (e: 'update:modelValue', value: string): void
 }>()
+
+const id = useId()
+const inputId = `ct-input-${id}`
+const errorId = `ct-input-${id}-err`
+const descId = `ct-input-${id}-desc`
 </script>
 
 <template>
@@ -16,19 +22,20 @@ defineEmits<{
     v-show="!hidden"
   >
     <div class="ct-header">
-      <label v-if="label" class="ct-label">
+      <label v-if="label" class="ct-label" :for="inputId">
         {{ label }}
-        <span v-if="required" class="ct-required">*</span>
+        <span v-if="required" class="ct-required" aria-hidden="true">*</span>
       </label>
       <button
         v-if="onRemove"
         type="button"
         class="ct-remove"
         :disabled="!canRemove"
-        @click="onRemove"
+        :aria-label="removeLabel || 'Remove item'"
         :title="removeLabel || 'Remove'"
+        @click="onRemove"
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path
             d="M5.5 2h3M2 3.5h10M11 3.5l-.5 7.5a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 11L3 3.5M5.5 6v3.5M8.5 6v3.5"
             stroke="currentColor"
@@ -39,8 +46,9 @@ defineEmits<{
         </svg>
       </button>
     </div>
-    <span v-if="description" class="ct-description">{{ description }}</span>
+    <span v-if="description" :id="descId" class="ct-description">{{ description }}</span>
     <input
+      :id="inputId"
       class="ct-input"
       :value="model.value"
       @input="model.value = ($event.target as HTMLInputElement).value"
@@ -52,9 +60,17 @@ defineEmits<{
       :disabled="disabled"
       :readonly="readonly"
       :maxlength="maxLength"
+      :aria-required="required || undefined"
+      :aria-invalid="!!error || undefined"
+      :aria-describedby="error || hint ? errorId : description ? descId : undefined"
     />
     <div class="ct-footer" v-if="error || hint">
-      <span :class="error ? 'ct-error' : 'ct-hint'">{{ error || hint }}</span>
+      <span
+        :id="errorId"
+        :class="error ? 'ct-error' : 'ct-hint'"
+        :role="error ? 'alert' : undefined"
+        >{{ error || hint }}</span
+      >
     </div>
   </div>
 </template>

@@ -268,7 +268,7 @@ Foorm provides special primitive types for non-data UI elements:
 
 ```
 @meta.label 'Reset Password'
-@foorm.altAction 'reset-password'
+@foorm.altAction 'reset-password', 'Reset Password'
 resetBtn: foorm.action
 
 @foorm.value 'Please fill out the form below.'

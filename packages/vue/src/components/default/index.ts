@@ -1,0 +1,6 @@
+export { default as OoInput } from './oo-input.vue'
+export { default as OoSelect } from './oo-select.vue'
+export { default as OoRadio } from './oo-radio.vue'
+export { default as OoCheckbox } from './oo-checkbox.vue'
+export { default as OoParagraph } from './oo-paragraph.vue'
+export { default as OoAction } from './oo-action.vue'

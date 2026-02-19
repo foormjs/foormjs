@@ -169,13 +169,21 @@ export const annotations: TAnnotationsTree = {
     }),
 
     altAction: new AnnotationSpec({
-      description: 'Alternate submit action name for this field',
+      description: 'Alternate action for this field',
       nodeType: ['prop'],
-      argument: {
-        name: 'action',
-        type: 'string',
-        description: 'The action name emitted on submit',
-      },
+      argument: [
+        {
+          name: 'id',
+          type: 'string',
+          description: 'The action name emitted on trigger',
+        },
+        {
+          name: 'label',
+          type: 'string',
+          optional: true,
+          description: 'Display label for the action (falls back to @meta.label)',
+        },
+      ],
     }),
 
     value: new AnnotationSpec({

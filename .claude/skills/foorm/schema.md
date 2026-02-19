@@ -60,7 +60,7 @@ export interface RegistrationForm {
 | `@foorm.hidden`                  | Hide the field                                            |
 | `@foorm.disabled`                | Disable the field                                         |
 | `@foorm.readonly`                | Read-only mode                                            |
-| `@foorm.altAction 'action-name'` | Alternate action for action buttons                       |
+| `@foorm.altAction 'id', 'label'` | Alternate action (id required, label optional)            |
 
 ### Computed Properties (`@foorm.fn.*`)
 
@@ -185,8 +185,7 @@ They only appear in the rendered field list for UI purposes.
 
 ```
 // Action button
-@meta.label 'Reset Password'
-@foorm.altAction 'reset-password'
+@foorm.altAction 'reset-password', 'Reset Password'
 resetBtn: foorm.action
 
 // Informational text

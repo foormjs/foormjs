@@ -32,7 +32,7 @@ declare global {
     'foorm.type': string
     'foorm.component': string
     'foorm.autocomplete': string
-    'foorm.altAction': string
+    'foorm.altAction': { id: string; label?: string }
     'foorm.value': string
     'foorm.order': number
     'foorm.hidden': boolean

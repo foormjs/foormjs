@@ -14,8 +14,14 @@ export interface Props<TF, TC> {
   firstValidation?: TFoormState<TF, TC>['firstValidation']
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components?: Record<string, Component<TFoormComponentProps<any, TF, TC>>>
+  /**
+   * Type-to-component map for field rendering. Must include at least a `text` entry.
+   *
+   * Import and pass the built-in defaults (`OoDefaultInput`, `OoDefaultSelect`,
+   * `OoDefaultRadio`, `OoDefaultCheckbox`) or supply your own components.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  types?: Record<string, Component<TFoormComponentProps<any, TF, TC>>>
+  types: Record<string, Component<TFoormComponentProps<any, TF, TC>>>
   groupComponent?: Component
   errors?: Record<string, string | undefined>
 }

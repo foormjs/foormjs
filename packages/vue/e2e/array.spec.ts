@@ -419,3 +419,107 @@ test.describe('Union Array — Contacts', () => {
     await expect(contactsSection.locator(ITEM).first().locator(SCALAR_INPUT)).toBeVisible()
   })
 })
+
+// ── Context-Driven Select (Category) ──────────────────────────────
+
+test.describe('Context-Driven Select — Category', () => {
+  test('renders select with label', async ({ page }) => {
+    const form = getForm(page)
+    await expect(form.locator('label').filter({ hasText: 'Category' })).toBeVisible()
+    await expect(form.locator('select[name="category"]')).toBeAttached()
+  })
+
+  test('populates options from context', async ({ page }) => {
+    const form = getForm(page)
+    const select = form.locator('select[name="category"]')
+
+    // Options in the native select (excluding disabled placeholder)
+    const enabledOptions = select.locator('option:not([disabled])')
+    const count = await enabledOptions.count()
+
+    // categoryOptions are randomly picked: 3–7 items from the pool
+    expect(count).toBeGreaterThanOrEqual(3)
+    expect(count).toBeLessThanOrEqual(7)
+  })
+
+  test('options come from the known category pool', async ({ page }) => {
+    const form = getForm(page)
+    const select = form.locator('select[name="category"]')
+    const knownKeys = [
+      'frontend',
+      'backend',
+      'devops',
+      'design',
+      'mobile',
+      'data',
+      'security',
+      'qa',
+      'ml',
+      'infra',
+    ]
+
+    const enabledOptions = select.locator('option:not([disabled])')
+    const count = await enabledOptions.count()
+    for (let i = 0; i < count; i++) {
+      const value = await enabledOptions.nth(i).getAttribute('value')
+      expect(knownKeys).toContain(value)
+    }
+  })
+})
+
+// ── Custom Select Component (4th form — ArrayFormCustom) ──────────
+
+test.describe('Custom Select Component — Category', () => {
+  /** The custom array form is the fourth form on the page. */
+  function getCustomForm(page: Page): Locator {
+    return page.locator('form').nth(3)
+  }
+
+  test('renders custom dropdown trigger', async ({ page }) => {
+    const form = getCustomForm(page)
+    await form.waitFor()
+    const trigger = form.locator('[role="combobox"]')
+    await expect(trigger).toBeVisible()
+  })
+
+  test('can select an option via custom dropdown', async ({ page }) => {
+    const form = getCustomForm(page)
+    await form.waitFor()
+
+    // Open the custom dropdown
+    const trigger = form.locator('[role="combobox"]')
+    await trigger.click()
+
+    // Dropdown should appear with options
+    const dropdown = form.locator('[role="listbox"]')
+    await expect(dropdown).toBeVisible()
+
+    const options = dropdown.locator('[role="option"]')
+    const count = await options.count()
+    expect(count).toBeGreaterThanOrEqual(3)
+
+    // Click the first option
+    const firstOptionText = await options.first().locator('span').textContent()
+    await options.first().click()
+
+    // Dropdown should close and trigger should show the selected label
+    await expect(dropdown).not.toBeVisible()
+    await expect(trigger.locator('.ct-select-value')).toHaveText(firstOptionText!)
+  })
+
+  test('selected option shows checkmark', async ({ page }) => {
+    const form = getCustomForm(page)
+    await form.waitFor()
+
+    // Open and select first option
+    const trigger = form.locator('[role="combobox"]')
+    await trigger.click()
+    const dropdown = form.locator('[role="listbox"]')
+    await dropdown.locator('[role="option"]').first().click()
+
+    // Re-open dropdown
+    await trigger.click()
+    const selected = dropdown.locator('[role="option"][aria-selected="true"]')
+    await expect(selected).toHaveCount(1)
+  })
+})

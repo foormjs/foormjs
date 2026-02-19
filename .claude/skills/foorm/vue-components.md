@@ -119,32 +119,33 @@ import type { TFoormComponentProps } from '@foormjs/vue'
 const props = defineProps<TFoormComponentProps<string, any, any>>()
 ```
 
-| Prop           | Type                      | Description                                        |
-| -------------- | ------------------------- | -------------------------------------------------- |
-| `model`        | `{ value: V }`            | Reactive model — bind with `v-model="model.value"` |
-| `onBlur`       | `(e: FocusEvent) => void` | Triggers validation on blur                        |
-| `error`        | `string?`                 | Validation error message                           |
-| `label`        | `string?`                 | Resolved label                                     |
-| `description`  | `string?`                 | Resolved description                               |
-| `hint`         | `string?`                 | Hint text                                          |
-| `placeholder`  | `string?`                 | Placeholder                                        |
-| `disabled`     | `boolean?`                | Disabled state                                     |
-| `hidden`       | `boolean?`                | Hidden state                                       |
-| `readonly`     | `boolean?`                | Read-only state                                    |
-| `optional`     | `boolean?`                | Whether optional                                   |
-| `required`     | `boolean?`                | Whether required                                   |
-| `type`         | `string`                  | Field input type                                   |
-| `options`      | `TFoormEntryOptions[]?`   | Select/radio options                               |
-| `maxLength`    | `number?`                 | Max length constraint                              |
-| `autocomplete` | `string?`                 | HTML autocomplete value                            |
-| `altAction`    | `string?`                 | Alternate action name                              |
-| `name`         | `string?`                 | Field name                                         |
-| `field`        | `FoormFieldDef?`          | Full field definition                              |
-| `formData`     | `TFormData`               | Full form data                                     |
-| `formContext`  | `TFormContext?`           | External context                                   |
-| `onRemove`     | `() => void?`             | Callback to remove this item from its parent array |
-| `canRemove`    | `boolean?`                | Whether removal is allowed (respects minLength)    |
-| `removeLabel`  | `string?`                 | Label for the remove button                        |
+| Prop           | Type                      | Description                                                |
+| -------------- | ------------------------- | ---------------------------------------------------------- |
+| `model`        | `{ value: V }`            | Reactive model — bind with `v-model="model.value"`         |
+| `value`        | `unknown?`                | Phantom display value (`@foorm.value` / `@foorm.fn.value`) |
+| `onBlur`       | `(e: FocusEvent) => void` | Triggers validation on blur                                |
+| `error`        | `string?`                 | Validation error message                                   |
+| `label`        | `string?`                 | Resolved label                                             |
+| `description`  | `string?`                 | Resolved description                                       |
+| `hint`         | `string?`                 | Hint text                                                  |
+| `placeholder`  | `string?`                 | Placeholder                                                |
+| `disabled`     | `boolean?`                | Disabled state                                             |
+| `hidden`       | `boolean?`                | Hidden state                                               |
+| `readonly`     | `boolean?`                | Read-only state                                            |
+| `optional`     | `boolean?`                | Whether optional                                           |
+| `required`     | `boolean?`                | Whether required                                           |
+| `type`         | `string`                  | Field input type                                           |
+| `options`      | `TFoormEntryOptions[]?`   | Select/radio options                                       |
+| `maxLength`    | `number?`                 | Max length constraint                                      |
+| `autocomplete` | `string?`                 | HTML autocomplete value                                    |
+| `altAction`    | `TFoormAltAction?`        | Alternate action `{ id, label }` from `@foorm.altAction`   |
+| `name`         | `string?`                 | Field name                                                 |
+| `field`        | `FoormFieldDef?`          | Full field definition                                      |
+| `formData`     | `TFormData`               | Full form data                                             |
+| `formContext`  | `TFormContext?`           | External context                                           |
+| `onRemove`     | `() => void?`             | Callback to remove this item from its parent array         |
+| `canRemove`    | `boolean?`                | Whether removal is allowed (respects minLength)            |
+| `removeLabel`  | `string?`                 | Label for the remove button                                |
 
 ### Example: Text Input Component
 
@@ -211,6 +212,8 @@ function optLabel(opt: TFoormEntryOptions) {
 
 ### Example: Action Button Component
 
+Action components emit `('action', name)` to trigger the form's action handler. The `altAction` prop is an object `{ id, label }` from `@foorm.altAction`.
+
 ```vue
 <script setup lang="ts">
 import type { TFoormComponentProps } from '@foormjs/vue'
@@ -220,9 +223,32 @@ const emit = defineEmits<{ (e: 'action', name: string): void }>()
 </script>
 
 <template>
-  <button type="button" @click="emit('action', altAction!)">
-    {{ label }}
+  <button
+    v-show="!hidden"
+    type="button"
+    :disabled="disabled"
+    :class="props.class"
+    :style="props.style"
+    @click="altAction && emit('action', altAction.id)"
+  >
+    {{ altAction?.label }}
   </button>
+</template>
+```
+
+### Example: Paragraph Component
+
+Paragraph components display static or computed text via the `value` prop (resolved from `@foorm.value` / `@foorm.fn.value`). They are phantom fields — no data entry, no validation.
+
+```vue
+<script setup lang="ts">
+import type { TFoormComponentProps } from '@foormjs/vue'
+
+defineProps<TFoormComponentProps<never, any, any>>()
+</script>
+
+<template>
+  <p v-show="!hidden" :class="props.class" :style="props.style">{{ value }}</p>
 </template>
 ```
 
@@ -234,6 +260,8 @@ import { OoForm, useFoorm } from '@foormjs/vue'
 import { MyForm } from './forms/my-form.as'
 import MyTextInput from './components/MyTextInput.vue'
 import MySelect from './components/MySelect.vue'
+import MyActionButton from './components/MyActionButton.vue'
+import MyParagraph from './components/MyParagraph.vue'
 import StarRating from './components/StarRating.vue'
 
 const { def, formData } = useFoorm(MyForm)
@@ -243,6 +271,8 @@ const typeComponents = {
   text: MyTextInput,
   password: MyTextInput,
   select: MySelect,
+  action: MyActionButton,
+  paragraph: MyParagraph,
 }
 
 // By @foorm.component name

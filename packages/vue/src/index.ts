@@ -12,7 +12,9 @@ export { default as OoField } from './components/oo-field.vue'
 export { default as OoForm } from './components/oo-form.vue'
 export { default as OoGroup } from './components/oo-group.vue'
 export { default as OoArray } from './components/oo-array.vue'
+export { OoInput, OoSelect, OoRadio, OoCheckbox, OoParagraph, OoAction } from './components/default'
 export type {
+  TFoormBaseComponentProps,
   TFoormComponentProps,
   TFoormAddComponentProps,
   TFoormVariantComponentProps,

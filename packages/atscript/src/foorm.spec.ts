@@ -950,7 +950,7 @@ describe('supportsAltAction', () => {
     const type = makeType({
       props: {
         save: {
-          metadata: { 'foorm.altAction': 'save-draft' },
+          metadata: { 'foorm.altAction': { id: 'save-draft' } },
           tags: ['action'],
           designType: 'phantom',
         },

@@ -1,10 +1,10 @@
 <script setup lang="ts" generic="TFormData = any, TFormContext = any">
 import type { FoormArrayFieldDef, FoormArrayVariant, FoormDef } from '@foormjs/atscript'
 import { getFieldMeta, createItemData, detectVariant, getByPath } from '@foormjs/atscript'
-import { computed, inject, reactive, watch, type Component, type ComputedRef } from 'vue'
+import { computed, reactive, watch, type Component } from 'vue'
 // eslint-disable-next-line import/no-cycle -- OoArray ↔ OoGroup recursive component pattern
 import OoGroup from './oo-group.vue'
-import { useRootFormData } from '../composables/use-root-form-data'
+import { useFoormContext } from '../composables/use-foorm-context'
 
 export interface OoArrayProps {
   field: FoormArrayFieldDef
@@ -21,11 +21,7 @@ export interface OoArrayProps {
 const props = defineProps<OoArrayProps>()
 
 // ── Root data + path prefix ──────────────────────────────────
-const rootFormData = useRootFormData<TFormData, TFormContext>()
-const pathPrefix = inject<ComputedRef<string>>(
-  '__foorm_path_prefix',
-  computed(() => '')
-)
+const { rootFormData, pathPrefix } = useFoormContext<TFormData, TFormContext>('OoArray')
 
 // ── Array value reference ───────────────────────────────────
 // pathPrefix already includes the array field's path (e.g. 'addresses')

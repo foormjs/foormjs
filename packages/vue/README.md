@@ -174,32 +174,33 @@ const emit = defineEmits<{ (e: 'action', name: string): void }>()
 
 Key props available to your component:
 
-| Prop           | Type                      | Description                                        |
-| -------------- | ------------------------- | -------------------------------------------------- |
-| `model`        | `{ value: V }`            | Reactive model — bind with `v-model="model.value"` |
-| `onBlur`       | `(e: FocusEvent) => void` | Triggers validation on blur                        |
-| `error`        | `string?`                 | Validation error message                           |
-| `label`        | `string?`                 | Resolved field label                               |
-| `description`  | `string?`                 | Resolved field description                         |
-| `hint`         | `string?`                 | Resolved hint text                                 |
-| `placeholder`  | `string?`                 | Resolved placeholder                               |
-| `disabled`     | `boolean?`                | Whether the field is disabled                      |
-| `hidden`       | `boolean?`                | Whether the field is hidden                        |
-| `readonly`     | `boolean?`                | Whether the field is read-only                     |
-| `optional`     | `boolean?`                | Whether the field is optional                      |
-| `required`     | `boolean?`                | Whether the field is required                      |
-| `type`         | `string`                  | The field input type                               |
-| `altAction`    | `string?`                 | Alternate action name from `@foorm.altAction`      |
-| `options`      | `TFoormEntryOptions[]?`   | Options for select/radio fields                    |
-| `formData`     | `TFormData`               | The full reactive form data                        |
-| `formContext`  | `TFormContext?`           | External context passed to the form                |
-| `name`         | `string?`                 | Field name                                         |
-| `maxLength`    | `number?`                 | Max length constraint                              |
-| `autocomplete` | `string?`                 | HTML autocomplete value                            |
-| `field`        | `FoormFieldDef?`          | Full field definition for advanced use             |
-| `onRemove`     | `() => void?`             | Callback to remove this item from its parent array |
-| `canRemove`    | `boolean?`                | Whether removal is allowed (respects minLength)    |
-| `removeLabel`  | `string?`                 | Label for the remove button                        |
+| Prop           | Type                      | Description                                                |
+| -------------- | ------------------------- | ---------------------------------------------------------- |
+| `model`        | `{ value: V }`            | Reactive model — bind with `v-model="model.value"`         |
+| `value`        | `unknown?`                | Phantom display value (`@foorm.value` / `@foorm.fn.value`) |
+| `onBlur`       | `(e: FocusEvent) => void` | Triggers validation on blur                                |
+| `error`        | `string?`                 | Validation error message                                   |
+| `label`        | `string?`                 | Resolved field label                                       |
+| `description`  | `string?`                 | Resolved field description                                 |
+| `hint`         | `string?`                 | Resolved hint text                                         |
+| `placeholder`  | `string?`                 | Resolved placeholder                                       |
+| `disabled`     | `boolean?`                | Whether the field is disabled                              |
+| `hidden`       | `boolean?`                | Whether the field is hidden                                |
+| `readonly`     | `boolean?`                | Whether the field is read-only                             |
+| `optional`     | `boolean?`                | Whether the field is optional                              |
+| `required`     | `boolean?`                | Whether the field is required                              |
+| `type`         | `string`                  | The field input type                                       |
+| `altAction`    | `TFoormAltAction?`        | Alternate action `{ id, label }` from `@foorm.altAction`   |
+| `options`      | `TFoormEntryOptions[]?`   | Options for select/radio fields                            |
+| `formData`     | `TFormData`               | The full reactive form data                                |
+| `formContext`  | `TFormContext?`           | External context passed to the form                        |
+| `name`         | `string?`                 | Field name                                                 |
+| `maxLength`    | `number?`                 | Max length constraint                                      |
+| `autocomplete` | `string?`                 | HTML autocomplete value                                    |
+| `field`        | `FoormFieldDef?`          | Full field definition for advanced use                     |
+| `onRemove`     | `() => void?`             | Callback to remove this item from its parent array         |
+| `canRemove`    | `boolean?`                | Whether removal is allowed (respects minLength)            |
+| `removeLabel`  | `string?`                 | Label for the remove button                                |
 
 ### Arrays
 
@@ -357,7 +358,7 @@ Define alternate submit actions using the `foorm.action` primitive:
 
 ```
 @meta.label 'Reset Password'
-@foorm.altAction 'reset-password'
+@foorm.altAction 'reset-password', 'Reset Password'
 resetBtn: foorm.action
 ```
 
@@ -375,6 +376,38 @@ function onAction(name: string, data: any) {
   }
 }
 </script>
+```
+
+### Paragraphs
+
+Display static or computed text using the `foorm.paragraph` primitive:
+
+```
+@foorm.value 'Please fill out all required fields.'
+info: foorm.paragraph
+
+@foorm.fn.value '(v, data) => "Hello, " + (data.firstName || "guest") + "!"'
+greeting: foorm.paragraph
+```
+
+Paragraphs are phantom fields — they are excluded from form data, validation, and TypeScript types. They only exist for display purposes.
+
+To customize paragraph rendering, register a component via the `types` prop:
+
+```vue
+<script setup lang="ts">
+import type { TFoormComponentProps } from '@foormjs/vue'
+
+defineProps<TFoormComponentProps<never, any, any>>()
+</script>
+
+<template>
+  <p v-show="!hidden" :class="class" :style="style">{{ value }}</p>
+</template>
+```
+
+```vue
+<OoForm :def="def" :form-data="formData" :types="{ paragraph: MyParagraph }" @submit="onSubmit" />
 ```
 
 ## API Reference
@@ -478,7 +511,7 @@ Renderless field wrapper (used internally by `OoForm`, can also be used standalo
 | `canRemove`   | `boolean?`      | Whether removal is allowed (respects minLength)                |
 | `removeLabel` | `string?`       | Label for the remove button (from `@foorm.array.remove.label`) |
 
-**Default Slot Bindings:** All `TFoormComponentProps` fields plus `classes`, `styles`, `value` (phantom), `vName`, `attrs`.
+**Default Slot Bindings:** All `TFoormComponentProps` fields plus `classes`, `styles`, `vName`, `attrs`.
 
 ### `TFoormComponentProps`
 

@@ -1,6 +1,10 @@
 @foorm.title 'Array Examples'
 @foorm.submit.text 'Save'
 export interface ArrayForm {
+    @foorm.value 'Manage your project arrays below.'
+    @foorm.order 0
+    instructions: foorm.paragraph
+
     @meta.label 'Name'
     @meta.placeholder 'Project name'
     @foorm.type 'text'
@@ -86,6 +90,24 @@ export interface ArrayForm {
         @foorm.type 'text'
         phone?: string
     } | string)[]
+
+    // ── Select with context-driven options ────────────────
+    @meta.label 'Category'
+    @meta.placeholder 'Pick a category'
+    @foorm.fn.options '(v, data, context) => context.categoryOptions || []'
+    @foorm.order 7
+    category?: foorm.select
+
+    // ── Computed paragraph ────────────────────────────────
+    @foorm.fn.value '(v, data) => data.name ? "Project: " + data.name + " (" + (data.tags || []).length + " tags, " + (data.addresses || []).length + " addresses)" : "Enter a project name to see a summary."'
+    @foorm.order 8
+    summary: foorm.paragraph
+
+    // ── Action button ─────────────────────────────────────
+    @meta.label 'Clear All Arrays'
+    @foorm.altAction 'clear-arrays'
+    @foorm.order 9
+    clearAction: foorm.action
 }
 
 
@@ -96,4 +118,13 @@ export annotate ArrayForm as ArrayFormCustom {
 
     @foorm.array.variant.component 'CustomVariantPicker'
     contacts
+
+    @foorm.component 'CustomParagraph'
+    instructions
+
+    @foorm.component 'CustomParagraph'
+    summary
+
+    @foorm.component 'CustomActionButton'
+    clearAction
 }

@@ -129,8 +129,7 @@ export interface E2eTestForm {
     @meta.placeholder 'Enter username'
     @foorm.type 'text'
     @foorm.attr 'data-testid', 'username-input'
-    @foorm.attr 'aria-label', 'Username field'
-    @foorm.attr 'maxlength', '50'
+    @foorm.attr 'data-field-type', 'username'
     @foorm.order 16
     username?: string
 
@@ -139,7 +138,7 @@ export interface E2eTestForm {
     @meta.placeholder '+1 (555) 123-4567'
     @foorm.type 'text'
     @foorm.fn.attr 'data-valid', '(v) => v && v.length >= 10 ? "true" : "false"'
-    @foorm.fn.attr 'aria-invalid', '(v) => !v || v.length < 10 ? "true" : "false"'
+    @foorm.fn.attr 'data-length', '(v) => v ? String(v.length) : "0"'
     @foorm.order 17
     phone?: string
 

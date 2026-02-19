@@ -1,7 +1,11 @@
 <script setup lang="ts" generic="TFormData = any, TFormContext = any">
-import { useFoormField, type TFoormState } from '@foormjs/composables'
-import { Validator } from '@atscript/typescript/utils'
-import type { FoormFieldDef, TFoormFieldEvaluated, TFoormFnScope } from '@foormjs/atscript'
+import { useFoormField } from '@foormjs/composables'
+import type {
+  FoormFieldDef,
+  TFoormAltAction,
+  TFoormFieldEvaluated,
+  TFoormFnScope,
+} from '@foormjs/atscript'
 import {
   resolveFieldProp,
   resolveOptions,
@@ -9,10 +13,10 @@ import {
   getFieldMeta,
   getByPath,
   setByPath,
-  foormValidatorPlugin,
 } from '@foormjs/atscript'
-import { computed, inject, isRef, watch, type ComputedRef } from 'vue'
-import { useRootFormData } from '../composables/use-root-form-data'
+import { computed, isRef, watch, type ComputedRef } from 'vue'
+import { useFoormContext } from '../composables/use-foorm-context'
+import { useFoormValidator } from '../composables/use-foorm-validator'
 
 const props = defineProps<{
   field: FoormFieldDef
@@ -41,7 +45,7 @@ defineSlots<{
     hidden: boolean
     readonly: boolean
     type: string
-    altAction: string | undefined
+    altAction: TFoormAltAction | undefined
     component: string | undefined
     vName: string
     field: FoormFieldDef
@@ -56,26 +60,11 @@ defineSlots<{
   }): unknown
 }>()
 
-const _foormState = inject<ComputedRef<TFoormState<TFormData, TFormContext>>>('__foorm_form')
-if (!_foormState) {
-  throw new Error('OoField must be used inside an OoForm component')
-}
-const foormState = _foormState
-
-// Root form data (always root — never overridden)
-const rootFormData = useRootFormData<TFormData, TFormContext>()
-
-// Path prefix from parent OoGroup
-const pathPrefix = inject<ComputedRef<string>>(
-  '__foorm_path_prefix',
-  computed(() => '')
-)
-
-// Absolute path: prefix + field.path (or just prefix when field.path is undefined = root)
-const absolutePath = computed<string | undefined>(() => {
-  if (props.field.path === undefined) return pathPrefix.value || undefined
-  return pathPrefix.value ? `${pathPrefix.value}.${props.field.path}` : props.field.path
-})
+const { foormState, rootFormData, formContext, joinPath, buildScope } = useFoormContext<
+  TFormData,
+  TFormContext
+>('OoField')
+const absolutePath = joinPath(props.field.path)
 
 // Helper to unwrap value (handles both static and computed)
 const unwrap = <T,>(v: T | ComputedRef<T>): T => (isRef(v) ? v.value : v)
@@ -86,13 +75,16 @@ const prop = props.field.prop
 const autocomplete = getFieldMeta<string>(prop, 'foorm.autocomplete')
 const maxLength = getFieldMeta<number>(prop, 'expect.maxLength')
 const component = getFieldMeta<string>(prop, 'foorm.component')
-const altAction = getFieldMeta<string>(prop, 'foorm.altAction')
+const altActionMeta = getFieldMeta<{ id: string; label?: string }>(prop, 'foorm.altAction')
+const altAction: TFoormAltAction | undefined = altActionMeta
+  ? {
+      id: altActionMeta.id,
+      label: altActionMeta.label ?? getFieldMeta<string>(prop, 'meta.label') ?? props.field.name,
+    }
+  : undefined
 
-// ── Validator factory + caching ─────────────────────────────
-// Plugin + Validator created once per field, reused on every blur.
-// Per-call data/context passed via ATScript external context.
-const validatorPlugin = foormValidatorPlugin()
-let cachedValidator: InstanceType<typeof Validator> | undefined
+// ── Cached validator (created once per field) ────────────────
+const { validate: foormValidate } = useFoormValidator(prop)
 
 // ── Helpers for v-model with absolute path support ──────────
 function getModel() {
@@ -209,14 +201,7 @@ if (props.field.allStatic) {
 
   // Base scope for constraints (no entry)
   // Always uses root form data for fn scopes
-  const baseScope = needsScope
-    ? computed<TFoormFnScope>(() => ({
-        v: getModel(),
-        data: rootFormData(),
-        context: (foormState.value.formContext ?? {}) as Record<string, unknown>,
-        entry: undefined,
-      }))
-    : undefined
+  const baseScope = needsScope ? computed(() => buildScope(getModel())) : undefined
 
   // Safe alias — guaranteed non-null when hasFn.* is true (implies needsScope)
   const bs = baseScope as ComputedRef<TFoormFnScope>
@@ -380,21 +365,10 @@ if (props.field.allStatic) {
 
 // ── Validation rule (shared by both paths) ──────────────────
 function foormRule(v: unknown) {
-  cachedValidator ??= new Validator(prop, { plugins: [validatorPlugin] })
-  const isValid = cachedValidator.validate(
+  return foormValidate(
     v,
-    true,
-    hasCustomValidators
-      ? {
-          data: rootFormData(),
-          context: (foormState.value.formContext ?? {}) as Record<string, unknown>,
-        }
-      : undefined
+    hasCustomValidators ? { data: rootFormData(), context: formContext.value } : undefined
   )
-  if (!isValid) {
-    return cachedValidator.errors?.[0]?.message || 'Invalid value'
-  }
-  return true
 }
 
 // ── Vuiless field composable ────────────────────────────────

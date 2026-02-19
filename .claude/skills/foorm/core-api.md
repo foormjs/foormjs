@@ -30,6 +30,7 @@ import type {
   FoormArrayFieldDef,
   FoormGroupFieldDef,
   FoormArrayVariant,
+  TFoormAltAction,
   TFoormFnScope,
   TFoormFieldEvaluated,
   TFoormEntryOptions,
@@ -102,7 +103,7 @@ Checks if any field supports a given alternate action.
 
 ```ts
 if (supportsAltAction(def, 'reset-password')) {
-  // At least one field has @foorm.altAction 'reset-password'
+  // At least one field has @foorm.altAction 'reset-password', '...'
 }
 ```
 

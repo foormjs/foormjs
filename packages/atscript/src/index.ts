@@ -16,6 +16,7 @@ export type {
   FoormGroupFieldDef,
   FoormArrayVariant,
   TComputed,
+  TFoormAltAction,
   TFoormEntryOptions,
   TFoormFieldEvaluated,
   TFoormFnScope,

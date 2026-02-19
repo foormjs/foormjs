@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useId } from 'vue'
 import type { TFoormComponentProps } from '../components/types'
 
 // Props that match TFoormComponentProps
@@ -9,16 +10,22 @@ defineProps<TFoormComponentProps<string, any, any>>()
 defineEmits<{
   (e: 'update:modelValue', value: string): void
 }>()
+
+const id = useId()
+const inputId = `ct-star-${id}`
+const errorId = `ct-star-${id}-err`
+const descId = `ct-star-${id}-desc`
 </script>
 
 <template>
   <div class="custom-star-input" :class="{ error: !!error }" v-show="!hidden">
-    <label v-if="label">{{ label }}</label>
-    <span v-if="description" class="description">{{ description }}</span>
+    <label v-if="label" :for="inputId">{{ label }}</label>
+    <span v-if="description" :id="descId" class="description">{{ description }}</span>
 
     <div class="input-wrapper">
-      <span class="prefix">⭐</span>
+      <span class="prefix" aria-hidden="true">⭐</span>
       <input
+        :id="inputId"
         :value="model.value"
         @input="model.value = ($event.target as HTMLInputElement).value"
         @blur="onBlur"
@@ -29,11 +36,16 @@ defineEmits<{
         :disabled="disabled"
         :readonly="readonly"
         :maxlength="maxLength"
+        :aria-required="required || undefined"
+        :aria-invalid="!!error || undefined"
+        :aria-describedby="error || hint ? errorId : description ? descId : undefined"
         class="star-input"
       />
     </div>
 
-    <div class="error-hint">{{ error || hint }}</div>
+    <div :id="errorId" class="error-hint" :role="error ? 'alert' : undefined">
+      {{ error || hint }}
+    </div>
   </div>
 </template>
 

@@ -4,8 +4,6 @@ import type {
   FoormFieldDef,
   FoormArrayFieldDef,
   FoormGroupFieldDef,
-  TFoormFnScope,
-  TFoormEntryOptions,
 } from '@foormjs/atscript'
 import {
   isArrayField,
@@ -15,12 +13,11 @@ import {
   resolveFormProp,
   getByPath,
   setByPath,
-  foormValidatorPlugin,
 } from '@foormjs/atscript'
-import { Validator } from '@atscript/typescript/utils'
 import { computed, inject, provide, type Component, type ComputedRef } from 'vue'
-import { useFoormField, type TFoormState } from '@foormjs/composables'
-import { useRootFormData } from '../composables/use-root-form-data'
+import { useFoormField } from '@foormjs/composables'
+import { useFoormContext } from '../composables/use-foorm-context'
+import { useFoormValidator } from '../composables/use-foorm-validator'
 import OoField from './oo-field.vue'
 // eslint-disable-next-line import/no-cycle -- OoGroup ↔ OoArray recursive component pattern
 import OoArray from './oo-array.vue'
@@ -57,21 +54,14 @@ export interface OoGroupProps<TF, TC> {
 
 const props = defineProps<OoGroupProps<TFormData, TFormContext>>()
 
-// ── Form state (for context access) ─────────────────────────
-const _foormState = inject<ComputedRef<TFoormState<TFormData, TFormContext>>>('__foorm_form')
-if (!_foormState) {
-  throw new Error('OoGroup must be used inside an OoForm component')
-}
-const foormState = _foormState
-
-// ── Root data (for fn scopes and model access) ──────────────
-const rootFormData = useRootFormData<TFormData, TFormContext>()
-
-// ── Path prefix ─────────────────────────────────────────────
-const parentPrefix = inject<ComputedRef<string>>(
-  '__foorm_path_prefix',
-  computed(() => '')
-)
+// ── Foorm context (form state, root data, path prefix) ──────
+const {
+  rootFormData,
+  pathPrefix: parentPrefix,
+  formContext,
+  buildScope,
+  buildPath,
+} = useFoormContext<TFormData, TFormContext>('OoGroup')
 const myPrefix = computed(() => {
   if (props.pathPrefix !== undefined)
     return parentPrefix.value ? `${parentPrefix.value}.${props.pathPrefix}` : props.pathPrefix
@@ -99,23 +89,10 @@ const effectiveDef = computed(() => groupField?.groupDef ?? props.def)
 let selfError: ComputedRef<string | undefined> | undefined
 
 if (props.field && (arrayField || groupField)) {
-  const fieldProp = props.field.prop
-  const validatorPlugin = foormValidatorPlugin()
-  let cachedValidator: InstanceType<typeof Validator> | undefined
+  const { validate: groupValidate } = useFoormValidator(props.field.prop, { rootOnly: true })
 
   function selfValidationRule(v: unknown) {
-    cachedValidator ??= new Validator(fieldProp, { plugins: [validatorPlugin] })
-    const isValid = cachedValidator.validate(v, true, {
-      data: rootFormData(),
-      context: (foormState.value.formContext ?? {}) as Record<string, unknown>,
-    })
-    if (!isValid) {
-      // Only report root-level errors (path === ''); child errors handled by their own fields
-      const rootError = cachedValidator.errors?.find(e => e.path === '')
-      if (rootError) return rootError.message
-      return true
-    }
-    return true
+    return groupValidate(v, { data: rootFormData(), context: formContext.value })
   }
 
   const { error } = useFoormField({
@@ -130,12 +107,7 @@ if (props.field && (arrayField || groupField)) {
 
 // ── Title resolution ───────────────────────────────────────
 const title = computed(() => {
-  const scope: TFoormFnScope = {
-    v: undefined,
-    data: rootFormData(),
-    context: (foormState.value.formContext ?? {}) as Record<string, unknown>,
-    entry: undefined,
-  }
+  const scope = buildScope()
 
   if (props.field) {
     return (
@@ -170,12 +142,6 @@ const passRemoveToFields = computed(
   () => !!props.onRemove && isPrimitiveWrapper.value && !useCustomGroup.value
 )
 
-// ── Absolute path helper for error lookup ───────────────────
-function absoluteFieldPath(f: FoormFieldDef): string | undefined {
-  if (f.path === undefined) return myPrefix.value || undefined
-  return myPrefix.value ? `${myPrefix.value}.${f.path}` : f.path
-}
-
 // ── Sub-field helpers (for field iteration) ─────────────────
 function getGroupDef(f: FoormFieldDef): FoormDef | undefined {
   if (isGroupField(f)) return (f as FoormGroupFieldDef).groupDef
@@ -191,14 +157,6 @@ function fieldHasComponent(f: FoormFieldDef): boolean {
 function resolveFieldComponent(field: { component?: string; type: string }): Component | undefined {
   if (field.component) return props.components?.[field.component]
   return props.types?.[field.type]
-}
-
-function optKey(opt: TFoormEntryOptions): string {
-  return typeof opt === 'string' ? opt : opt.key
-}
-
-function optLabel(opt: TFoormEntryOptions): string {
-  return typeof opt === 'string' ? opt : opt.label
 }
 </script>
 
@@ -231,6 +189,7 @@ function optLabel(opt: TFoormEntryOptions): string {
         type="button"
         class="oo-group-remove-btn"
         :disabled="!canRemove"
+        :aria-label="removeLabel || 'Remove item'"
         @click="onRemove"
       >
         {{ removeLabel || 'Remove' }}
@@ -238,7 +197,7 @@ function optLabel(opt: TFoormEntryOptions): string {
     </div>
 
     <!-- Group-level error (only when NOT using custom group; custom group receives it as prop) -->
-    <div v-if="!useCustomGroup && selfError && !arrayField" class="oo-group-error">
+    <div v-if="!useCustomGroup && selfError && !arrayField" class="oo-group-error" role="alert">
       {{ selfError }}
     </div>
 
@@ -278,19 +237,20 @@ function optLabel(opt: TFoormEntryOptions): string {
           :can-remove="passRemoveToFields ? canRemove : undefined"
           :remove-label="passRemoveToFields ? removeLabel : undefined"
           v-slot="field"
-          :error="errors?.[absoluteFieldPath(f)!]"
+          :error="errors?.[buildPath(f.path)!]"
         >
-          <!-- Custom component: named (@foorm.component) or type-based (types prop) -->
+          <!-- Field component: named (@foorm.component) or type-based (types prop) -->
           <component
             v-if="resolveFieldComponent(field)"
             :is="resolveFieldComponent(field)!"
             :on-blur="field.onBlur"
             :error="field.error"
             :model="field.model"
+            :value="field.value"
             :form-data="field.formData"
             :form-context="field.formContext"
-            :label="field.label"
-            :description="field.description"
+            :label="!isPrimitiveWrapper || field.component ? field.label : undefined"
+            :description="!isPrimitiveWrapper || field.component ? field.description : undefined"
             :hint="field.hint"
             :placeholder="field.placeholder"
             :class="field.classes"
@@ -299,6 +259,7 @@ function optLabel(opt: TFoormEntryOptions): string {
             :required="field.required"
             :disabled="field.disabled"
             :hidden="field.hidden"
+            :readonly="field.readonly"
             :type="field.type"
             :alt-action="field.altAction"
             :name="field.vName"
@@ -314,152 +275,11 @@ function optLabel(opt: TFoormEntryOptions): string {
             v-model="field.model.value"
           />
 
-          <div v-else-if="field.component">
-            [{{ field.label }}] Component "{{ field.component }}" not supplied
-          </div>
-
-          <!-- Default: text/password/number input -->
-          <div
-            class="oo-default-field"
-            :class="field.classes"
-            v-else-if="['text', 'password', 'number'].includes(field.type)"
-            v-show="!field.hidden"
-          >
-            <label v-if="!isPrimitiveWrapper">{{ field.label }}</label>
-            <span v-if="!!field.description && !isPrimitiveWrapper">{{ field.description }}</span>
-            <div class="oo-field-input-row">
-              <input
-                v-model="field.model.value"
-                @blur="field.onBlur"
-                :placeholder="field.placeholder"
-                :autocomplete="field.autocomplete"
-                :name="field.vName"
-                :type="field.type"
-                :disabled="field.disabled"
-                :readonly="field.readonly"
-                v-bind="field.attrs"
-              />
-              <button
-                v-if="field.onRemove"
-                type="button"
-                class="oo-array-inline-remove"
-                :disabled="!field.canRemove"
-                @click="field.onRemove"
-              >
-                {{ field.removeLabel || '\u00d7' }}
-              </button>
-            </div>
-            <div v-if="!isPrimitiveWrapper || field.error" class="oo-error-slot">
-              {{ field.error || field.hint }}
-            </div>
-          </div>
-
-          <!-- Default: paragraph -->
-          <p v-else-if="field.type === 'paragraph'" v-show="!field.hidden">{{ field.value }}</p>
-
-          <!-- Default: select -->
-          <div
-            class="oo-default-field"
-            :class="field.classes"
-            v-else-if="field.type === 'select'"
-            v-show="!field.hidden"
-          >
-            <label v-if="!isPrimitiveWrapper">{{ field.label }}</label>
-            <span v-if="!!field.description && !isPrimitiveWrapper">{{ field.description }}</span>
-            <div class="oo-field-input-row">
-              <select
-                v-model="field.model.value"
-                @blur="field.onBlur"
-                :name="field.vName"
-                :disabled="field.disabled"
-                :readonly="field.readonly"
-                v-bind="field.attrs"
-              >
-                <option v-if="field.placeholder" value="" disabled>{{ field.placeholder }}</option>
-                <option v-for="opt in field.options" :key="optKey(opt)" :value="optKey(opt)">
-                  {{ optLabel(opt) }}
-                </option>
-              </select>
-              <button
-                v-if="field.onRemove"
-                type="button"
-                class="oo-array-inline-remove"
-                :disabled="!field.canRemove"
-                @click="field.onRemove"
-              >
-                {{ field.removeLabel || '\u00d7' }}
-              </button>
-            </div>
-            <div v-if="!isPrimitiveWrapper || field.error" class="oo-error-slot">
-              {{ field.error || field.hint }}
-            </div>
-          </div>
-
-          <!-- Default: radio -->
-          <div
-            class="oo-default-field oo-radio-field"
-            :class="field.classes"
-            v-else-if="field.type === 'radio'"
-            v-show="!field.hidden"
-          >
-            <span class="oo-field-label">{{ field.label }}</span>
-            <span v-if="!!field.description">{{ field.description }}</span>
-            <div class="oo-radio-group">
-              <label v-for="opt in field.options" :key="optKey(opt)">
-                <input
-                  type="radio"
-                  :value="optKey(opt)"
-                  v-model="field.model.value"
-                  @blur="field.onBlur"
-                  :name="field.vName"
-                  :disabled="field.disabled"
-                  :readonly="field.readonly"
-                  v-bind="field.attrs"
-                />
-                {{ optLabel(opt) }}
-              </label>
-            </div>
-            <div class="oo-error-slot">{{ field.error || field.hint }}</div>
-          </div>
-
-          <!-- Default: checkbox -->
-          <div
-            class="oo-default-field oo-checkbox-field"
-            :class="field.classes"
-            v-else-if="field.type === 'checkbox'"
-            v-show="!field.hidden"
-          >
-            <label>
-              <input
-                type="checkbox"
-                v-model="field.model.value"
-                @blur="field.onBlur"
-                :name="field.vName"
-                :disabled="field.disabled"
-                :readonly="field.readonly"
-                v-bind="field.attrs"
-              />
-              {{ field.label }}
-            </label>
-            <span v-if="!!field.description">{{ field.description }}</span>
-            <div class="oo-error-slot">{{ field.error || field.hint }}</div>
-          </div>
-
-          <!-- Default: action button -->
-          <div
-            class="oo-default-field oo-action-field"
-            :class="field.classes"
-            v-else-if="field.type === 'action'"
-            v-show="!field.hidden"
-          >
-            <button type="button" @click="field.altAction && handleAction(field.altAction)">
-              {{ field.label }}
-            </button>
-          </div>
-
-          <!-- Unsupported type fallback -->
+          <!-- No matching component -->
           <div v-else>
-            [{{ field.label }}] Not supported field type "{{ field.type }}" {{ field.component }}
+            [{{ field.label }}] No component for type "{{ field.type }}"{{
+              field.component ? ` (component "${field.component}" not supplied)` : ''
+            }}
           </div>
         </OoField>
       </template>
