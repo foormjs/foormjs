@@ -1,6 +1,6 @@
 ---
 name: atscript
-description: ATScript language and type system. Use when working with .as files, annotations (@meta.*, @expect.*), primitives (string.email, number.int), validators, type traversal, serialization, JSON Schema, ad-hoc annotations, custom annotations (AnnotationSpec), custom primitives, or ATScript plugin development (TAtscriptPlugin).
+description: ATScript language and type system. Use when working with .as files, annotations (@meta.*, @expect.*), primitives (string.email, number.int), validators, type traversal, serialization, JSON Schema, ad-hoc annotations, custom annotations (AnnotationSpec), custom primitives, ATScript plugin development (TAtscriptPlugin), or runtime type internals (TAtscriptAnnotatedType, TAtscriptTypeFinal, TAtscriptTypeObject, TAtscriptTypeArray, forAnnotatedType, flattenAnnotatedType, annotation nodeType targeting).
 ---
 
 # ATScript Skill

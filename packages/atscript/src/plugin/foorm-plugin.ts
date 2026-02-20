@@ -68,7 +68,7 @@ export function foormPlugin(opts?: TFoormPluginOptions): TAtscriptPlugin {
       if (opts.extraTypes?.length) {
         overrides.type = new AnnotationSpec({
           description: 'Field input type',
-          nodeType: ['prop'],
+          nodeType: ['prop', 'type'],
           argument: {
             name: 'type',
             type: 'string',

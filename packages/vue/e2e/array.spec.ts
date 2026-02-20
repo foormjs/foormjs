@@ -1,19 +1,29 @@
 import { test, expect, type Page, type Locator } from '@playwright/test'
 
-/** The array form is the third form on the page. */
+/** With tabs, only one form is visible at a time. */
 function getForm(page: Page): Locator {
-  return page.locator('form').nth(2)
+  return page.locator('form').first()
 }
 
-/** All array items now use .oo-array-item (object and primitive alike). */
-const ITEM = '.oo-array-item'
+/** Primitive array items render as .oo-default-field (text/number inputs). */
+const FIELD_ITEM = '.oo-default-field'
 
-/** Primitive array items render through OoField with name="value". */
-const SCALAR_INPUT = 'input[name="value"]'
+/** Object array items render as .oo-object. */
+const OBJ_ITEM = '.oo-object'
+
+/** Union array items render as .oo-union. */
+const UNION_ITEM = '.oo-union'
+
+/** Scalar variant input inside a union item (use from array/form context). */
+const UNION_SCALAR = '.oo-union > .oo-default-field input'
+
+/** Scalar input (use when already scoped to a .oo-union item). */
+const SCALAR_INPUT = '.oo-default-field input'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
-  await page.locator('form').nth(2).waitFor()
+  await page.getByRole('button', { name: 'Array', exact: true }).click()
+  await page.locator('form').first().waitFor()
 })
 
 // ── Array Form Structure ──────────────────────────────────────────
@@ -21,7 +31,7 @@ test.beforeEach(async ({ page }) => {
 test.describe('Array Form Structure', () => {
   test('renders form title', async ({ page }) => {
     const form = getForm(page)
-    await expect(form.locator('h2')).toHaveText('Array Examples')
+    await expect(form.locator('.oo-form-title')).toHaveText('Array Examples')
   })
 
   test('renders submit button', async ({ page }) => {
@@ -45,7 +55,10 @@ test.describe('Array Form Structure', () => {
 
   test('arrays start empty', async ({ page }) => {
     const form = getForm(page)
-    await expect(form.locator(ITEM)).toHaveCount(0)
+    await expect(form.locator('.oo-array').first().locator(FIELD_ITEM)).toHaveCount(0)
+    await expect(form.locator('.oo-array').nth(1).locator(FIELD_ITEM)).toHaveCount(0)
+    await expect(form.locator('.oo-array').nth(2).locator(OBJ_ITEM)).toHaveCount(0)
+    await expect(form.locator('.oo-array').last().locator(UNION_ITEM)).toHaveCount(0)
   })
 })
 
@@ -57,7 +70,7 @@ test.describe('String Array — Tags', () => {
     await form.getByRole('button', { name: 'Add tag' }).click()
 
     const tagsArray = form.locator('.oo-array').first()
-    const input = tagsArray.locator(SCALAR_INPUT).first()
+    const input = tagsArray.locator(FIELD_ITEM).first().locator('input')
     await expect(input).toBeVisible()
     await expect(input).toHaveAttribute('type', 'text')
   })
@@ -66,8 +79,8 @@ test.describe('String Array — Tags', () => {
     const form = getForm(page)
     await form.getByRole('button', { name: 'Add tag' }).click()
 
-    const item = form.locator('.oo-array').first().locator(ITEM).first()
-    await expect(item.locator(SCALAR_INPUT)).toBeVisible()
+    const item = form.locator('.oo-array').first().locator(FIELD_ITEM).first()
+    await expect(item.locator('input')).toBeVisible()
     await expect(item.locator('.oo-array-inline-remove')).toBeVisible()
   })
 
@@ -80,7 +93,7 @@ test.describe('String Array — Tags', () => {
     await addBtn.click()
 
     const tagsArray = form.locator('.oo-array').first()
-    await expect(tagsArray.locator(ITEM)).toHaveCount(3)
+    await expect(tagsArray.locator(FIELD_ITEM)).toHaveCount(3)
   })
 
   test('can type into scalar inputs', async ({ page }) => {
@@ -90,7 +103,7 @@ test.describe('String Array — Tags', () => {
     await addBtn.click()
     await addBtn.click()
 
-    const inputs = form.locator('.oo-array').first().locator(SCALAR_INPUT)
+    const inputs = form.locator('.oo-array').first().locator(`${FIELD_ITEM} input`)
     await inputs.first().fill('vue')
     await inputs.nth(1).fill('typescript')
 
@@ -105,10 +118,10 @@ test.describe('String Array — Tags', () => {
 
     await addBtn.click()
     await addBtn.click()
-    await expect(tagsArray.locator(ITEM)).toHaveCount(2)
+    await expect(tagsArray.locator(FIELD_ITEM)).toHaveCount(2)
 
     await tagsArray.locator('.oo-array-inline-remove').first().click()
-    await expect(tagsArray.locator(ITEM)).toHaveCount(1)
+    await expect(tagsArray.locator(FIELD_ITEM)).toHaveCount(1)
   })
 
   test('enforces maxLength of 5', async ({ page }) => {
@@ -120,7 +133,7 @@ test.describe('String Array — Tags', () => {
     }
 
     const tagsArray = form.locator('.oo-array').first()
-    await expect(tagsArray.locator(ITEM)).toHaveCount(5)
+    await expect(tagsArray.locator(FIELD_ITEM)).toHaveCount(5)
 
     // Add button should be disabled at maxLength
     await expect(addBtn).toBeDisabled()
@@ -149,7 +162,7 @@ test.describe('Number Array — Scores', () => {
     await form.getByRole('button', { name: 'Add score' }).click()
 
     const scoresArray = form.locator('.oo-array').nth(1)
-    const input = scoresArray.locator(SCALAR_INPUT).first()
+    const input = scoresArray.locator(FIELD_ITEM).first().locator('input')
     await expect(input).toBeVisible()
     await expect(input).toHaveAttribute('type', 'number')
   })
@@ -159,7 +172,7 @@ test.describe('Number Array — Scores', () => {
     await form.getByRole('button', { name: 'Add score' }).click()
 
     const scoresArray = form.locator('.oo-array').nth(1)
-    const input = scoresArray.locator(SCALAR_INPUT).first()
+    const input = scoresArray.locator(FIELD_ITEM).first().locator('input')
     await input.fill('95')
     await expect(input).toHaveValue('95')
   })
@@ -170,7 +183,7 @@ test.describe('Number Array — Scores', () => {
 test.describe('Object Array — Addresses', () => {
   test('renders group title', async ({ page }) => {
     const form = getForm(page)
-    await expect(form.locator('.oo-group-title').filter({ hasText: 'Addresses' })).toBeVisible()
+    await expect(form.locator('.oo-array-title').filter({ hasText: 'Addresses' })).toBeVisible()
   })
 
   test('add creates item with sub-fields', async ({ page }) => {
@@ -178,7 +191,7 @@ test.describe('Object Array — Addresses', () => {
     await form.getByRole('button', { name: 'Add address' }).click()
 
     const addressArray = form.locator('.oo-array').nth(2)
-    const item = addressArray.locator(ITEM).first()
+    const item = addressArray.locator(OBJ_ITEM).first()
     await expect(item).toBeVisible()
 
     await expect(item.locator('input[name="street"]')).toBeVisible()
@@ -191,7 +204,7 @@ test.describe('Object Array — Addresses', () => {
     await form.getByRole('button', { name: 'Add address' }).click()
 
     const addressArray = form.locator('.oo-array').nth(2)
-    const item = addressArray.locator(ITEM).first()
+    const item = addressArray.locator(OBJ_ITEM).first()
 
     await expect(item.locator('input[name="street"]')).toHaveAttribute('placeholder', '123 Main St')
     await expect(item.locator('input[name="city"]')).toHaveAttribute('placeholder', 'New York')
@@ -203,7 +216,7 @@ test.describe('Object Array — Addresses', () => {
     await form.getByRole('button', { name: 'Add address' }).click()
 
     const addressArray = form.locator('.oo-array').nth(2)
-    const item = addressArray.locator(ITEM).first()
+    const item = addressArray.locator(OBJ_ITEM).first()
 
     await expect(item.locator('label').filter({ hasText: 'Street' })).toBeVisible()
     await expect(item.locator('label').filter({ hasText: 'City' })).toBeVisible()
@@ -215,7 +228,7 @@ test.describe('Object Array — Addresses', () => {
     await form.getByRole('button', { name: 'Add address' }).click()
 
     const addressArray = form.locator('.oo-array').nth(2)
-    const item = addressArray.locator(ITEM).first()
+    const item = addressArray.locator(OBJ_ITEM).first()
 
     await item.locator('input[name="street"]').fill('742 Evergreen Terrace')
     await item.locator('input[name="city"]').fill('Springfield')
@@ -234,10 +247,10 @@ test.describe('Object Array — Addresses', () => {
     await addBtn.click()
     await addBtn.click()
 
-    await expect(addressArray.locator(ITEM)).toHaveCount(2)
+    await expect(addressArray.locator(OBJ_ITEM)).toHaveCount(2)
 
-    const firstItem = addressArray.locator(ITEM).first()
-    const secondItem = addressArray.locator(ITEM).nth(1)
+    const firstItem = addressArray.locator(OBJ_ITEM).first()
+    const secondItem = addressArray.locator(OBJ_ITEM).nth(1)
     await firstItem.locator('input[name="street"]').fill('Address 1')
     await secondItem.locator('input[name="street"]').fill('Address 2')
 
@@ -253,17 +266,17 @@ test.describe('Object Array — Addresses', () => {
     await addBtn.click()
     await addBtn.click()
 
-    const firstItem = addressArray.locator(ITEM).first()
-    const secondItem = addressArray.locator(ITEM).nth(1)
+    const firstItem = addressArray.locator(OBJ_ITEM).first()
+    const secondItem = addressArray.locator(OBJ_ITEM).nth(1)
     await firstItem.locator('input[name="street"]').fill('First')
     await secondItem.locator('input[name="street"]').fill('Second')
 
     // Remove the first item (object items have remove in the group header)
-    await addressArray.locator('.oo-group-remove-btn').first().click()
+    await addressArray.locator('.oo-object-remove-btn').first().click()
 
     // Second item should now be first
-    await expect(addressArray.locator(ITEM)).toHaveCount(1)
-    await expect(addressArray.locator(ITEM).first().locator('input[name="street"]')).toHaveValue(
+    await expect(addressArray.locator(OBJ_ITEM)).toHaveCount(1)
+    await expect(addressArray.locator(OBJ_ITEM).first().locator('input[name="street"]')).toHaveValue(
       'Second'
     )
   })
@@ -274,7 +287,7 @@ test.describe('Object Array — Addresses', () => {
 test.describe('Nested Group — Settings', () => {
   test('renders group title', async ({ page }) => {
     const form = getForm(page)
-    await expect(form.locator('.oo-group-title').filter({ hasText: 'Settings' })).toBeVisible()
+    await expect(form.locator('.oo-object-title').filter({ hasText: 'Settings' })).toBeVisible()
   })
 
   test('renders checkbox field', async ({ page }) => {
@@ -305,28 +318,28 @@ test.describe('Nested Group — Settings', () => {
 test.describe('Union Array — Contacts', () => {
   test('renders group title', async ({ page }) => {
     const form = getForm(page)
-    await expect(form.locator('.oo-group-title').filter({ hasText: 'Contacts' })).toBeVisible()
+    await expect(form.locator('.oo-array-title').filter({ hasText: 'Contacts' })).toBeVisible()
   })
 
   test('shows variant picker with two add buttons', async ({ page }) => {
     const form = getForm(page)
     const contactsSection = form.locator('.oo-array').last()
-    const addButtons = contactsSection.locator('.oo-array-variant-picker .oo-array-add-btn')
+    const addButtons = contactsSection.locator('.oo-array-union-picker .oo-array-add-btn')
     await expect(addButtons).toHaveCount(2)
   })
 
   test('add object variant creates item with sub-fields', async ({ page }) => {
     const form = getForm(page)
     const contactsSection = form.locator('.oo-array').last()
-    const addButtons = contactsSection.locator('.oo-array-variant-picker .oo-array-add-btn')
+    const addButtons = contactsSection.locator('.oo-array-union-picker .oo-array-add-btn')
 
     await addButtons.first().click()
 
-    const item = contactsSection.locator(ITEM).first()
+    const item = contactsSection.locator(UNION_ITEM).first()
     await expect(item).toBeVisible()
 
     // Should have variant selector and object sub-fields
-    await expect(item.locator('.oo-array-variant-btns')).toBeVisible()
+    await expect(item.locator('.oo-union-picker')).toBeVisible()
     await expect(item.locator('input[name="fullName"]')).toBeVisible()
     await expect(item.locator('input[name="email"]')).toBeVisible()
     await expect(item.locator('input[name="phone"]')).toBeVisible()
@@ -335,25 +348,25 @@ test.describe('Union Array — Contacts', () => {
   test('add string variant creates scalar input with variant selector', async ({ page }) => {
     const form = getForm(page)
     const contactsSection = form.locator('.oo-array').last()
-    const addButtons = contactsSection.locator('.oo-array-variant-picker .oo-array-add-btn')
+    const addButtons = contactsSection.locator('.oo-array-union-picker .oo-array-add-btn')
 
     await addButtons.nth(1).click()
 
-    const item = contactsSection.locator(ITEM).first()
+    const item = contactsSection.locator(UNION_ITEM).first()
     await expect(item).toBeVisible()
     await expect(item.locator(SCALAR_INPUT)).toBeVisible()
     await expect(item.locator(SCALAR_INPUT)).toHaveAttribute('type', 'text')
-    // Variant selector is still visible so user can switch back
-    await expect(item.locator('.oo-array-variant-btns')).toBeVisible()
+    // Union selector is still visible so user can switch back
+    await expect(item.locator('.oo-union-picker')).toBeVisible()
   })
 
   test('can fill object variant sub-fields', async ({ page }) => {
     const form = getForm(page)
     const contactsSection = form.locator('.oo-array').last()
-    const addButtons = contactsSection.locator('.oo-array-variant-picker .oo-array-add-btn')
+    const addButtons = contactsSection.locator('.oo-array-union-picker .oo-array-add-btn')
     await addButtons.first().click()
 
-    const item = contactsSection.locator(ITEM).first()
+    const item = contactsSection.locator(UNION_ITEM).first()
     await item.locator('input[name="fullName"]').fill('Jane Doe')
     await item.locator('input[name="email"]').fill('jane@example.com')
     await item.locator('input[name="phone"]').fill('+1 555 0123')
@@ -366,34 +379,34 @@ test.describe('Union Array — Contacts', () => {
   test('variant selector switches between object and scalar', async ({ page }) => {
     const form = getForm(page)
     const contactsSection = form.locator('.oo-array').last()
-    const addButtons = contactsSection.locator('.oo-array-variant-picker .oo-array-add-btn')
+    const addButtons = contactsSection.locator('.oo-array-union-picker .oo-array-add-btn')
 
     // Add an object variant item
     await addButtons.first().click()
-    const allItems = contactsSection.locator(ITEM)
+    const allItems = contactsSection.locator(UNION_ITEM)
     await expect(allItems.first().locator('input[name="fullName"]')).toBeVisible()
 
     // Switch to string variant via button click
-    await allItems.first().locator('.oo-array-variant-btn').nth(1).click()
+    await allItems.first().locator('.oo-union-btn').nth(1).click()
     await expect(contactsSection.locator('input[name="fullName"]')).toHaveCount(0)
-    await expect(contactsSection.locator(SCALAR_INPUT)).toBeVisible()
+    await expect(contactsSection.locator(UNION_SCALAR)).toBeVisible()
 
     // Switch back to object variant via button click
-    await contactsSection.locator(ITEM).first().locator('.oo-array-variant-btn').first().click()
+    await contactsSection.locator(UNION_ITEM).first().locator('.oo-union-btn').first().click()
     await expect(contactsSection.locator('input[name="fullName"]')).toBeVisible()
-    await expect(contactsSection.locator(SCALAR_INPUT)).toHaveCount(0)
+    await expect(contactsSection.locator(UNION_SCALAR)).toHaveCount(0)
   })
 
   test('can mix object and scalar items', async ({ page }) => {
     const form = getForm(page)
     const contactsSection = form.locator('.oo-array').last()
-    const addButtons = contactsSection.locator('.oo-array-variant-picker .oo-array-add-btn')
+    const addButtons = contactsSection.locator('.oo-array-union-picker .oo-array-add-btn')
 
     // Add object, then string
     await addButtons.first().click()
     await addButtons.nth(1).click()
 
-    const allItems = contactsSection.locator(ITEM)
+    const allItems = contactsSection.locator(UNION_ITEM)
     await expect(allItems).toHaveCount(2)
 
     // First item should be object (has fullName), second should be scalar
@@ -404,19 +417,19 @@ test.describe('Union Array — Contacts', () => {
   test('remove works for union items', async ({ page }) => {
     const form = getForm(page)
     const contactsSection = form.locator('.oo-array').last()
-    const addButtons = contactsSection.locator('.oo-array-variant-picker .oo-array-add-btn')
+    const addButtons = contactsSection.locator('.oo-array-union-picker .oo-array-add-btn')
 
     await addButtons.first().click()
     await addButtons.nth(1).click()
-    const allItems = contactsSection.locator(ITEM)
+    const allItems = contactsSection.locator(UNION_ITEM)
     await expect(allItems).toHaveCount(2)
 
     // Remove first item (object items have remove in the group header)
-    await contactsSection.locator('.oo-group-remove-btn').first().click()
-    await expect(contactsSection.locator(ITEM)).toHaveCount(1)
+    await contactsSection.locator('.oo-object-remove-btn').first().click()
+    await expect(contactsSection.locator(UNION_ITEM)).toHaveCount(1)
 
     // Remaining item should be the scalar one
-    await expect(contactsSection.locator(ITEM).first().locator(SCALAR_INPUT)).toBeVisible()
+    await expect(contactsSection.locator(UNION_ITEM).first().locator(SCALAR_INPUT)).toBeVisible()
   })
 })
 
@@ -470,12 +483,13 @@ test.describe('Context-Driven Select — Category', () => {
 // ── Custom Select Component (4th form — ArrayFormCustom) ──────────
 
 test.describe('Custom Select Component — Category', () => {
-  /** The custom array form is the fourth form on the page. */
+  /** Switch to Custom Array tab and get the form. */
   function getCustomForm(page: Page): Locator {
-    return page.locator('form').nth(3)
+    return page.locator('form').first()
   }
 
   test('renders custom dropdown trigger', async ({ page }) => {
+    await page.getByRole('button', { name: 'Custom Array' }).click()
     const form = getCustomForm(page)
     await form.waitFor()
     const trigger = form.locator('[role="combobox"]')
@@ -483,6 +497,7 @@ test.describe('Custom Select Component — Category', () => {
   })
 
   test('can select an option via custom dropdown', async ({ page }) => {
+    await page.getByRole('button', { name: 'Custom Array' }).click()
     const form = getCustomForm(page)
     await form.waitFor()
 
@@ -508,6 +523,7 @@ test.describe('Custom Select Component — Category', () => {
   })
 
   test('selected option shows checkmark', async ({ page }) => {
+    await page.getByRole('button', { name: 'Custom Array' }).click()
     const form = getCustomForm(page)
     await form.waitFor()
 

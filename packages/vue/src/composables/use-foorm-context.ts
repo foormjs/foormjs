@@ -1,4 +1,5 @@
 import type { TFoormFieldEvaluated, TFoormFnScope } from '@foormjs/atscript'
+import { getByPath as _getByPath, setByPath as _setByPath } from '@foormjs/atscript'
 import type { TFoormState } from '@foormjs/composables'
 import { computed, inject, type ComputedRef } from 'vue'
 
@@ -33,23 +34,44 @@ export function useFoormContext<TFormData = any, TFormContext = any>(componentNa
   )
 
   // ── Path-join utility (reactive — returns ComputedRef) ────
-  function joinPath(segment: string | undefined): ComputedRef<string | undefined> {
+  function joinPath(segment: string | (() => string)): ComputedRef<string> {
     return computed(() => {
-      if (segment === undefined) return pathPrefix.value || undefined
-      return pathPrefix.value ? `${pathPrefix.value}.${segment}` : segment
+      const s = typeof segment === 'function' ? segment() : segment
+      if (!s) return pathPrefix.value
+      return pathPrefix.value ? `${pathPrefix.value}.${s}` : s
     })
   }
 
   // ── Path-build utility (non-reactive — plain function) ───
-  function buildPath(segment: string | undefined): string | undefined {
-    if (segment === undefined) return pathPrefix.value || undefined
+  function buildPath(segment: string): string {
+    if (!segment) return pathPrefix.value
     return pathPrefix.value ? `${pathPrefix.value}.${segment}` : segment
+  }
+
+  // ── Path-aware data access (closure over rootFormData) ──────
+  function getByPath(path: string): unknown {
+    return _getByPath(rootFormData(), path)
+  }
+
+  function setByPath(path: string, value: unknown): void {
+    _setByPath(rootFormData(), path, value)
   }
 
   // ── Scope builder ───────────────────────────────────────────
   function buildScope(v?: unknown, entry?: TFoormFieldEvaluated): TFoormFnScope {
-    return { v, data: rootFormData(), context: formContext.value, entry }
+    const rd = rootFormData()
+    return { v, data: rd.value as Record<string, unknown>, context: formContext.value, entry }
   }
 
-  return { foormState, rootFormData, pathPrefix, formContext, joinPath, buildPath, buildScope }
+  return {
+    foormState,
+    rootFormData,
+    pathPrefix,
+    formContext,
+    joinPath,
+    buildPath,
+    getByPath,
+    setByPath,
+    buildScope,
+  }
 }

@@ -12,7 +12,7 @@ export interface TFoormFieldCallbacks {
 }
 
 export interface TFoormFieldRegistration {
-  path: () => string | undefined
+  path: () => string
   callbacks: TFoormFieldCallbacks
 }
 

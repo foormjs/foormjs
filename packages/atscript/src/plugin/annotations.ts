@@ -62,7 +62,7 @@ function validateTitleTarget(
 function fnAnnotation(description: string): AnnotationSpec {
   return new AnnotationSpec({
     description,
-    nodeType: ['prop'],
+    nodeType: ['prop', 'type'],
     argument: {
       name: 'fn',
       type: 'string',
@@ -80,7 +80,7 @@ function fnAnnotation(description: string): AnnotationSpec {
 function fnTopAnnotation(description: string): AnnotationSpec {
   return new AnnotationSpec({
     description,
-    nodeType: ['interface'],
+    nodeType: ['interface', 'type'],
     argument: {
       name: 'fn',
       type: 'string',
@@ -112,7 +112,7 @@ export const annotations: TAnnotationsTree = {
     submit: {
       text: new AnnotationSpec({
         description: 'Static submit button text',
-        nodeType: ['interface'],
+        nodeType: ['interface', 'type'],
         argument: {
           name: 'text',
           type: 'string',
@@ -121,14 +121,14 @@ export const annotations: TAnnotationsTree = {
       }),
       disabled: new AnnotationSpec({
         description: 'Statically disable the submit button',
-        nodeType: ['interface'],
+        nodeType: ['interface', 'type'],
       }),
     },
 
     // ── Field-level static annotations ───────────────────────
     type: new AnnotationSpec({
       description: 'Field input type',
-      nodeType: ['prop'],
+      nodeType: ['prop', 'type'],
       argument: {
         name: 'type',
         type: 'string',
@@ -160,7 +160,7 @@ export const annotations: TAnnotationsTree = {
 
     autocomplete: new AnnotationSpec({
       description: 'HTML autocomplete attribute value',
-      nodeType: ['prop'],
+      nodeType: ['prop', 'type'],
       argument: {
         name: 'value',
         type: 'string',
@@ -170,7 +170,7 @@ export const annotations: TAnnotationsTree = {
 
     altAction: new AnnotationSpec({
       description: 'Alternate action for this field',
-      nodeType: ['prop'],
+      nodeType: ['prop', 'type'],
       argument: [
         {
           name: 'id',
@@ -188,7 +188,7 @@ export const annotations: TAnnotationsTree = {
 
     value: new AnnotationSpec({
       description: 'Default value for this field',
-      nodeType: ['prop'],
+      nodeType: ['prop', 'type'],
       argument: {
         name: 'value',
         type: 'string',
@@ -198,7 +198,7 @@ export const annotations: TAnnotationsTree = {
 
     order: new AnnotationSpec({
       description: 'Explicit rendering order for this field',
-      nodeType: ['prop'],
+      nodeType: ['prop', 'type'],
       argument: {
         name: 'order',
         type: 'number',
@@ -208,24 +208,24 @@ export const annotations: TAnnotationsTree = {
 
     hidden: new AnnotationSpec({
       description: 'Statically mark this field as hidden',
-      nodeType: ['prop'],
+      nodeType: ['prop', 'type'],
     }),
 
     disabled: new AnnotationSpec({
       description: 'Statically mark this field as disabled',
-      nodeType: ['prop'],
+      nodeType: ['prop', 'type'],
     }),
 
     readonly: new AnnotationSpec({
       description: 'Statically mark this field as readonly',
-      nodeType: ['prop'],
+      nodeType: ['prop', 'type'],
     }),
 
     // ── Options annotation ──────────────────────────────────
     options: new AnnotationSpec({
       description:
         'Static option for select/radio fields. Repeat for each option. Label is the display text, value is the key (defaults to label).',
-      nodeType: ['prop'],
+      nodeType: ['prop', 'type'],
       multiple: true,
       mergeStrategy: 'replace',
       argument: [
@@ -247,7 +247,7 @@ export const annotations: TAnnotationsTree = {
     attr: new AnnotationSpec({
       description:
         'Custom attribute or component prop. Repeat for each attr. Passed to rendered component via v-bind.',
-      nodeType: ['prop'],
+      nodeType: ['prop', 'type'],
       multiple: true,
       mergeStrategy: 'replace',
       argument: [
@@ -268,7 +268,7 @@ export const annotations: TAnnotationsTree = {
     validate: new AnnotationSpec({
       description:
         'Custom JS validator function string. Returns true for pass, or an error message string.',
-      nodeType: ['prop'],
+      nodeType: ['prop', 'type'],
       multiple: true,
       mergeStrategy: 'append',
       argument: {
@@ -287,15 +287,6 @@ export const annotations: TAnnotationsTree = {
     // ── Array annotations ──────────────────────────────────
     array: {
       add: {
-        component: new AnnotationSpec({
-          description: 'Custom component for the array add-item button',
-          nodeType: ['prop'],
-          argument: {
-            name: 'name',
-            type: 'string',
-            description: 'Component name from the components registry',
-          },
-        }),
         label: new AnnotationSpec({
           description: 'Label for the add-item button (default: "Add item")',
           nodeType: ['prop'],
@@ -303,17 +294,6 @@ export const annotations: TAnnotationsTree = {
             name: 'label',
             type: 'string',
             description: 'Button label text',
-          },
-        }),
-      },
-      variant: {
-        component: new AnnotationSpec({
-          description: 'Custom component for the array variant selector (union arrays)',
-          nodeType: ['prop'],
-          argument: {
-            name: 'name',
-            type: 'string',
-            description: 'Component name from the components registry',
           },
         }),
       },
@@ -380,7 +360,7 @@ export const annotations: TAnnotationsTree = {
       attr: new AnnotationSpec({
         description:
           'Computed custom attribute/prop. Name is the attribute/prop name, fn returns the value.',
-        nodeType: ['prop'],
+        nodeType: ['prop', 'type'],
         multiple: true,
         mergeStrategy: 'replace',
         argument: [

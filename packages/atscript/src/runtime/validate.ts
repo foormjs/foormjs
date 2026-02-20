@@ -34,6 +34,7 @@ export function getFormValidator(
     ...opts,
   })
 
+  // OoForm passes domain data directly (unwrapped from { value: ... } wrapper)
   return (callOpts: TFormValidatorCallOptions) => {
     const isValid = validator.validate(callOpts.data, true, {
       data: callOpts.data,

@@ -3,9 +3,13 @@ import type {
   TFoormFnScope,
   TFoormEntryOptions,
   FoormFieldDef,
-  FoormArrayVariant,
+  FoormUnionVariant,
 } from './types'
-import type { TAtscriptAnnotatedType, TAtscriptTypeObject } from '@atscript/typescript/utils'
+import type {
+  TAtscriptAnnotatedType,
+  TAtscriptTypeComplex,
+  TAtscriptTypeObject,
+} from '@atscript/typescript/utils'
 import { isPhantomType } from '@atscript/typescript/utils'
 import { compileFieldFn, compileTopFn } from './fn-compiler'
 
@@ -238,14 +242,18 @@ export function evalComputed<T>(
 
 /**
  * Gets a nested value by dot-separated path.
+ * Always dereferences `obj.value` first (form data is wrapped in `{ value: domainData }`).
+ * When `path` is empty, returns the root domain data (`obj.value`).
  *
- * @param obj - The root object to traverse
- * @param path - Dot-separated path (e.g., `'address.city'`)
+ * @param obj - The root form data wrapper (must have a `value` property)
+ * @param path - Dot-separated path (e.g., `'address.city'`), or `''` for root value
  * @returns The value at the path, or `undefined` if any segment is missing
  */
 export function getByPath(obj: Record<string, unknown>, path: string): unknown {
+  const root = obj.value
+  if (!path) return root
   const keys = path.split('.')
-  let current: unknown = obj
+  let current: unknown = root
   for (const key of keys) {
     if (current === null || current === undefined || typeof current !== 'object') return undefined
     current = (current as Record<string, unknown>)[key]
@@ -255,17 +263,23 @@ export function getByPath(obj: Record<string, unknown>, path: string): unknown {
 
 /**
  * Sets a nested value by dot-separated path.
+ * Always dereferences `obj.value` first (form data is wrapped in `{ value: domainData }`).
+ * When `path` is empty, sets the root domain data (`obj.value = value`).
  * Creates intermediate objects if they do not exist.
  *
- * @param obj - The root object to mutate
- * @param path - Dot-separated path (e.g., `'address.city'`)
+ * @param obj - The root form data wrapper (must have a `value` property)
+ * @param path - Dot-separated path (e.g., `'address.city'`), or `''` for root value
  * @param value - The value to set
  */
 export function setByPath(obj: Record<string, unknown>, path: string, value: unknown): void {
+  if (!path) {
+    obj.value = value
+    return
+  }
   const keys = path.split('.')
   const last = keys.pop()
   if (last === undefined) return
-  let current: Record<string, unknown> = obj
+  let current: Record<string, unknown> = obj.value as Record<string, unknown>
   for (const key of keys) {
     if (current[key] === null || current[key] === undefined || typeof current[key] !== 'object') {
       current[key] = {}
@@ -280,23 +294,32 @@ export function setByPath(obj: Record<string, unknown>, path: string, value: unk
 const NON_DATA_TYPES = new Set(['action', 'paragraph'])
 
 /**
- * Creates nested form data from an ATScript type with default values.
+ * Creates form data from an ATScript type with default values.
+ *
+ * For object types: builds nested data from properties.
+ * For non-object types (primitive, array, etc.): wraps in `{ value: defaultValue }`.
+ *
  * Skips phantom types and non-data fields (action, paragraph).
  * Resolves `@foorm.value` / `@foorm.fn.value` defaults from metadata.
  *
- * @param type - ATScript annotated object type describing the form
+ * @param type - ATScript annotated type describing the form
  * @param fields - The FoormFieldDef array produced by createFoormDef
  * @returns A data object matching the form schema with defaults applied
  */
 export function createFormData<T = Record<string, unknown>>(
-  type: TAtscriptAnnotatedType<TAtscriptTypeObject>,
+  type: TAtscriptAnnotatedType,
   fields: FoormFieldDef[]
 ): T {
+  if (type.type.kind !== 'object') {
+    return { value: createDefaultValue(type) } as T
+  }
   const fieldsByPath = new Map<string, FoormFieldDef>()
   for (const f of fields) {
     if (f.path !== undefined) fieldsByPath.set(f.path, f)
   }
-  return buildNestedData(type, fieldsByPath, '') as T
+  return {
+    value: buildNestedData(type as TAtscriptAnnotatedType<TAtscriptTypeObject>, fieldsByPath, ''),
+  } as T
 }
 
 function buildNestedData(
@@ -312,41 +335,47 @@ function buildNestedData(
     const fullPath = prefix ? `${prefix}.${key}` : key
 
     if (prop.type.kind === 'object') {
-      data[key] = buildNestedData(
-        prop as TAtscriptAnnotatedType<TAtscriptTypeObject>,
-        fieldsByPath,
-        fullPath
-      )
-    } else if (prop.type.kind === 'array') {
-      data[key] = []
+      data[key] = prop.optional
+        ? undefined
+        : buildNestedData(
+            prop as TAtscriptAnnotatedType<TAtscriptTypeObject>,
+            fieldsByPath,
+            fullPath
+          )
+      continue
+    }
+
+    if (prop.type.kind === 'array') {
+      data[key] = prop.optional ? undefined : []
+      continue
+    }
+
+    const field = fieldsByPath.get(fullPath)
+
+    if (field && NON_DATA_TYPES.has(field.type)) {
+      continue
+    }
+
+    // Resolve default value from metadata on demand
+    const scope: TFoormFnScope = {
+      v: undefined,
+      data: data as Record<string, unknown>,
+      context: {},
+      entry: field
+        ? {
+            field: field.path,
+            type: field.type,
+            component: getFieldMeta<string>(prop, 'foorm.component'),
+            name: field.name,
+          }
+        : undefined,
+    }
+    const defaultValue = resolveFieldProp<unknown>(prop, 'foorm.fn.value', 'foorm.value', scope)
+
+    if (defaultValue !== undefined) {
+      data[key] = defaultValue
     } else {
-      const field = fieldsByPath.get(fullPath)
-
-      if (field && NON_DATA_TYPES.has(field.type)) {
-        continue
-      }
-
-      // Resolve default value from metadata on demand
-      const scope: TFoormFnScope = {
-        v: undefined,
-        data: data as Record<string, unknown>,
-        context: {},
-        entry: field
-          ? {
-              field: field.path,
-              type: field.type,
-              component: getFieldMeta<string>(prop, 'foorm.component'),
-              name: field.name,
-            }
-          : undefined,
-      }
-      const defaultValue = resolveFieldProp<unknown>(prop, 'foorm.fn.value', 'foorm.value', scope)
-
-      if (defaultValue !== undefined) {
-        data[key] = defaultValue
-      } else {
-        data[key] = getDefaultForDesignType(prop)
-      }
+      data[key] = getDefaultForDesignType(prop)
     }
   }
 
@@ -354,73 +383,85 @@ function buildNestedData(
 }
 
 function getDefaultForDesignType(prop: TAtscriptAnnotatedType): unknown {
+  // Union: use the first branch's default
+  if (prop.type.kind === 'union') {
+    const items = (prop.type as TAtscriptTypeComplex).items
+    return items[0] ? createDefaultValue(items[0]) : undefined
+  }
+  // Tuple: array of defaults for each position
+  if (prop.type.kind === 'tuple') {
+    const items = (prop.type as TAtscriptTypeComplex).items
+    return items.map(item => createDefaultValue(item))
+  }
   if (prop.type.kind !== '') return undefined
   switch (prop.type.designType) {
     case 'boolean':
       return false
     case 'string':
       return ''
-    default:
-      return undefined
-  }
-}
-
-// ── Array helpers ───────────────────────────────────────────
-
-/**
- * Creates default data for a new array item based on its variant.
- *
- * @param variant - The array variant to create data for
- * @returns Default value: nested object for object variants, primitive default for scalar variants
- */
-export function createItemData(variant: FoormArrayVariant): unknown {
-  if (variant.def) {
-    return createFormData(
-      variant.type as TAtscriptAnnotatedType<TAtscriptTypeObject>,
-      variant.def.fields
-    )
-  }
-  switch (variant.designType) {
-    case 'string':
-      return ''
     case 'number':
       return 0
-    case 'boolean':
-      return false
     default:
       return undefined
   }
 }
 
+/** Returns a default value for any type kind. */
+export function createDefaultValue(type: TAtscriptAnnotatedType): unknown {
+  if (type.type.kind === 'array') return []
+  if (type.type.kind === 'object') {
+    const objType = type.type as TAtscriptTypeObject
+    const data: Record<string, unknown> = {}
+    for (const [key, prop] of objType.props.entries()) {
+      if (isPhantomType(prop)) continue
+      data[key] = createDefaultValue(prop)
+    }
+    return data
+  }
+  if (type.type.kind === 'tuple') {
+    const items = (type.type as TAtscriptTypeComplex).items
+    return items.map(item => createDefaultValue(item))
+  }
+  return getDefaultForDesignType(type)
+}
+
+// ── Union helpers ────────────────────────────────────────────
+
 /**
- * Detects which variant an existing array item value matches.
+ * Creates default data for a union branch.
  *
- * @param value - The array item value to inspect
- * @param variants - Available variants for this array field
+ * @param variant - The union variant to create data for
+ * @returns Default value: nested object for object variants, primitive default for scalar variants
+ */
+export function createItemData(variant: FoormUnionVariant): unknown {
+  if (variant.def) {
+    // createFormData wraps in { value: ... } — unwrap for array items (they're raw domain data)
+    return (
+      createFormData(
+        variant.type as TAtscriptAnnotatedType<TAtscriptTypeObject>,
+        variant.def.fields
+      ) as Record<string, unknown>
+    ).value
+  }
+  // Primitives and complex types (tuple, array, etc.)
+  return createDefaultValue(variant.type)
+}
+
+/**
+ * Detects which union variant an existing value matches.
+ *
+ * @param value - The value to inspect
+ * @param variants - Available union variants
  * @returns Index of the matching variant (0-based), or 0 as fallback
  */
-export function detectVariant(value: unknown, variants: FoormArrayVariant[]): number {
+export function detectUnionVariant(value: unknown, variants: FoormUnionVariant[]): number {
   if (variants.length <= 1) return 0
 
-  // Quick matching by designType
-  const isArray = Array.isArray(value)
-  const vType = isArray ? 'array' : typeof value
   for (let i = 0; i < variants.length; i++) {
-    const v = variants[i]!
-    if (v.designType && v.designType === vType) return i
-  }
-
-  // Object variant matching via validator
-  if (value !== null && typeof value === 'object') {
-    for (let i = 0; i < variants.length; i++) {
-      const v = variants[i]!
-      if (v.def) {
-        try {
-          if (v.type.validator().validate(value, true)) return i
-        } catch {
-          // Validator threw — skip this variant
-        }
-      }
+    try {
+      if (variants[i]?.type.validator().validate(value, true)) return i
+    } catch {
+      // Validator threw — skip this variant
     }
   }
 

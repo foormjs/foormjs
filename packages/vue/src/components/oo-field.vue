@@ -1,20 +1,23 @@
 <script setup lang="ts" generic="TFormData = any, TFormContext = any">
 import { useFoormField } from '@foormjs/composables'
-import type {
-  FoormFieldDef,
-  TFoormAltAction,
-  TFoormFieldEvaluated,
-  TFoormFnScope,
-} from '@foormjs/atscript'
 import {
+  isObjectField,
+  isArrayField,
+  isUnionField,
+  isTupleField,
   resolveFieldProp,
   resolveOptions,
   resolveAttrs,
   getFieldMeta,
-  getByPath,
-  setByPath,
+  createDefaultValue,
+  createFormData,
+  type FoormFieldDef,
+  type FoormObjectFieldDef,
+  type TFoormAltAction,
+  type TFoormFieldEvaluated,
+  type TFoormFnScope,
 } from '@foormjs/atscript'
-import { computed, isRef, watch, type ComputedRef } from 'vue'
+import { computed, inject, isRef, provide, watch, type Component, type ComputedRef } from 'vue'
 import { useFoormContext } from '../composables/use-foorm-context'
 import { useFoormValidator } from '../composables/use-foorm-validator'
 
@@ -24,47 +27,54 @@ const props = defineProps<{
   onRemove?: () => void
   canRemove?: boolean
   removeLabel?: string
+  arrayIndex?: number
 }>()
 
-defineSlots<{
-  default(props: {
-    onBlur: () => void
-    error: string | undefined
-    model: { value: unknown }
-    formData: TFormData
-    formContext: TFormContext | undefined
-    label: string
-    description: string | undefined
-    hint: string | undefined
-    placeholder: string | undefined
-    value: unknown
-    classes: Record<string, boolean>
-    styles: unknown
-    optional: boolean
-    disabled: boolean
-    hidden: boolean
-    readonly: boolean
-    type: string
-    altAction: TFoormAltAction | undefined
-    component: string | undefined
-    vName: string
-    field: FoormFieldDef
-    options: unknown
-    maxLength: number | undefined
-    required: boolean | undefined
-    autocomplete: string | undefined
-    attrs: Record<string, unknown> | undefined
-    onRemove: (() => void) | undefined
-    canRemove: boolean | undefined
-    removeLabel: string | undefined
-  }): unknown
-}>()
+// ── Inject types, components, errors, action handler ─────────
+const types = inject<ComputedRef<Record<string, Component>>>('__foorm_types')
+const components = inject<ComputedRef<Record<string, Component> | undefined>>('__foorm_components')
+const errors = inject<ComputedRef<Record<string, string | undefined> | undefined>>('__foorm_errors')
+const handleAction = inject<(name: string) => void>('__foorm_action_handler', () => {})
 
-const { foormState, rootFormData, formContext, joinPath, buildScope } = useFoormContext<
-  TFormData,
-  TFormContext
->('OoField')
-const absolutePath = joinPath(props.field.path)
+// ── Foorm context ────────────────────────────────────────────
+const {
+  foormState,
+  rootFormData,
+  formContext,
+  joinPath,
+  buildPath,
+  getByPath,
+  setByPath,
+  buildScope,
+} = useFoormContext<TFormData, TFormContext>('OoField')
+const absolutePath = joinPath(() => props.field.path)
+
+// ── Structured field detection ──────────────────────────────
+const isStructured = isObjectField(props.field) || isArrayField(props.field) || isTupleField(props.field)
+const isUnion = isUnionField(props.field)
+
+// ── Nesting level tracking ──────────────────────────────────
+const parentLevel = inject<ComputedRef<number>>(
+  '__foorm_level',
+  computed(() => -1)
+)
+const myLevel = isStructured ? parentLevel.value + 1 : -1
+
+// ── Provide path prefix + level for children (object/array/tuple/union)
+// Union fields provide path prefix (children need correct path)
+// but do NOT increment level (transparent wrapper — prevents double increment)
+if (isStructured || isUnion) {
+  provide(
+    '__foorm_path_prefix',
+    computed(() => absolutePath.value)
+  )
+}
+if (isStructured) {
+  provide(
+    '__foorm_level',
+    computed(() => myLevel)
+  )
+}
 
 // Helper to unwrap value (handles both static and computed)
 const unwrap = <T,>(v: T | ComputedRef<T>): T => (isRef(v) ? v.value : v)
@@ -74,7 +84,7 @@ const prop = props.field.prop
 // ── Static reads (always) ──────────────────────────────────
 const autocomplete = getFieldMeta<string>(prop, 'foorm.autocomplete')
 const maxLength = getFieldMeta<number>(prop, 'expect.maxLength')
-const component = getFieldMeta<string>(prop, 'foorm.component')
+const componentName = getFieldMeta<string>(prop, 'foorm.component')
 const altActionMeta = getFieldMeta<{ id: string; label?: string }>(prop, 'foorm.altAction')
 const altAction: TFoormAltAction | undefined = altActionMeta
   ? {
@@ -84,21 +94,52 @@ const altAction: TFoormAltAction | undefined = altActionMeta
   : undefined
 
 // ── Cached validator (created once per field) ────────────────
-const { validate: foormValidate } = useFoormValidator(prop)
+const { validate: foormValidate } = useFoormValidator(
+  prop,
+  isStructured || isUnion ? { rootOnly: true } : undefined
+)
 
 // ── Helpers for v-model with absolute path support ──────────
 function getModel() {
-  const p = absolutePath.value
-  return p === undefined ? rootFormData() : getByPath(rootFormData(), p)
+  return getByPath(absolutePath.value)
 }
 
 function setModel(value: unknown) {
-  const p = absolutePath.value
-  if (p !== undefined) setByPath(rootFormData(), p, value)
+  setByPath(absolutePath.value, value)
 }
 
+// ── Optional toggle ─────────────────────────────────────────
+function toggleOptional(enabled: boolean) {
+  if (enabled) {
+    // Check explicit @foorm.value / @foorm.fn.value first
+    const explicit = resolveFieldProp(
+      prop,
+      'foorm.fn.value',
+      'foorm.value',
+      buildScope(undefined)
+    )
+    if (explicit !== undefined) {
+      setModel(explicit)
+    } else if (isObjectField(props.field)) {
+      const objField = props.field as FoormObjectFieldDef
+      setModel(
+        (createFormData(objField.prop, objField.objectDef.fields) as { value: unknown }).value
+      )
+    } else {
+      setModel(createDefaultValue(props.field.prop))
+    }
+  } else {
+    setModel(undefined)
+  }
+}
+
+// ── Component resolution ────────────────────────────────────
+const resolvedComponent = computed<Component | undefined>(() => {
+  if (componentName) return components?.value?.[componentName]
+  return types?.value?.[props.field.type]
+})
+
 // ── Declare all field properties ────────────────────────────
-// These are assigned in the allStatic fast-path or the dynamic path below.
 let disabled: boolean | ComputedRef<boolean>
 let hidden: boolean | ComputedRef<boolean>
 let optional: boolean | ComputedRef<boolean>
@@ -108,6 +149,7 @@ let label: string | ComputedRef<string>
 let description: string | undefined | ComputedRef<string | undefined>
 let hint: string | undefined | ComputedRef<string | undefined>
 let placeholder: string | undefined | ComputedRef<string | undefined>
+let title: string | undefined | ComputedRef<string | undefined>
 let styles: unknown
 let options: ReturnType<typeof resolveOptions> | ComputedRef<ReturnType<typeof resolveOptions>>
 let attrs: Record<string, unknown> | ComputedRef<Record<string, unknown> | undefined> | undefined
@@ -151,6 +193,11 @@ if (props.field.allStatic) {
   attrs =
     getFieldMeta(prop, 'foorm.attr') !== undefined ? resolveAttrs(prop, emptyScope) : undefined
 
+  // Title: static (for structure/array fields)
+  title = isStructured
+    ? (getFieldMeta<string>(prop, 'foorm.title') ?? getFieldMeta<string>(prop, 'meta.label') ?? props.field.name)
+    : undefined
+
   // Classes: plain object (no computed)
   const staticClassValue = getFieldMeta(prop, 'foorm.classes')
   classesBase = {
@@ -181,6 +228,7 @@ if (props.field.allStatic) {
     options: getFieldMeta(prop, 'foorm.fn.options') !== undefined,
     value: getFieldMeta(prop, 'foorm.fn.value') !== undefined,
     attr: getFieldMeta(prop, 'foorm.fn.attr') !== undefined,
+    title: getFieldMeta(prop, 'foorm.fn.title') !== undefined,
   }
   hasCustomValidators = getFieldMeta(prop, 'foorm.validate') !== undefined
 
@@ -196,11 +244,11 @@ if (props.field.allStatic) {
     hasFn.options ||
     hasFn.value ||
     hasFn.attr ||
+    hasFn.title ||
     hasCustomValidators
   const needsScope = needsBaseScope || needsFullScope
 
   // Base scope for constraints (no entry)
-  // Always uses root form data for fn scopes
   const baseScope = needsScope ? computed(() => buildScope(getModel())) : undefined
 
   // Safe alias — guaranteed non-null when hasFn.* is true (implies needsScope)
@@ -252,7 +300,7 @@ if (props.field.allStatic) {
         const entry: TFoormFieldEvaluated = {
           field: props.field.path,
           type: props.field.type,
-          component,
+          component: componentName,
           name: props.field.name,
           optional: unwrap(optional),
           disabled: unwrap(disabled),
@@ -309,6 +357,18 @@ if (props.field.allStatic) {
         : resolveAttrs(prop, emptyScope)
       : undefined
 
+  // ── Title (for structure/array fields) ─────────────────────
+  title = isStructured
+    ? hasFn.title
+      ? computed(
+          () =>
+            resolveFieldProp<string>(prop, 'foorm.fn.title', 'foorm.title', fs.value) ??
+            getFieldMeta<string>(prop, 'meta.label') ??
+            props.field.name
+        )
+      : (getFieldMeta<string>(prop, 'foorm.title') ?? getFieldMeta<string>(prop, 'meta.label') ?? props.field.name)
+    : undefined
+
   // ── Classes — conditional computed ─────────────────────────
   classesBase =
     hasFn.classes || typeof disabled !== 'boolean'
@@ -354,8 +414,7 @@ if (props.field.allStatic) {
       computedValue,
       newVal => {
         if (newVal !== undefined && unwrap(readonly)) {
-          const p = absolutePath.value
-          if (p !== undefined) setByPath(rootFormData(), p, newVal)
+          setByPath(absolutePath.value, newVal)
         }
       },
       { immediate: true }
@@ -372,6 +431,8 @@ function foormRule(v: unknown) {
 }
 
 // ── Vuiless field composable ────────────────────────────────
+const isOptionalField = props.field.prop.optional ?? false
+
 const {
   model,
   error: foormError,
@@ -381,13 +442,22 @@ const {
   setValue: setModel,
   rules: [foormRule],
   path: () => absolutePath.value,
+  ...(isOptionalField
+    ? { resetValue: undefined }
+    : isArrayField(props.field) || isTupleField(props.field)
+      ? { resetValue: [] }
+      : isObjectField(props.field)
+        ? { resetValue: {} }
+        : {}),
 })
 
-// Merged error: external prop > foorm composable error
-const mergedError = computed(() => props.error || foormError.value)
+// Merged error: external errors map > prop > foorm composable error
+const mergedError = computed(() => {
+  const path = buildPath(props.field.path)
+  return (path ? errors?.value?.[path] : undefined) ?? props.error ?? foormError.value
+})
 
-// Stable model wrapper — plain object with getter/setter so Vue's template
-// auto-unwrapping doesn't strip the ref. Slot consumers use v-model="field.model.value".
+// Stable model wrapper — plain object with getter/setter
 const slotModel = {
   get value() {
     return model.value
@@ -402,39 +472,54 @@ const classes = computed(() => ({
   ...unwrap(classesBase),
   error: !!mergedError.value,
 }))
+
+// ── All props for the rendered component ─────────────────────
+const componentProps = computed(() => ({
+  onBlur,
+  error: mergedError.value,
+  model: slotModel,
+  value: unwrap(phantomValue),
+  formData: foormState.value.formData,
+  formContext: foormState.value.formContext,
+  label: unwrap(label),
+  description: unwrap(description),
+  hint: unwrap(hint),
+  placeholder: unwrap(placeholder),
+  class: classes.value,
+  style: unwrap(styles),
+  optional: unwrap(optional),
+  onToggleOptional: unwrap(optional) ? toggleOptional : undefined,
+  required: required !== undefined ? unwrap(required) : undefined,
+  disabled: unwrap(disabled),
+  hidden: unwrap(hidden),
+  readonly: unwrap(readonly),
+  type: props.field.type,
+  altAction,
+  name: props.field.name,
+  field: props.field,
+  options: unwrap(options),
+  maxLength,
+  autocomplete,
+  title: unwrap(title),
+  level: isStructured ? myLevel : undefined,
+  onRemove: props.onRemove,
+  canRemove: props.canRemove,
+  removeLabel: props.removeLabel,
+  arrayIndex: props.arrayIndex,
+  ...unwrap(attrs),
+}))
 </script>
 
 <template>
-  <slot
-    :on-blur="onBlur"
-    :error="mergedError"
-    :model="slotModel"
-    :form-data="foormState.formData"
-    :form-context="foormState.formContext"
-    :label="unwrap(label)"
-    :description="unwrap(description)"
-    :hint="unwrap(hint)"
-    :placeholder="unwrap(placeholder)"
-    :value="unwrap(phantomValue)"
-    :classes="classes"
-    :styles="unwrap(styles)"
-    :optional="unwrap(optional)"
-    :disabled="unwrap(disabled)"
-    :hidden="unwrap(hidden)"
-    :readonly="unwrap(readonly)"
-    :type="field.type"
-    :alt-action="altAction"
-    :component="component"
-    :v-name="field.name"
-    :field="field"
-    :options="unwrap(options)"
-    :max-length="maxLength"
-    :required="required !== undefined ? unwrap(required) : undefined"
-    :autocomplete="autocomplete"
-    :attrs="unwrap(attrs)"
-    :on-remove="onRemove"
-    :can-remove="canRemove"
-    :remove-label="removeLabel"
-  >
-  </slot>
+  <component
+    v-if="resolvedComponent"
+    :is="resolvedComponent"
+    v-bind="componentProps"
+    @action="handleAction"
+  />
+  <div v-else>
+    [{{ unwrap(label) }}] No component for type "{{ field.type }}"{{
+      componentName ? ` (component "${componentName}" not supplied)` : ''
+    }}
+  </div>
 </template>

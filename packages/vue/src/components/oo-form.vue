@@ -1,10 +1,10 @@
 <script setup lang="ts" generic="TFormData = any, TFormContext = any">
 import { useFoormForm } from '@foormjs/composables'
 import type { TFoormState } from '@foormjs/composables'
-import OoGroup from './oo-group.vue'
+import OoField from './oo-field.vue'
 import type { FoormDef, TFoormFnScope } from '@foormjs/atscript'
 import { getFormValidator, resolveFormProp, supportsAltAction } from '@foormjs/atscript'
-import { computed, provide, ref, type Component } from 'vue'
+import { computed, provide, ref, toRaw, type Component } from 'vue'
 import type { TFoormComponentProps } from './types'
 
 export interface Props<TF, TC> {
@@ -15,14 +15,12 @@ export interface Props<TF, TC> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components?: Record<string, Component<TFoormComponentProps<any, TF, TC>>>
   /**
-   * Type-to-component map for field rendering. Must include at least a `text` entry.
-   *
-   * Import and pass the built-in defaults (`OoDefaultInput`, `OoDefaultSelect`,
-   * `OoDefaultRadio`, `OoDefaultCheckbox`) or supply your own components.
+   * Type-to-component map for field rendering. Maps field types to Vue components.
+   * Must include entries for all field types used in the form (e.g. `text`, `select`,
+   * `structure`, `array`). Import defaults from `@foormjs/vue` or supply your own.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   types: Record<string, Component<TFoormComponentProps<any, TF, TC>>>
-  groupComponent?: Component
   errors?: Record<string, string | undefined>
 }
 
@@ -41,7 +39,7 @@ const { clearErrors, reset, submit, setErrors } = useFoormForm({
   firstValidation: computed(() => props.firstValidation),
   submitValidator: () =>
     formValidator.value({
-      data: data.value as Record<string, unknown>,
+      data: (data.value as Record<string, unknown>).value as Record<string, unknown>,
       context: (props.formContext ?? {}) as Record<string, unknown>,
     }),
 })
@@ -55,11 +53,23 @@ provide(
   '__foorm_path_prefix',
   computed(() => '')
 )
+provide(
+  '__foorm_types',
+  computed(() => props.types)
+)
+provide(
+  '__foorm_components',
+  computed(() => props.components)
+)
+provide(
+  '__foorm_errors',
+  computed(() => props.errors)
+)
 
 // ── Form-level resolved props ──────────────────────────────
 const ctx = computed<TFoormFnScope>(() => ({
   v: undefined,
-  data: data.value as Record<string, unknown>,
+  data: (data.value as Record<string, unknown>).value as Record<string, unknown>,
   context: (props.formContext ?? {}) as Record<string, unknown>,
   entry: undefined,
 }))
@@ -90,12 +100,14 @@ const emit = defineEmits<{
   (e: 'unsupported-action', name: string, data: TFormData): void
 }>()
 
-// ── Action handler (provided to OoGroup tree) ──────────────
+// ── Action handler (provided to OoField tree) ──────────────
+const domainData = () => toRaw((data.value as Record<string, unknown>).value) as TFormData
+
 function handleAction(name: string) {
   if (supportsAltAction(props.def, name)) {
-    emit('action', name, data.value)
+    emit('action', name, domainData())
   } else {
-    emit('unsupported-action', name, data.value)
+    emit('unsupported-action', name, domainData())
   }
 }
 
@@ -104,7 +116,7 @@ provide('__foorm_action_handler', handleAction)
 function onSubmit() {
   const result = submit()
   if (result === true) {
-    emit('submit', data.value)
+    emit('submit', domainData())
   } else {
     emit('error', result)
   }
@@ -129,13 +141,7 @@ function onSubmit() {
       :set-errors="setErrors"
     ></slot>
 
-    <OoGroup
-      :def="def"
-      :components="components"
-      :types="types"
-      :errors="errors"
-      :group-component="groupComponent"
-    />
+    <OoField :field="def.rootField" />
 
     <slot
       name="form.after"

@@ -1,9 +1,4 @@
-import type {
-  FoormArrayVariant,
-  FoormFieldDef,
-  TFoormAltAction,
-  TFoormEntryOptions,
-} from '@foormjs/atscript'
+import type { FoormFieldDef, TFoormAltAction, TFoormEntryOptions } from '@foormjs/atscript'
 
 /**
  * Shared base props available to all custom foorm components.
@@ -52,6 +47,8 @@ export interface TFoormComponentProps<V, TFormData, TFormContext> extends TFoorm
   style?: Record<string, string> | string
   /** Whether the field is optional (not required). */
   optional?: boolean | undefined
+  /** Toggle an optional field on/off. `true` sets default value; `false` sets `undefined`. Only present when `optional` is true. */
+  onToggleOptional?: (enabled: boolean) => void
   /** Whether the field is required (inverse of optional). */
   required?: boolean | undefined
   /** Whether the field is read-only. */
@@ -70,54 +67,16 @@ export interface TFoormComponentProps<V, TFormData, TFormContext> extends TFoorm
   maxLength?: number
   /** Autocomplete hint from `@foorm.autocomplete`. */
   autocomplete?: string
+  /** Resolved title from `@foorm.title` / `@foorm.fn.title` / `@meta.label` for structure/array fields. */
+  title?: string
+  /** Nesting level for structure/array fields. Root structure is 0, each nested structure/array increments by 1. */
+  level?: number
   /** Callback to remove this item from its parent array. Present when rendered inside an array. */
   onRemove?: () => void
   /** Whether removal is allowed (respects minLength constraints). */
   canRemove?: boolean
   /** Label for the remove button (from `@foorm.array.remove.label`). */
   removeLabel?: string
-}
-
-/**
- * Props contract for custom array "add" button components.
- *
- * Used with `@foorm.array.add.component` annotation.
- * The component receives variant info and emits `add(variantIndex)` to append an item.
- */
-export interface TFoormAddComponentProps extends TFoormBaseComponentProps {
-  /** Available variants — single-element for homogeneous arrays, multiple for unions. */
-  variants: FoormArrayVariant[]
-}
-
-/**
- * Props contract for custom array variant selector components.
- *
- * Used with `@foorm.array.variant.component` annotation.
- * Rendered per-item in union arrays to let users switch between variant types.
- */
-export interface TFoormVariantComponentProps extends TFoormBaseComponentProps {
-  /** Available variants for this union array. */
-  variants: FoormArrayVariant[]
-  /** Index of the currently active variant. */
-  modelValue: number
-}
-
-/**
- * Props contract for custom group wrapper components.
- *
- * Passed via the `group-component` prop on `OoForm`. Wraps around group/array-item
- * content, replacing the default `div.oo-group` markup. Fields are rendered in the
- * default slot.
- */
-export interface TFoormGroupComponentProps extends TFoormBaseComponentProps {
-  /** Resolved group title (from `@foorm.title` / `@meta.label`). */
-  title?: string
-  /** Group-level validation error message. */
-  error?: string
-  /** Callback to remove this group from its parent array. Present only for array items. */
-  onRemove?: () => void
-  /** Whether removal is allowed (respects minLength constraints). */
-  canRemove?: boolean
-  /** Label for the remove button (from `@foorm.array.remove.label`). */
-  removeLabel?: string
+  /** Zero-based index when rendered as a direct array item. `undefined` otherwise. */
+  arrayIndex?: number
 }

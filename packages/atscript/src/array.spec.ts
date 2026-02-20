@@ -1,9 +1,9 @@
 import { defineAnnotatedType } from '@atscript/typescript/utils'
 import type { TAtscriptAnnotatedType, TAtscriptTypeObject } from '@atscript/typescript/utils'
-import { createFoormDef, buildVariants } from './runtime/create-foorm'
-import { createItemData, detectVariant, createFormData } from './runtime/utils'
-import { isArrayField, isGroupField } from './runtime/types'
-import type { FoormArrayFieldDef, FoormGroupFieldDef } from './runtime/types'
+import { createFoormDef, buildUnionVariants } from './runtime/create-foorm'
+import { createItemData, detectUnionVariant, createFormData } from './runtime/utils'
+import { isArrayField, isObjectField, isUnionField } from './runtime/types'
+import type { FoormArrayFieldDef, FoormObjectFieldDef, FoormUnionFieldDef } from './runtime/types'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -95,12 +95,11 @@ describe('createFoormDef with arrays', () => {
     expect(isArrayField(tagsField as FoormArrayFieldDef)).toBe(true)
 
     const arrayDef = tagsField as FoormArrayFieldDef
-    expect(arrayDef.variants).toHaveLength(1)
-    expect(arrayDef.variants[0].designType).toBe('string')
-    expect(arrayDef.variants[0].label).toBe('String')
+    expect(arrayDef.itemField).toBeDefined()
+    expect(arrayDef.itemField.type).toBe('text')
   })
 
-  it('creates FoormArrayFieldDef for object array with sub-def', () => {
+  it('creates FoormArrayFieldDef for object array with itemField', () => {
     const itemType = defineAnnotatedType('object')
     itemType.prop('street', defineAnnotatedType().designType('string').$type)
     itemType.prop('city', defineAnnotatedType().designType('string').$type)
@@ -114,10 +113,11 @@ describe('createFoormDef with arrays', () => {
 
     const arrayField = def.fields[0] as FoormArrayFieldDef
     expect(arrayField.type).toBe('array')
-    expect(arrayField.variants).toHaveLength(1)
-    expect(arrayField.variants[0].def).toBeDefined()
-    expect(arrayField.variants[0].def?.fields).toHaveLength(2)
-    expect(arrayField.variants[0].def?.fields.map(f => f.path).sort()).toEqual(['city', 'street'])
+    expect(arrayField.itemField).toBeDefined()
+    expect(isObjectField(arrayField.itemField)).toBe(true)
+    const objField = arrayField.itemField as FoormObjectFieldDef
+    expect(objField.objectDef.fields).toHaveLength(2)
+    expect(objField.objectDef.fields.map(f => f.path).sort()).toEqual(['city', 'street'])
   })
 
   it('skips child paths of array fields', () => {
@@ -137,7 +137,7 @@ describe('createFoormDef with arrays', () => {
     expect(paths).not.toContain('addresses.street')
   })
 
-  it('creates union variants for union array', () => {
+  it('creates union itemField for union array', () => {
     const stringItem = defineAnnotatedType().designType('string')
     const numberItem = defineAnnotatedType().designType('number')
     const union = defineAnnotatedType('union')
@@ -155,12 +155,14 @@ describe('createFoormDef with arrays', () => {
     expect(def.fields).toHaveLength(1)
 
     const arrayField = def.fields[0] as FoormArrayFieldDef
-    expect(arrayField.variants).toHaveLength(2)
-    expect(arrayField.variants[0].designType).toBe('string')
-    expect(arrayField.variants[1].designType).toBe('number')
+    expect(isUnionField(arrayField.itemField)).toBe(true)
+    const unionField = arrayField.itemField as FoormUnionFieldDef
+    expect(unionField.unionVariants).toHaveLength(2)
+    expect(unionField.unionVariants[0].designType).toBe('string')
+    expect(unionField.unionVariants[1].designType).toBe('number')
     // Labels should be prefixed with index for union
-    expect(arrayField.variants[0].label).toMatch(/1\..*String/)
-    expect(arrayField.variants[1].label).toMatch(/2\..*Number/)
+    expect(unionField.unionVariants[0].label).toMatch(/1\..*String/)
+    expect(unionField.unionVariants[1].label).toMatch(/2\..*Number/)
   })
 
   it('skips nested arrays (array of array) without @foorm.component', () => {
@@ -193,10 +195,10 @@ describe('createFoormDef with arrays', () => {
   })
 })
 
-// ── createFoormDef: group detection ─────────────────────────
+// ── createFoormDef: object detection ─────────────────────────
 
-describe('createFoormDef with groups', () => {
-  it('creates FoormGroupFieldDef for object with @foorm.title', () => {
+describe('createFoormDef with objects', () => {
+  it('creates FoormObjectFieldDef for object with @foorm.title', () => {
     const type = makeObjectType({
       address: {
         kind: 'object',
@@ -209,12 +211,12 @@ describe('createFoormDef with groups', () => {
     })
 
     const def = createFoormDef(type)
-    // Should have 1 group field, not 2 flat fields
+    // Should have 1 object field, not 2 flat fields
     expect(def.fields).toHaveLength(1)
-    const group = def.fields[0] as FoormGroupFieldDef
-    expect(group.type).toBe('group')
-    expect(isGroupField(group)).toBe(true)
-    expect(group.groupDef.fields).toHaveLength(2)
+    const group = def.fields[0] as FoormObjectFieldDef
+    expect(group.type).toBe('object')
+    expect(isObjectField(group)).toBe(true)
+    expect(group.objectDef.fields).toHaveLength(2)
   })
 
   it('flattens objects without @foorm.title (backwards compatible)', () => {
@@ -234,7 +236,7 @@ describe('createFoormDef with groups', () => {
     expect(def.fields.map(f => f.path).sort()).toEqual(['address.city', 'address.street'])
   })
 
-  it('creates group for object with @foorm.component', () => {
+  it('creates object for object with @foorm.component', () => {
     const type = makeObjectType({
       address: {
         kind: 'object',
@@ -247,16 +249,16 @@ describe('createFoormDef with groups', () => {
 
     const def = createFoormDef(type)
     expect(def.fields).toHaveLength(1)
-    expect(def.fields[0].type).toBe('group')
+    expect(def.fields[0].type).toBe('object')
   })
 })
 
-// ── buildVariants ───────────────────────────────────────────
+// ── buildUnionVariants ──────────────────────────────────────
 
-describe('buildVariants', () => {
+describe('buildUnionVariants', () => {
   it('builds single variant for primitive', () => {
     const stringType = defineAnnotatedType().designType('string').$type
-    const variants = buildVariants(stringType)
+    const variants = buildUnionVariants(stringType)
     expect(variants).toHaveLength(1)
     expect(variants[0].designType).toBe('string')
     expect(variants[0].label).toBe('String')
@@ -266,7 +268,7 @@ describe('buildVariants', () => {
   it('builds single variant for object', () => {
     const objType = defineAnnotatedType('object')
     objType.prop('name', defineAnnotatedType().designType('string').$type)
-    const variants = buildVariants(objType.$type)
+    const variants = buildUnionVariants(objType.$type)
     expect(variants).toHaveLength(1)
     expect(variants[0].def).toBeDefined()
     expect(variants[0].def?.fields).toHaveLength(1)
@@ -276,7 +278,7 @@ describe('buildVariants', () => {
     const union = defineAnnotatedType('union')
     union.item(defineAnnotatedType().designType('string').$type)
     union.item(defineAnnotatedType().designType('boolean').$type)
-    const variants = buildVariants(union.$type)
+    const variants = buildUnionVariants(union.$type)
     expect(variants).toHaveLength(2)
     expect(variants[0].designType).toBe('string')
     expect(variants[1].designType).toBe('boolean')
@@ -286,7 +288,7 @@ describe('buildVariants', () => {
     const obj = defineAnnotatedType('object')
     obj.annotate('meta.label' as never, 'Product')
     obj.prop('name', defineAnnotatedType().designType('string').$type)
-    const variants = buildVariants(obj.$type)
+    const variants = buildUnionVariants(obj.$type)
     expect(variants[0].label).toBe('Product')
   })
 })
@@ -328,38 +330,38 @@ describe('createItemData', () => {
     const obj = defineAnnotatedType('object')
     obj.prop('name', defineAnnotatedType().designType('string').$type)
     obj.prop('active', defineAnnotatedType().designType('boolean').$type)
-    const variant = buildVariants(obj.$type)[0]
+    const variant = buildUnionVariants(obj.$type)[0]
 
     const data = createItemData(variant) as Record<string, unknown>
     expect(data).toEqual({ name: '', active: false })
   })
 })
 
-// ── detectVariant ───────────────────────────────────────────
+// ── detectUnionVariant ──────────────────────────────────────
 
-describe('detectVariant', () => {
+describe('detectUnionVariant', () => {
   it('returns 0 for single variant', () => {
-    const variants = buildVariants(defineAnnotatedType().designType('string').$type)
-    expect(detectVariant('hello', variants)).toBe(0)
+    const variants = buildUnionVariants(defineAnnotatedType().designType('string').$type)
+    expect(detectUnionVariant('hello', variants)).toBe(0)
   })
 
   it('detects primitive variant by typeof', () => {
     const union = defineAnnotatedType('union')
     union.item(defineAnnotatedType().designType('string').$type)
     union.item(defineAnnotatedType().designType('number').$type)
-    const variants = buildVariants(union.$type)
+    const variants = buildUnionVariants(union.$type)
 
-    expect(detectVariant('hello', variants)).toBe(0)
-    expect(detectVariant(42, variants)).toBe(1)
+    expect(detectUnionVariant('hello', variants)).toBe(0)
+    expect(detectUnionVariant(42, variants)).toBe(1)
   })
 
   it('falls back to 0 for unknown type', () => {
     const union = defineAnnotatedType('union')
     union.item(defineAnnotatedType().designType('string').$type)
     union.item(defineAnnotatedType().designType('number').$type)
-    const variants = buildVariants(union.$type)
+    const variants = buildUnionVariants(union.$type)
 
-    expect(detectVariant(null, variants)).toBe(0)
+    expect(detectUnionVariant(null, variants)).toBe(0)
   })
 })
 
@@ -375,6 +377,137 @@ describe('createFormData with arrays', () => {
 
     const def = createFoormDef(type)
     const data = createFormData(type, def.fields)
-    expect(data).toEqual({ name: '', tags: [] })
+    expect(data).toEqual({ value: { name: '', tags: [] } })
+  })
+})
+
+// ── createFoormDef with single-type (leaf) forms ────────────
+
+describe('createFoormDef with single-type forms', () => {
+  it('creates leaf FoormDef for a string type', () => {
+    const type = defineAnnotatedType().designType('string').$type
+    const def = createFoormDef(type)
+
+    expect(def.rootField.type).toBe('text')
+    expect(def.rootField.path).toBe('')
+    expect(def.rootField.name).toBe('')
+    expect(def.fields).toHaveLength(1)
+    expect(def.fields[0]).toBe(def.rootField)
+    expect(def.flatMap.size).toBe(0)
+  })
+
+  it('creates leaf FoormDef for a number type', () => {
+    const type = defineAnnotatedType().designType('number').$type
+    const def = createFoormDef(type)
+
+    expect(def.rootField.type).toBe('number')
+    expect(def.rootField.path).toBe('')
+  })
+
+  it('creates leaf FoormDef for a boolean type', () => {
+    const type = defineAnnotatedType().designType('boolean').$type
+    const def = createFoormDef(type)
+
+    expect(def.rootField.type).toBe('checkbox')
+    expect(def.rootField.path).toBe('')
+  })
+
+  it('respects @foorm.type override on leaf form', () => {
+    const type = defineAnnotatedType().designType('string')
+    type.annotate('foorm.type' as never, 'textarea')
+    const def = createFoormDef(type.$type)
+
+    expect(def.rootField.type).toBe('textarea')
+    expect(def.rootField.path).toBe('')
+  })
+
+  it('creates array FoormDef for array type', () => {
+    const itemType = defineAnnotatedType().designType('string')
+    const type = defineAnnotatedType('array')
+    type.of(itemType.$type)
+    const def = createFoormDef(type.$type)
+
+    expect(def.rootField.type).toBe('array')
+    expect(def.rootField.path).toBe('')
+    expect(isArrayField(def.rootField)).toBe(true)
+    const arrayField = def.rootField as FoormArrayFieldDef
+    expect(arrayField.itemField).toBeDefined()
+    expect(arrayField.itemField.type).toBe('text')
+  })
+
+  it('still creates object FoormDef normally', () => {
+    const type = makeObjectType({
+      name: { designType: 'string' },
+      age: { designType: 'number' },
+    })
+    const def = createFoormDef(type)
+
+    expect(def.rootField.type).toBe('object')
+    expect(def.fields).toHaveLength(2)
+  })
+})
+
+// ── createFormData with single-type forms ───────────────────
+
+describe('createFormData with single-type forms', () => {
+  it('wraps string type in { value: "" }', () => {
+    const type = defineAnnotatedType().designType('string').$type
+    const def = createFoormDef(type)
+    const data = createFormData(type, def.fields)
+    expect(data).toEqual({ value: '' })
+  })
+
+  it('wraps number type in { value: 0 }', () => {
+    const type = defineAnnotatedType().designType('number').$type
+    const def = createFoormDef(type)
+    const data = createFormData(type, def.fields)
+    expect(data).toEqual({ value: 0 })
+  })
+
+  it('wraps boolean type in { value: false }', () => {
+    const type = defineAnnotatedType().designType('boolean').$type
+    const def = createFoormDef(type)
+    const data = createFormData(type, def.fields)
+    expect(data).toEqual({ value: false })
+  })
+
+  it('wraps array type in { value: [] }', () => {
+    const itemType = defineAnnotatedType().designType('string')
+    const type = defineAnnotatedType('array')
+    type.of(itemType.$type)
+    const def = createFoormDef(type.$type)
+    const data = createFormData(type.$type, def.fields)
+    expect(data).toEqual({ value: [] })
+  })
+
+  it('creates undefined for optional array prop', () => {
+    const stringItem = defineAnnotatedType().designType('string')
+    const type = makeObjectType({
+      tags: { kind: 'array', of: stringItem, optional: true },
+    })
+    const def = createFoormDef(type)
+    const data = createFormData(type, def.fields)
+    expect((data as { value: Record<string, unknown> }).value.tags).toBeUndefined()
+  })
+
+  it('preserves optional flag on array field def prop', () => {
+    const stringItem = defineAnnotatedType().designType('string')
+    const type = makeObjectType({
+      tags: { kind: 'array', of: stringItem, optional: true },
+    })
+    const def = createFoormDef(type)
+    const tagsField = def.fields.find(f => f.path === 'tags')
+    expect(tagsField).toBeDefined()
+    expect(tagsField!.prop.optional).toBe(true)
+  })
+
+  it('creates [] for non-optional array prop', () => {
+    const stringItem = defineAnnotatedType().designType('string')
+    const type = makeObjectType({
+      tags: { kind: 'array', of: stringItem },
+    })
+    const def = createFoormDef(type)
+    const data = createFormData(type, def.fields)
+    expect((data as { value: Record<string, unknown> }).value.tags).toEqual([])
   })
 })

@@ -1,23 +1,40 @@
 <script setup lang="ts">
-import type { Component } from 'vue'
+import { ref, type Component } from 'vue'
 import OoForm from '@/components/oo-form.vue'
 import CustomStarInput from './app-components/custom-star-input.vue'
-import CustomAddButton from './app-components/custom-add-button.vue'
-import CustomVariantPicker from './app-components/custom-variant-picker.vue'
 import CustomParagraph from './app-components/custom-paragraph.vue'
 import CustomActionButton from './app-components/custom-action-button.vue'
 import CustomTextInput from './app-components/custom-text-input.vue'
 import CustomGroup from './app-components/custom-group.vue'
 import CustomSelect from './app-components/custom-select.vue'
-import { OoInput, OoSelect, OoRadio, OoCheckbox, OoParagraph, OoAction } from './components/default'
+import {
+  OoInput,
+  OoSelect,
+  OoRadio,
+  OoCheckbox,
+  OoParagraph,
+  OoAction,
+  OoObject,
+  OoArray,
+  OoUnion,
+  OoTuple,
+} from './components/default'
 import { useFoorm } from '@/composables/use-foorm'
 import { E2eTestForm } from './forms/e2e-test-form.as'
 import { NestedForm } from './forms/nested-form.as'
 import { ArrayForm, ArrayFormCustom } from './forms/array-form.as'
+import { SimpleForm } from './forms/simple-form.as'
+
 const { def, formData } = useFoorm(E2eTestForm)
 const { def: nestedDef, formData: nestedFormData } = useFoorm(NestedForm)
 const { def: arrayDef, formData: arrayFormData } = useFoorm(ArrayForm)
 const { def: arrayCustomDef, formData: arrayCustomFormData } = useFoorm(ArrayFormCustom)
+const { def: simpleDef, formData: simpleFormData } = useFoorm(SimpleForm)
+
+
+
+const tabs = ['Basic', 'Nested', 'Array', 'Custom Array', 'Simple'] as const
+const activeTab = ref<(typeof tabs)[number]>('Basic')
 
 const categoryPool = [
   { key: 'frontend', label: 'Frontend' },
@@ -66,6 +83,10 @@ const defaultTypes: Record<string, Component> = {
   checkbox: OoCheckbox,
   paragraph: OoParagraph,
   action: OoAction,
+  object: OoObject,
+  array: OoArray,
+  union: OoUnion,
+  tuple: OoTuple,
 }
 
 const customComponents = {
@@ -73,8 +94,6 @@ const customComponents = {
 }
 
 const arrayCustomComponents: Record<string, Component> = {
-  CustomAddButton,
-  CustomVariantPicker,
   CustomParagraph,
   CustomActionButton,
 }
@@ -83,6 +102,7 @@ const arrayCustomTypes: Record<string, Component> = {
   ...defaultTypes,
   text: CustomTextInput,
   select: CustomSelect,
+  object: CustomGroup,
 }
 
 function handleSubmit(d: unknown) {
@@ -100,7 +120,20 @@ function onError(e: unknown) {
 
 <template>
   <main>
+    <nav class="tabs">
+      <button
+        v-for="tab in tabs"
+        :key="tab"
+        class="tab-btn"
+        :class="{ 'tab-btn--active': activeTab === tab }"
+        @click="activeTab = tab"
+      >
+        {{ tab }}
+      </button>
+    </nav>
+
     <OoForm
+      v-if="activeTab === 'Basic'"
       class="form"
       :def="def"
       :form-data="formData"
@@ -113,6 +146,7 @@ function onError(e: unknown) {
       @error="onError"
     />
     <OoForm
+      v-if="activeTab === 'Nested'"
       class="form"
       :def="nestedDef"
       :form-data="nestedFormData"
@@ -122,6 +156,7 @@ function onError(e: unknown) {
       @error="onError"
     />
     <OoForm
+      v-if="activeTab === 'Array'"
       class="form"
       :def="arrayDef"
       :form-data="arrayFormData"
@@ -129,19 +164,30 @@ function onError(e: unknown) {
       :types="defaultTypes"
       first-validation="on-blur"
       @submit="handleSubmit"
+      @action="handleAction"
       @error="onError"
     />
     <OoForm
+      v-if="activeTab === 'Custom Array'"
       class="form"
       :def="arrayCustomDef"
       :form-data="arrayCustomFormData"
       :form-context="arrayFormContext"
       :components="arrayCustomComponents"
       :types="arrayCustomTypes"
-      :group-component="CustomGroup"
       first-validation="on-blur"
       @submit="handleSubmit"
       @action="handleAction"
+      @error="onError"
+    />
+    <OoForm
+      v-if="activeTab === 'Simple'"
+      class="form"
+      :def="simpleDef"
+      :form-data="simpleFormData"
+      :types="defaultTypes"
+      first-validation="on-blur"
+      @submit="handleSubmit"
       @error="onError"
     />
   </main>
@@ -151,10 +197,42 @@ function onError(e: unknown) {
 main {
   min-height: 100vh;
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   gap: 24px;
   padding: 48px 16px;
-  overflow-x: auto;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #f3f4f6;
+  border-radius: 8px;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.tab-btn:hover {
+  color: #374151;
+}
+
+.tab-btn--active {
+  background: #fff;
+  color: #6366f1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .form {
@@ -162,7 +240,8 @@ main {
   flex-direction: column;
   gap: 4px;
   min-width: 500px;
-  flex-shrink: 0;
+  max-width: 600px;
+  width: 100%;
   background: #fff;
   border-radius: 12px;
   padding: 32px;

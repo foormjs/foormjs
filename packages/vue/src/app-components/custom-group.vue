@@ -1,7 +1,15 @@
 <script setup lang="ts">
-import type { TFoormGroupComponentProps } from '../components/types'
+import type { FoormObjectFieldDef } from '@foormjs/atscript'
+import { isObjectField } from '@foormjs/atscript'
+import type { TFoormComponentProps } from '../components/types'
+import OoIterator from '../components/oo-iterator.vue'
 
-defineProps<TFoormGroupComponentProps>()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const props = defineProps<TFoormComponentProps<unknown, any, any>>()
+
+const objectDef = isObjectField(props.field!)
+  ? (props.field as FoormObjectFieldDef).objectDef
+  : undefined
 </script>
 
 <template>
@@ -30,7 +38,7 @@ defineProps<TFoormGroupComponentProps>()
       </button>
     </div>
     <div class="cg-content">
-      <slot />
+      <OoIterator v-if="objectDef" :def="objectDef" />
     </div>
   </div>
 </template>

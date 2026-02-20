@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**foormjs** is an ATScript-first TypeScript monorepo providing validatable forms as Vue renderless wrapper components. Users bring their own Vue UI components and wrap them in foormjs renderless components to build automated, validated forms.
+**foormjs** is an ATScript-first TypeScript monorepo providing validatable forms as Vue components with a unified type-based rendering pipeline. Users supply a `types` map (field type → Vue component) and foormjs resolves, validates, and renders the entire form tree automatically.
 
 Forms are defined in ATScript `.as` files — a TypeScript superset with custom annotation syntax. The `@atscript/typescript` compiler processes these files into annotated type objects carrying metadata maps, which foormjs reads at runtime to resolve field properties, validators, and computed values on demand.
 
@@ -27,11 +27,11 @@ The Vue package (`packages/vue`) uses Vite — run `pnpm dev` and `pnpm build` f
 
 ## Monorepo Structure
 
-| Package                | Published Name         | Build Tool | Description                                                      |
-| ---------------------- | ---------------------- | ---------- | ---------------------------------------------------------------- |
-| `packages/atscript`    | `@foormjs/atscript`    | rollup     | ATScript-first form model with validation                        |
-| `packages/composables` | `@foormjs/composables` | vite       | Framework-agnostic form composables (useFoormForm/Field)         |
-| `packages/vue`         | `@foormjs/vue`         | vite       | Renderless Vue components built on top of atscript + composables |
+| Package                | Published Name         | Build Tool | Description                                                    |
+| ---------------------- | ---------------------- | ---------- | -------------------------------------------------------------- |
+| `packages/atscript`    | `@foormjs/atscript`    | rollup     | ATScript-first form model with validation                      |
+| `packages/composables` | `@foormjs/composables` | vite       | Framework-agnostic form composables (useFoormForm/Field)       |
+| `packages/vue`         | `@foormjs/vue`         | vite       | Vue form components with unified type-based rendering pipeline |
 
 Two export paths for atscript: `@foormjs/atscript` (runtime) and `@foormjs/atscript/plugin` (ATScript plugin for build-time/IDE usage).
 
@@ -67,12 +67,12 @@ The `@atscript/typescript` compiler generates `.as.d.ts` declarations and runtim
 
 **`src/runtime/`** — Main runtime (exported as `@foormjs/atscript`):
 
-- `create-foorm.ts` — `createFoormDef(annotatedType)` converts an ATScript annotated type into a `FoormDef` (thin `{ type, fields, flatMap }` object). Fields are `FoormFieldDef` pointers to ATScript props, not copies.
+- `create-foorm.ts` — `createFoormDef(annotatedType)` converts an ATScript annotated type into a `FoormDef` (thin `{ type, rootField, fields, flatMap }` object). `rootField` is a `FoormStructureFieldDef` representing the entire form as a single field (type `'structure'`). Fields are `FoormFieldDef` pointers to ATScript props, not copies.
 - `utils.ts` — `resolveFieldProp()`, `resolveFormProp()`, `resolveOptions()`, `resolveAttrs()`, `createFormData()`, `evalComputed()`, `getByPath()`/`setByPath()`. Properties are resolved lazily on demand — `resolveFieldProp(prop, fnKey, staticKey, scope)` checks `foorm.fn.*` first (compiles fn string), then falls back to static metadata key.
 - `fn-compiler.ts` — `compileFieldFn()`, `compileTopFn()`, `compileValidatorFn()` using `FNPool` from `@prostojs/deserialize-fn` for cached function compilation.
 - `validate.ts` — `getFormValidator(def)` returns a reusable validator using ATScript's `Validator` class + `foormValidatorPlugin`.
 - `validator-plugin.ts` — `foormValidatorPlugin()` ATScript validator plugin for `@foorm.validate` custom validators.
-- `types.ts` — `FoormDef`, `FoormFieldDef`, `TFoormFnScope`, `TComputed`, `TFoormFieldEvaluated`, `TFoormEntryOptions`.
+- `types.ts` — `FoormDef`, `FoormFieldDef`, `FoormStructureFieldDef`, `FoormArrayFieldDef`, `TFoormFnScope`, `TComputed`, `TFoormFieldEvaluated`, `TFoormEntryOptions`. Structure fields use type `'structure'` (renamed from `'group'`). `isStructureField()` and `isArrayField()` are the type guards.
 
 **`src/plugin/`** — ATScript plugin (exported as `@foormjs/atscript/plugin`):
 
@@ -90,20 +90,52 @@ Framework-agnostic form composables (exported as `@foormjs/composables`):
 
 ### Vue (`packages/vue`)
 
-Renderless wrapper components letting users plug in their own UI components.
+Unified type-based rendering pipeline where every form element — text inputs, selects, structures, arrays — is a field resolved through the same `types` map.
+
+**Rendering chain:**
+
+```
+OoForm → OoField(def.rootField) → types['structure'] → OoStructure → OoIterator
+  → OoField(per field) → types[field.type] → component
+    → for leaf fields: types['text'](OoInput), types['select'](OoSelect), etc.
+    → for nested structure: types['structure'](OoStructure) → OoIterator → ...
+    → for array field: types['array'](OoArray) → OoIterator(per item) → OoField → ...
+```
+
+**Core components:**
+
+- `src/components/oo-form.vue` — `OoForm` provides context via provide/inject (`__foorm_types`, `__foorm_components`, `__foorm_errors`, `__foorm_action_handler`), resolves form-level props, renders `<OoField :field="def.rootField" />`. The `types` prop (required) maps field types to Vue components. Slots: `form.header`, `form.before`, `form.after`, `form.submit`, `form.footer`.
+- `src/components/oo-field.vue` — `OoField` is the core renderer. Injects types/components, resolves the component for each field (`@foorm.component` → `components[name]`, else → `types[field.type]`), resolves all field props, and renders via `<component :is="resolvedComponent" v-bind="componentProps" />`. Manages nesting level tracking (`__foorm_level` provide/inject: root structure = level 0, each nested structure/array increments). Two-path optimization: `allStatic` fast path (no Vue computeds) vs dynamic path (per-property computed detection via `foorm.fn.*`). Lazy scope construction: `baseScope` for constraints, `fullScope` for display/validators.
+- `src/components/oo-iterator.vue` — `OoIterator` iterates `def.fields` and renders `<OoField>` per field. Manages path prefix for array items. Passes `onRemove`/`canRemove`/`removeLabel` to child fields. Exported for use in custom structure/array components.
+
+**Default type components** (all receive `TFoormComponentProps`):
+
+- `src/components/default/` — `OoInput` (text/password/number), `OoSelect`, `OoRadio`, `OoCheckbox`, `OoParagraph`, `OoAction`, `OoStructure` (renders title + remove + `<OoIterator>` for sub-fields), `OoArray` (uses `useFoormArray` composable + `<OoIterator>` per item), `OoVariant` (variant picker for union arrays).
+
+**Composables:**
 
 - `src/composables/use-foorm.ts` — `useFoorm(annotatedType)` returns `{ def, formData }` where `def` is `FoormDef` and `formData` is reactive.
-- `src/components/oo-form.vue` — `OoForm` uses `useFoormForm` composable, resolves form-level props via `resolveFormProp()`, delegates field rendering to `OoGroup`. Slots: `form.header`, `form.before`, `field:{type}`, `form.after`, `form.submit`, `form.footer`. Component resolution: `@foorm.component` → `components` prop → `types` prop → built-in defaults.
-- `src/components/oo-field.vue` — `OoField` resolves all field properties through ATScript metadata. Two-path optimization: `allStatic` fast path (no Vue computeds) vs dynamic path (per-property computed detection via `foorm.fn.*`). Lazy scope construction: `baseScope` for constraints, `fullScope` for display/validators.
-- `src/components/types.ts` — `TFoormComponentProps` interface that custom components must satisfy.
+- `src/composables/use-foorm-array.ts` — `useFoormArray(field, disabled?)` manages array state: stable keys, variant tracking, add/remove with constraints, item def resolution, custom component resolution. Used by default `OoArray` and available for custom array components.
+
+**Types:**
+
+- `src/components/types.ts` — `TFoormComponentProps` (unified interface for ALL field types including `title`, `level`, `onRemove`, `canRemove`, `removeLabel`), `TFoormAddComponentProps`, `TFoormVariantComponentProps`.
+
+**Provide/inject keys** (set by OoForm, consumed by OoField/OoIterator/composables):
+`__foorm_types`, `__foorm_components`, `__foorm_errors`, `__foorm_action_handler`, `__foorm_root_data`, `__foorm_path_prefix`, `__foorm_level`
+
 - `src/forms/` — ATScript `.as` form definitions (e.g. `e2e-test-form.as` for E2E testing).
 
-### Key Performance Patterns
+### Key Design Patterns
 
+- **Unified type-based rendering**: Every form element (leaf fields, structures, arrays) flows through `OoField` → `types[field.type]`. Custom components swap in via the `types` map or per-field `@foorm.component` annotation. No special-casing for different field categories.
+- **Root field in FoormDef**: `createFoormDef()` produces a `rootField` representing the entire form as a structure field. OoForm renders `<OoField :field="def.rootField" />` — no fabrication needed.
+- **Nesting level tracking**: `OoField` injects `__foorm_level` (default -1), increments for structure/array fields, provides for children. Root structure = level 0. Level-aware rendering: `<h2>` at root, `<h3>` nested; root has no left border, nested gets left border.
 - **Metadata-on-demand resolve**: `FoormFieldDef` keeps a thin pointer to the ATScript prop; properties are resolved lazily via `resolveFieldProp()` rather than eagerly copied.
 - **`allStatic` optimization**: `OoField` checks `field.allStatic` (no `foorm.fn.*` or `foorm.validate` annotations) to skip creating Vue `computed()` refs entirely for static fields.
 - **`FNPool` caching**: Function strings are compiled once and cached — the same `foorm.fn.label` string across multiple fields only gets compiled once.
 - **Dual-scope pattern**: `baseScope` (v, data, context) evaluates constraints (disabled/hidden) first; `fullScope` adds `entry` for display/validation functions, avoiding circular dependency.
+- **Array item architecture**: Object array items render a remove button in OoArray's header; primitive items pass `onRemove` through OoIterator to the field component for inline rendering.
 
 ### Annotation Reference
 

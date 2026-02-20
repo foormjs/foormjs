@@ -19,6 +19,7 @@ declare global {
     'meta.placeholder': string
     'meta.sensitive': boolean
     'meta.readonly': boolean
+    'meta.required': { message?: string }
     'meta.isKey': boolean
     'expect.minLength': { length: number; message?: string }
     'expect.maxLength': { length: number; message?: string }
@@ -29,6 +30,7 @@ declare global {
     'emit.jsonSchema': boolean
     'foorm.title': string
     'foorm.submit.text': string
+    'foorm.submit.disabled': boolean
     'foorm.type': string
     'foorm.component': string
     'foorm.autocomplete': string
@@ -41,7 +43,6 @@ declare global {
     'foorm.options': { label: string; value?: string }[]
     'foorm.attr': { name: string; value: string }[]
     'foorm.validate': string[]
-    'foorm.array.add.component': string
     'foorm.array.add.label': string
     'foorm.array.remove.label': string
     'foorm.array.sortable': boolean
@@ -71,6 +72,7 @@ declare global {
     | 'date'
     | 'isoDate'
     | 'uuid'
+    | 'required'
     | 'number'
     | 'positive'
     | 'negative'

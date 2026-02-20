@@ -6,7 +6,7 @@ export interface UseFoormFieldOptions<TValue = any, TFormData = any, TContext = 
   getValue: () => TValue
   setValue: (v: TValue) => void
   rules?: TFoormRule<TValue, TFormData, TContext>[]
-  path: () => string | undefined
+  path: () => string
   /** Value to set on reset. Defaults to `''`. Use `[]` for arrays, `{}` for objects. */
   resetValue?: TValue
 }
@@ -32,7 +32,7 @@ export function useFoormField<TValue = any, TFormData = any, TContext = any>(
     submitError.value = undefined
     externalError.value = undefined
     touched.value = true
-  })
+  }, { deep: true })
 
   const isValidationActive = computed(() => {
     if (foormState?.value?.firstValidation) {

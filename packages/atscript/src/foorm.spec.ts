@@ -194,52 +194,72 @@ describe('evalComputed', () => {
 // ── getByPath / setByPath ───────────────────────────────────
 
 describe('getByPath', () => {
-  it('gets top-level properties', () => {
-    expect(getByPath({ name: 'Alice' }, 'name')).toBe('Alice')
+  it('gets top-level properties via .value dereference', () => {
+    expect(getByPath({ value: { name: 'Alice' } }, 'name')).toBe('Alice')
   })
 
   it('gets nested properties', () => {
-    expect(getByPath({ address: { city: 'NYC', zip: '10001' } }, 'address.city')).toBe('NYC')
+    expect(getByPath({ value: { address: { city: 'NYC', zip: '10001' } } }, 'address.city')).toBe(
+      'NYC'
+    )
   })
 
   it('gets deeply nested properties', () => {
-    expect(getByPath({ a: { b: { c: { d: 'deep' } } } }, 'a.b.c.d')).toBe('deep')
+    expect(getByPath({ value: { a: { b: { c: { d: 'deep' } } } } }, 'a.b.c.d')).toBe('deep')
+  })
+
+  it('returns root value when path is empty', () => {
+    expect(getByPath({ value: { name: 'Alice' } }, '')).toEqual({ name: 'Alice' })
+    expect(getByPath({ value: 'hello' }, '')).toBe('hello')
+    expect(getByPath({ value: 42 }, '')).toBe(42)
   })
 
   it('returns undefined for missing paths', () => {
-    expect(getByPath({ a: 1 }, 'b')).toBeUndefined()
-    expect(getByPath({ a: { b: 1 } }, 'a.c')).toBeUndefined()
-    expect(getByPath({ a: 1 }, 'a.b.c')).toBeUndefined()
+    expect(getByPath({ value: { a: 1 } }, 'b')).toBeUndefined()
+    expect(getByPath({ value: { a: { b: 1 } } }, 'a.c')).toBeUndefined()
+    expect(getByPath({ value: { a: 1 } }, 'a.b.c')).toBeUndefined()
   })
 
   it('returns undefined when traversing through null', () => {
-    expect(getByPath({ a: null } as any, 'a.b')).toBeUndefined()
+    expect(getByPath({ value: { a: null } } as any, 'a.b')).toBeUndefined()
   })
 })
 
 describe('setByPath', () => {
-  it('sets top-level properties', () => {
-    const obj: Record<string, unknown> = {}
+  it('sets top-level properties via .value dereference', () => {
+    const obj: Record<string, unknown> = { value: {} }
     setByPath(obj, 'name', 'Alice')
-    expect(obj.name).toBe('Alice')
+    expect((obj.value as any).name).toBe('Alice')
   })
 
   it('sets nested properties', () => {
-    const obj: Record<string, unknown> = { address: {} }
+    const obj: Record<string, unknown> = { value: { address: {} } }
     setByPath(obj, 'address.city', 'NYC')
-    expect((obj.address as any).city).toBe('NYC')
+    expect((obj.value as any).address.city).toBe('NYC')
   })
 
   it('creates intermediate objects', () => {
-    const obj: Record<string, unknown> = {}
+    const obj: Record<string, unknown> = { value: {} }
     setByPath(obj, 'a.b.c', 'deep')
-    expect((obj.a as any).b.c).toBe('deep')
+    expect((obj.value as any).a.b.c).toBe('deep')
   })
 
   it('overwrites existing values', () => {
-    const obj: Record<string, unknown> = { name: 'Alice' }
+    const obj: Record<string, unknown> = { value: { name: 'Alice' } }
     setByPath(obj, 'name', 'Bob')
-    expect(obj.name).toBe('Bob')
+    expect((obj.value as any).name).toBe('Bob')
+  })
+
+  it('sets root value when path is empty', () => {
+    const obj: Record<string, unknown> = { value: 'old' }
+    setByPath(obj, '', 'new')
+    expect(obj.value).toBe('new')
+  })
+
+  it('replaces root object when path is empty', () => {
+    const obj: Record<string, unknown> = { value: { a: 1 } }
+    setByPath(obj, '', { b: 2 })
+    expect(obj.value).toEqual({ b: 2 })
   })
 })
 
@@ -758,7 +778,7 @@ describe('createFoormDef', () => {
 // ── createFormData ──────────────────────────────────────────
 
 describe('createFormData', () => {
-  it('creates default data for simple fields', () => {
+  it('wraps object data in { value: ... }', () => {
     const type = makeType({
       props: {
         name: { metadata: {}, designType: 'string' },
@@ -766,7 +786,7 @@ describe('createFormData', () => {
       },
     })
     const def = createFoormDef(type)
-    expect(createFormData(type, def.fields)).toEqual({ name: '', active: false })
+    expect(createFormData(type, def.fields)).toEqual({ value: { name: '', active: false } })
   })
 
   it('applies static default values from metadata', () => {
@@ -774,7 +794,7 @@ describe('createFormData', () => {
       props: { status: { metadata: { 'foorm.value': 'pending' }, designType: 'string' } },
     })
     const def = createFoormDef(type)
-    expect(createFormData(type, def.fields)).toEqual({ status: 'pending' })
+    expect(createFormData(type, def.fields)).toEqual({ value: { status: 'pending' } })
   })
 
   it('creates nested data for object types', () => {
@@ -792,7 +812,7 @@ describe('createFormData', () => {
     })
     const def = createFoormDef(type)
     expect(createFormData(type, def.fields)).toEqual({
-      address: { city: '', zip: '' },
+      value: { address: { city: '', zip: '' } },
     })
   })
 
@@ -804,9 +824,9 @@ describe('createFormData', () => {
       },
     })
     const def = createFoormDef(type)
-    const data = createFormData(type, def.fields)
-    expect(data).toEqual({ name: '' })
-    expect('save' in (data as any)).toBe(false)
+    const data = createFormData(type, def.fields) as { value: Record<string, unknown> }
+    expect(data).toEqual({ value: { name: '' } })
+    expect('save' in data.value).toBe(false)
   })
 })
 

@@ -177,7 +177,9 @@ test.describe('Static Annotations', () => {
 
   test('fields render in order', async ({ page }) => {
     const form = getForm(page)
-    const labels = await form.locator('.oo-default-field label').allTextContents()
+    const labels = (await form.locator('.oo-default-field label').allTextContents()).map(l =>
+      l.trim()
+    )
     const firstNameIdx = labels.indexOf('First Name')
     const lastNameIdx = labels.indexOf('Last Name')
     const ageIdx = labels.indexOf('Age')

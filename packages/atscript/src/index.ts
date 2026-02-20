@@ -13,18 +13,20 @@ export type {
   FoormDef,
   FoormFieldDef,
   FoormArrayFieldDef,
-  FoormGroupFieldDef,
-  FoormArrayVariant,
+  FoormObjectFieldDef,
+  FoormUnionFieldDef,
+  FoormTupleFieldDef,
+  FoormUnionVariant,
   TComputed,
   TFoormAltAction,
   TFoormEntryOptions,
   TFoormFieldEvaluated,
   TFoormFnScope,
 } from './runtime/types'
-export { isArrayField, isGroupField } from './runtime/types'
+export { isArrayField, isObjectField, isUnionField, isTupleField } from './runtime/types'
 
 // Core
-export { createFoormDef, buildVariants } from './runtime/create-foorm'
+export { createFoormDef, buildUnionVariants } from './runtime/create-foorm'
 export { getFormValidator, supportsAltAction } from './runtime/validate'
 export type { TFormValidatorCallOptions } from './runtime/validate'
 
@@ -46,8 +48,9 @@ export {
   getByPath,
   setByPath,
   createFormData,
+  createDefaultValue,
   createItemData,
-  detectVariant,
+  detectUnionVariant,
 } from './runtime/utils'
 
 // fn-compiler

@@ -1,3 +1,4 @@
+
 @foorm.title 'Array Examples'
 @foorm.submit.text 'Save'
 export interface ArrayForm {
@@ -33,24 +34,7 @@ export interface ArrayForm {
     @foorm.order 4
     @foorm.array.add.label 'Add address'
     @foorm.array.remove.label 'Remove address'
-    addresses: {
-        @meta.label 'Street'
-        @meta.placeholder '123 Main St'
-        @foorm.type 'text'
-        @meta.required 'Street is required'
-        street: string
-
-        @meta.label 'City'
-        @meta.placeholder 'New York'
-        @foorm.type 'text'
-        @meta.required 'City is required'
-        city: string
-
-        @meta.label 'ZIP'
-        @meta.placeholder '10001'
-        @foorm.type 'text'
-        zip?: string
-    }[]
+    addresses: Address[]
 
     // ── Grouped nested object (not an array) ─────────────
     @foorm.title 'Settings'
@@ -111,13 +95,28 @@ export interface ArrayForm {
 }
 
 
+@foorm.title 'Address'
+interface Address {
+    @meta.label 'Street1'
+    @meta.placeholder '123 Main St'
+    @foorm.type 'text'
+    @meta.required 'Street is required'
+    street: string
+
+    @meta.label 'City'
+    @meta.placeholder 'New York'
+    @foorm.type 'text'
+    @meta.required 'City is required'
+    city: string
+
+    @meta.label 'ZIP'
+    @meta.placeholder '10001'
+    @foorm.type 'text'
+    zip?: string
+}
+
+
 export annotate ArrayForm as ArrayFormCustom {
-
-    @foorm.array.add.component 'CustomAddButton'
-    scores
-
-    @foorm.array.variant.component 'CustomVariantPicker'
-    contacts
 
     @foorm.component 'CustomParagraph'
     instructions

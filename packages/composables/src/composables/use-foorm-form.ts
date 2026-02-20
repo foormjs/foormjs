@@ -68,7 +68,7 @@ export function useFoormForm<TFormData, TContext>(opts: {
       const result = reg.callbacks.validate()
       if (result !== true) {
         const path = reg.path()
-        errors.push({ path: path ?? '', message: result as string })
+        errors.push({ path, message: result as string })
       }
     }
     return errors.length > 0 ? errors : true
@@ -77,7 +77,7 @@ export function useFoormForm<TFormData, TContext>(opts: {
   function setErrors(errors: Record<string, string>) {
     for (const reg of fieldsById.values()) {
       const p = reg.path()
-      reg.callbacks.setExternalError(p !== undefined ? errors[p] : undefined)
+      reg.callbacks.setExternalError(errors[p])
     }
   }
 
