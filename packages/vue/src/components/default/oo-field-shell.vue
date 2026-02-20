@@ -47,7 +47,13 @@ function onSelectVariant(index: number) {
   <div class="oo-default-field" :class="[fieldClass, $props.class]" v-show="!hidden">
     <!-- Header row: label/header on left, action buttons on right -->
     <div
-      v-if="displayLabel || onRemove || (optional && optionalEnabled) || hasVariantPicker || $slots.header"
+      v-if="
+        displayLabel ||
+        onRemove ||
+        (optional && optionalEnabled) ||
+        hasVariantPicker ||
+        $slots.header
+      "
       class="oo-field-header-row"
     >
       <div class="oo-field-header-content">

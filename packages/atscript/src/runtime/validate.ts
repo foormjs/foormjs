@@ -4,6 +4,8 @@ import type { FoormDef } from './types'
 import { getFieldMeta } from './utils'
 import { foormValidatorPlugin } from './validator-plugin'
 
+const _foormPlugin = foormValidatorPlugin()
+
 /** Per-call options for the form validator function. */
 export interface TFormValidatorCallOptions {
   data: Record<string, unknown>
@@ -27,9 +29,8 @@ export function getFormValidator(
   def: FoormDef,
   opts?: Partial<TValidatorOptions>
 ): (callOpts: TFormValidatorCallOptions) => Record<string, string> {
-  const plugin = foormValidatorPlugin()
   const validator = new Validator(def.type, {
-    plugins: [plugin],
+    plugins: [_foormPlugin],
     unknwonProps: 'ignore',
     ...opts,
   })
@@ -73,11 +74,10 @@ export function createFieldValidator(
   prop: TAtscriptAnnotatedType,
   opts?: TFieldValidatorOptions
 ): (value: unknown, externalCtx?: { data: unknown; context: unknown }) => true | string {
-  const plugin = foormValidatorPlugin()
   let cached: InstanceType<typeof Validator> | undefined
 
   return (value: unknown, externalCtx?: { data: unknown; context: unknown }): true | string => {
-    cached ??= new Validator(prop, { plugins: [plugin] })
+    cached ??= new Validator(prop, { plugins: [_foormPlugin] })
     const isValid = cached.validate(value, true, externalCtx)
     if (!isValid) {
       if (opts?.rootOnly) {

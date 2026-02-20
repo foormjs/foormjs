@@ -17,7 +17,7 @@ export function asArray<T>(x: T | T[]): T[] {
 // ── Metadata access ─────────────────────────────────────────
 
 /** Loose metadata accessor for internal use. */
-type TMetadataAccessor = { get(key: string): unknown }
+type TMetadataAccessor = { get(key: string): unknown; keys(): Iterable<string> }
 
 /**
  * Reads a static metadata value from an ATScript prop.
@@ -243,10 +243,10 @@ export function resolveAttrs(
  * @returns `true` if dynamic annotations are present
  */
 export function hasComputedAnnotations(prop: TAtscriptAnnotatedType): boolean {
-  const metadata = prop.metadata as unknown as Map<string, unknown>
-  if (metadata.get('foorm.validate' as never) !== undefined) return true
+  const metadata = prop.metadata as unknown as TMetadataAccessor
+  if (metadata.get('foorm.validate') !== undefined) return true
   for (const key of metadata.keys()) {
-    if (String(key).startsWith('foorm.fn.')) return true
+    if (key.startsWith('foorm.fn.')) return true
   }
   return false
 }
@@ -407,7 +407,7 @@ function buildNestedData(
         : undefined,
     }
     const defaultValue = resolveFieldProp<unknown>(prop, 'foorm.fn.value', 'foorm.value', scope, {
-      transform: (raw) => parseStaticDefault(raw, prop),
+      transform: raw => parseStaticDefault(raw, prop),
     })
 
     if (defaultValue !== undefined) {

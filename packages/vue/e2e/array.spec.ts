@@ -309,7 +309,9 @@ test.describe('Nested Group — Settings', () => {
 
   test('renders number field', async ({ page }) => {
     const form = getForm(page)
-    const pageSizeField = form.locator('.oo-default-field').filter({ hasText: 'Max items per page' })
+    const pageSizeField = form
+      .locator('.oo-default-field')
+      .filter({ hasText: 'Max items per page' })
     await pageSizeField.locator('.oo-no-data').click()
     const pageSize = form.locator('input[name="pageSize"]')
     await expect(pageSize).toBeVisible()

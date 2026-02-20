@@ -171,30 +171,3 @@ function onSubmit() {
     ></slot>
   </form>
 </template>
-
-<style>
-button[type='submit'],
-button:not([type]) {
-  margin-top: 16px;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  background: #6366f1;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-button[type='submit']:hover,
-button:not([type]):hover {
-  background: #4f46e5;
-}
-
-button[type='submit']:disabled,
-button:not([type]):disabled {
-  background: #c7d2fe;
-  cursor: not-allowed;
-}
-</style>

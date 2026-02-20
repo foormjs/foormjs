@@ -39,7 +39,9 @@ function onSelectVariant(index: number) {
           type="button"
           class="oo-variant-trigger"
           :disabled="disabled"
-          :title="unionContext!.variants[unionContext!.currentIndex.value]?.label ?? 'Switch variant'"
+          :title="
+            unionContext!.variants[unionContext!.currentIndex.value]?.label ?? 'Switch variant'
+          "
           @click="toggle"
         >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">

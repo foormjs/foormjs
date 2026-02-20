@@ -55,8 +55,15 @@ export function useFoormArray(field: FoormArrayFieldDef, disabled?: ComputedRef<
     : []
 
   // ── Item field resolution ─────────────────────────────────────
+  const itemFieldCache = new Map<number, FoormFieldDef>()
+
   function getItemField(index: number): FoormFieldDef {
-    return { ...field.itemField, path: String(index), name: '' }
+    let cached = itemFieldCache.get(index)
+    if (!cached) {
+      cached = { ...field.itemField, path: String(index), name: '' }
+      itemFieldCache.set(index, cached)
+    }
+    return cached
   }
 
   // ── Length constraints ──────────────────────────────────────

@@ -227,9 +227,8 @@ if (props.field.allStatic) {
   // ══════════════════════════════════════════════════════════
   // Single scan of metadata keys to detect all foorm.fn.* annotations
   const hasFn = new Set<string>()
-  for (const key of (prop.metadata as unknown as Map<string, unknown>).keys()) {
-    const k = String(key)
-    if (k.startsWith('foorm.fn.')) hasFn.add(k.slice(9))
+  for (const key of (prop.metadata as unknown as { keys(): Iterable<string> }).keys()) {
+    if (key.startsWith('foorm.fn.')) hasFn.add(key.slice(9))
   }
   hasCustomValidators = getFieldMeta(prop, 'foorm.validate') !== undefined
 

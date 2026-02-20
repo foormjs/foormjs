@@ -23,6 +23,9 @@ const optionalEnabled = computed(() => props.model?.value !== undefined)
     <OoStructuredHeader
       :title="title"
       :level="level"
+      :on-remove="onRemove"
+      :can-remove="canRemove"
+      :remove-label="removeLabel"
       :optional="optional"
       :optional-enabled="optionalEnabled"
       :on-toggle-optional="onToggleOptional"

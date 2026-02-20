@@ -27,9 +27,7 @@
   "author": "Artem Maltsev",
   "license": "MIT",
   "scripts": {
-    "dev": "vite",
     "build": "run-s type-check build-only",
-    "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "pub": "pnpm publish --access public --no-git-checks"

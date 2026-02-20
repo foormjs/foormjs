@@ -59,16 +59,19 @@ function validateTitleTarget(
   ]
 }
 
-function fnAnnotation(description: string): AnnotationSpec {
+function makeFnAnnotation(description: string, mode: 'field' | 'top'): AnnotationSpec {
   return new AnnotationSpec({
     description,
-    nodeType: ['prop', 'type'],
+    nodeType: mode === 'field' ? ['prop', 'type'] : ['interface', 'type'],
     argument: {
       name: 'fn',
       type: 'string',
-      description: 'JS function string: (value, data, context, entry) => result',
+      description:
+        mode === 'field'
+          ? 'JS function string: (value, data, context, entry) => result'
+          : 'JS function string: (data, context) => result',
     },
-    validate(token, args) {
+    validate(_token, args) {
       if (args[0]) {
         return validateFnString(args[0].text, args[0].range)
       }
@@ -77,23 +80,8 @@ function fnAnnotation(description: string): AnnotationSpec {
   })
 }
 
-function fnTopAnnotation(description: string): AnnotationSpec {
-  return new AnnotationSpec({
-    description,
-    nodeType: ['interface', 'type'],
-    argument: {
-      name: 'fn',
-      type: 'string',
-      description: 'JS function string: (data, context) => result',
-    },
-    validate(token, args) {
-      if (args[0]) {
-        return validateFnString(args[0].text, args[0].range)
-      }
-      return undefined
-    },
-  })
-}
+const fnAnnotation = (description: string) => makeFnAnnotation(description, 'field')
+const fnTopAnnotation = (description: string) => makeFnAnnotation(description, 'top')
 
 export const BUILTIN_TYPES = [
   'text',
@@ -278,7 +266,7 @@ export const annotations: TAnnotationsTree = {
         type: 'string',
         description: 'JS function string: (value, data, context, entry) => boolean | string',
       },
-      validate(token, args) {
+      validate(_token, args) {
         if (args[0]) {
           return validateFnString(args[0].text, args[0].range)
         }
