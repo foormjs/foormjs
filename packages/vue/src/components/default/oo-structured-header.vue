@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import type { TFoormUnionContext } from '../types'
-import { useDropdown } from '../../composables/use-dropdown'
+import OoVariantPicker from './oo-variant-picker.vue'
 
 const props = defineProps<{
   title?: string
@@ -18,13 +17,6 @@ const props = defineProps<{
 
 // ── Variant picker (from union context prop) ────────────────
 const hasVariantPicker = props.unionContext !== undefined && props.unionContext.variants.length > 1
-
-const dropdownRef = ref<HTMLElement | null>(null)
-const { isOpen, toggle, select } = useDropdown(dropdownRef)
-
-function onSelectVariant(index: number) {
-  select(() => props.unionContext!.changeVariant(index))
-}
 </script>
 
 <template>
@@ -34,35 +26,11 @@ function onSelectVariant(index: number) {
       <h3 v-else-if="title" class="oo-structured-title">{{ title }}</h3>
 
       <!-- Union variant picker — inline next to title -->
-      <div v-if="hasVariantPicker" ref="dropdownRef" class="oo-dropdown">
-        <button
-          type="button"
-          class="oo-variant-trigger"
-          :disabled="disabled"
-          :title="
-            unionContext!.variants[unionContext!.currentIndex.value]?.label ?? 'Switch variant'
-          "
-          @click="toggle"
-        >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <circle cx="3" cy="8" r="1.5" fill="currentColor" />
-            <circle cx="8" cy="8" r="1.5" fill="currentColor" />
-            <circle cx="13" cy="8" r="1.5" fill="currentColor" />
-          </svg>
-        </button>
-        <div v-if="isOpen" class="oo-dropdown-menu">
-          <button
-            v-for="(v, vi) in unionContext!.variants"
-            :key="vi"
-            type="button"
-            class="oo-dropdown-item"
-            :class="{ 'oo-dropdown-item--active': unionContext!.currentIndex.value === vi }"
-            @click="onSelectVariant(vi)"
-          >
-            {{ v.label }}
-          </button>
-        </div>
-      </div>
+      <OoVariantPicker
+        v-if="hasVariantPicker"
+        :union-context="unionContext!"
+        :disabled="disabled"
+      />
     </div>
 
     <button

@@ -106,6 +106,7 @@ function createConfig(target, type, entry = 'src/index.ts', fileName = 'index') 
         check: true,
         tsconfig: './tsconfig.json',
         tsconfigOverride: {
+          files: ['packages/vue/src/atscript.d.ts'],
           target: 'es2020',
           declaration: false,
           declarationMap: false,

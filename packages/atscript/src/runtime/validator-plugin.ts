@@ -1,7 +1,6 @@
 import type { TValidatorPlugin } from '@atscript/typescript/utils'
-import type { TFoormFieldEvaluated } from './types'
 import { compileValidatorFn } from './fn-compiler'
-import { resolveFieldProp, resolveOptions, getFieldMeta, asArray } from './utils'
+import { buildFieldEntry, getFieldMeta, asArray } from './utils'
 
 /**
  * ATScript validator plugin that processes @foorm.validate annotations.
@@ -35,41 +34,9 @@ export function foormValidatorPlugin(): TValidatorPlugin {
     const data = foormCtx?.data ?? {}
     const context = foormCtx?.context ?? {}
 
-    // Field name from the validator's current path
-    const fieldName = ctx.path.split('.').pop() || ''
-
-    // Base scope for evaluating constraints (no entry yet)
+    // Build entry + full scope via shared dual-scope utility
     const baseScope = { v: value, data, context, entry: undefined }
-
-    // Resolve constraints for the entry snapshot
-    const optional =
-      resolveFieldProp<boolean>(def, 'foorm.fn.optional', 'foorm.optional', baseScope, {
-        staticAsBoolean: true,
-      }) ?? def.optional
-
-    // Build entry object with field metadata
-    const entry: TFoormFieldEvaluated = {
-      field: ctx.path,
-      type: getFieldMeta(def, 'foorm.type') || 'text',
-      component: getFieldMeta(def, 'foorm.component'),
-      name: fieldName,
-      optional,
-      disabled: resolveFieldProp<boolean>(def, 'foorm.fn.disabled', 'foorm.disabled', baseScope, {
-        staticAsBoolean: true,
-      }),
-      hidden: resolveFieldProp<boolean>(def, 'foorm.fn.hidden', 'foorm.hidden', baseScope, {
-        staticAsBoolean: true,
-      }),
-      readonly: resolveFieldProp<boolean>(def, 'foorm.fn.readonly', 'foorm.readonly', baseScope, {
-        staticAsBoolean: true,
-      }),
-    }
-
-    // Full scope with evaluated entry
-    const scope = { v: value, data, context, entry }
-
-    // Evaluate options (static or computed)
-    entry.options = resolveOptions(def, scope)
+    const scope = buildFieldEntry(def, baseScope, ctx.path)
 
     // Run custom validators with full scope
     const fns = asArray(hasValidators)

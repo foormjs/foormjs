@@ -1,4 +1,4 @@
-import { computed, nextTick, provide, ref, toValue, type MaybeRef } from 'vue'
+import { computed, nextTick, provide, reactive, toValue, watchEffect, type MaybeRef } from 'vue'
 import type { TFoormFieldRegistration, TFoormState } from '../types'
 
 /** Custom form-level validator. Returns `Record<path, message>` (empty = passed). */
@@ -12,7 +12,6 @@ export function useFoormForm<TFormData, TContext>(opts: {
   submitValidator?: TFoormSubmitValidator
 }) {
   const fieldsById = new Map<symbol, TFoormFieldRegistration>()
-  const firstSubmitHappened = ref(false)
 
   // Stable functions — outside computed to avoid re-creation on reactivity ticks
   const register = (id: symbol, registration: TFoormFieldRegistration) => {
@@ -22,15 +21,20 @@ export function useFoormForm<TFormData, TContext>(opts: {
     fieldsById.delete(id)
   }
 
-  // foormState is decoupled from formData/formContext — it only changes on
-  // validation-state transitions (firstSubmitHappened, firstValidation), NOT on
-  // every keystroke. formData and formContext are provided separately.
-  const foormState = computed<TFoormState>(() => ({
-    firstSubmitHappened: firstSubmitHappened.value,
+  // Reactive object — properties are mutated in-place so Vue's fine-grained
+  // reactivity only invalidates dependents that read the specific changed property
+  // (e.g. firstSubmitHappened), instead of every consumer on every tick.
+  const foormState = reactive<TFoormState>({
+    firstSubmitHappened: false,
     firstValidation: toValue(opts.firstValidation) ?? 'on-change',
     register,
     unregister,
-  }))
+  })
+
+  // Sync firstValidation from opts (may be a ref)
+  watchEffect(() => {
+    foormState.firstValidation = toValue(opts.firstValidation) ?? 'on-change'
+  })
 
   provide('__foorm_form', foormState)
   provide(
@@ -43,7 +47,7 @@ export function useFoormForm<TFormData, TContext>(opts: {
   )
 
   function clearErrors() {
-    firstSubmitHappened.value = false
+    foormState.firstSubmitHappened = false
     for (const reg of fieldsById.values()) {
       reg.callbacks.clearErrors()
     }
@@ -58,9 +62,8 @@ export function useFoormForm<TFormData, TContext>(opts: {
   }
 
   function submit(): true | { path: string; message: string }[] {
-    firstSubmitHappened.value = true
-    const fv = toValue(opts.firstValidation) ?? 'on-change'
-    if (fv === 'none') return true
+    foormState.firstSubmitHappened = true
+    if (foormState.firstValidation === 'none') return true
 
     // Custom form-level validator — replaces per-field iteration
     if (opts.submitValidator) {

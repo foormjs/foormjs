@@ -22,6 +22,7 @@ export {
   OoCheckbox,
   OoParagraph,
   OoAction,
+  OoVariantPicker,
   OoStructuredHeader,
   OoObject,
   OoArray,
@@ -41,3 +42,4 @@ export type {
 export { useFoorm } from './composables/use-foorm'
 export { useFoormArray } from './composables/use-foorm-array'
 export { useFoormUnion } from './composables/use-foorm-union'
+export { useConsumeUnionContext, formatIndexedLabel } from './composables/use-foorm-context'

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { FoormObjectFieldDef } from '@foormjs/atscript'
 import { isObjectField } from '@foormjs/atscript'
-import { computed, inject, provide } from 'vue'
-import type { TFoormComponentProps, TFoormUnionContext } from '../types'
+import { computed } from 'vue'
+import type { TFoormComponentProps } from '../types'
+import { useConsumeUnionContext, formatIndexedLabel } from '../../composables/use-foorm-context'
 import OoIterator from '../oo-iterator.vue'
 import OoNoData from './oo-no-data.vue'
 import OoStructuredHeader from './oo-structured-header.vue'
@@ -14,17 +15,10 @@ const objectDef = isObjectField(props.field!)
   : undefined
 
 // ── Union context: consume and clear for nested children ────
-const unionCtx = inject<TFoormUnionContext | undefined>('__foorm_union', undefined)
-provide('__foorm_union', undefined)
+const unionCtx = useConsumeUnionContext()
 
 // In array context, show #<index+1> (with or without title)
-const displayTitle = computed(() => {
-  const idx = props.arrayIndex
-  if (idx !== undefined) {
-    return props.title ? `${props.title} #${idx + 1}` : `#${idx + 1}`
-  }
-  return props.title
-})
+const displayTitle = computed(() => formatIndexedLabel(props.title, props.arrayIndex))
 
 const optionalEnabled = computed(() => props.model?.value !== undefined)
 </script>

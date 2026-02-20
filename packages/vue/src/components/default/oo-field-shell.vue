@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, inject, provide, ref, useId } from 'vue'
-import type { TFoormComponentProps, TFoormUnionContext } from '../types'
+import { computed, useId } from 'vue'
+import type { TFoormComponentProps } from '../types'
+import { useConsumeUnionContext, formatIndexedLabel } from '../../composables/use-foorm-context'
 import OoNoData from './oo-no-data.vue'
-import { useDropdown } from '../../composables/use-dropdown'
+import OoVariantPicker from './oo-variant-picker.vue'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const props = defineProps<
@@ -21,26 +22,11 @@ const descId = `${prefix}-${id}-desc`
 const optionalEnabled = computed(() => props.model?.value !== undefined)
 
 // ── Union context (optional — present when rendered inside oo-union) ──
-const unionCtx = inject<TFoormUnionContext | undefined>('__foorm_union', undefined)
-provide('__foorm_union', undefined) // Clear for nested children
+const unionCtx = useConsumeUnionContext()
 const hasVariantPicker = unionCtx !== undefined && unionCtx.variants.length > 1
 
 // In array context, prepend #<index+1> to the label (same as oo-object displayTitle)
-const displayLabel = computed(() => {
-  const idx = props.arrayIndex
-  if (idx !== undefined) {
-    return props.label ? `${props.label} #${idx + 1}` : `#${idx + 1}`
-  }
-  return props.label
-})
-
-// ── Dropdown for variant picker ─────────────────────────────
-const dropdownRef = ref<HTMLElement | null>(null)
-const { isOpen, toggle, select } = useDropdown(dropdownRef)
-
-function onSelectVariant(index: number) {
-  select(() => unionCtx!.changeVariant(index))
-}
+const displayLabel = computed(() => formatIndexedLabel(props.label, props.arrayIndex))
 </script>
 
 <template>
@@ -71,33 +57,7 @@ function onSelectVariant(index: number) {
         </template>
 
         <!-- Union variant picker — inline next to label -->
-        <div v-if="hasVariantPicker" ref="dropdownRef" class="oo-dropdown">
-          <button
-            type="button"
-            class="oo-variant-trigger"
-            :disabled="disabled"
-            :title="unionCtx!.variants[unionCtx!.currentIndex.value]?.label ?? 'Switch variant'"
-            @click="toggle"
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <circle cx="3" cy="8" r="1.5" fill="currentColor" />
-              <circle cx="8" cy="8" r="1.5" fill="currentColor" />
-              <circle cx="13" cy="8" r="1.5" fill="currentColor" />
-            </svg>
-          </button>
-          <div v-if="isOpen" class="oo-dropdown-menu">
-            <button
-              v-for="(v, vi) in unionCtx!.variants"
-              :key="vi"
-              type="button"
-              class="oo-dropdown-item"
-              :class="{ 'oo-dropdown-item--active': unionCtx!.currentIndex.value === vi }"
-              @click="onSelectVariant(vi)"
-            >
-              {{ v.label }}
-            </button>
-          </div>
-        </div>
+        <OoVariantPicker v-if="hasVariantPicker" :union-context="unionCtx!" :disabled="disabled" />
       </div>
 
       <div v-if="(optional && optionalEnabled) || onRemove" class="oo-field-header-actions">
@@ -117,7 +77,7 @@ function onSelectVariant(index: number) {
           :aria-label="removeLabel || 'Remove item'"
           @click="onRemove"
         >
-          {{ removeLabel || '\u00d7' }}
+          {{ removeLabel || 'Remove' }}
         </button>
       </div>
     </div>

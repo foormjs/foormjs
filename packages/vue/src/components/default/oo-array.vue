@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { FoormArrayFieldDef } from '@foormjs/atscript'
 import { isArrayField } from '@foormjs/atscript'
-import { computed, inject, provide, ref } from 'vue'
-import type { TFoormComponentProps, TFoormUnionContext } from '../types'
+import { computed, ref } from 'vue'
+import type { TFoormComponentProps } from '../types'
+import { useConsumeUnionContext } from '../../composables/use-foorm-context'
 import { useFoormArray } from '../../composables/use-foorm-array'
 import { useDropdown } from '../../composables/use-dropdown'
 import OoField from '../oo-field.vue'
@@ -14,8 +15,7 @@ const props = defineProps<TFoormComponentProps>()
 const arrayField = isArrayField(props.field!) ? (props.field as FoormArrayFieldDef) : undefined
 
 // ── Union context: consume and clear for nested children ────
-const unionCtx = inject<TFoormUnionContext | undefined>('__foorm_union', undefined)
-provide('__foorm_union', undefined)
+const unionCtx = useConsumeUnionContext()
 
 const optionalEnabled = computed(() => Array.isArray(props.model?.value))
 

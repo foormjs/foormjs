@@ -1,3 +1,15 @@
+<script lang="ts">
+import type { TFoormFnScope } from '@foormjs/atscript'
+
+// Module-level singleton — shared across all OoField instances
+const emptyScope: TFoormFnScope = {
+  v: undefined,
+  data: {} as Record<string, unknown>,
+  context: {} as Record<string, unknown>,
+  entry: undefined,
+}
+</script>
+
 <script setup lang="ts" generic="TFormData = any, TFormContext = any">
 import { useFoormField } from '@foormjs/composables'
 import {
@@ -9,14 +21,13 @@ import {
   resolveOptions,
   resolveAttrs,
   getFieldMeta,
+  buildFieldEntry,
   createDefaultValue,
   createFormData,
   createFieldValidator,
   type FoormFieldDef,
   type FoormObjectFieldDef,
   type TFoormAltAction,
-  type TFoormFieldEvaluated,
-  type TFoormFnScope,
 } from '@foormjs/atscript'
 import { computed, inject, isRef, provide, watch, type Component, type ComputedRef } from 'vue'
 import { useFoormContext } from '../composables/use-foorm-context'
@@ -173,14 +184,6 @@ let classesBase: Record<string, boolean> | ComputedRef<Record<string, boolean>>
 let phantomValue: unknown
 let hasCustomValidators: boolean
 
-// Empty scope for static resolve calls (options, attrs)
-const emptyScope: TFoormFnScope = {
-  v: undefined,
-  data: {} as Record<string, unknown>,
-  context: {} as Record<string, unknown>,
-  entry: undefined,
-}
-
 // Whether @meta.required is present (static — shared by both paths)
 const hasMetaRequired = getFieldMeta(prop, 'meta.required') !== undefined
 
@@ -235,8 +238,7 @@ if (props.field.allStatic) {
   hasCustomValidators = getFieldMeta(prop, 'foorm.validate') !== undefined
 
   // ── Lazy scope construction ────────────────────────────────
-  const needsBaseScope =
-    hasFn.has('disabled') || hasFn.has('hidden') || hasFn.has('optional') || hasFn.has('readonly')
+  const needsBaseScope = hasFn.has('disabled') || hasFn.has('hidden') || hasFn.has('readonly')
   const needsFullScope =
     hasFn.has('label') ||
     hasFn.has('description') ||
@@ -276,14 +278,7 @@ if (props.field.allStatic) {
     getFieldMeta(prop, 'foorm.hidden') !== undefined
   )
 
-  optional = maybeComputed(
-    hasFn.has('optional'),
-    () =>
-      resolveFieldProp<boolean>(prop, 'foorm.fn.optional', undefined, bs.value) ??
-      props.field.prop.optional ??
-      false,
-    props.field.prop.optional ?? false
-  )
+  optional = props.field.prop.optional ?? false
 
   readonly = maybeComputed(
     hasFn.has('readonly'),
@@ -298,9 +293,8 @@ if (props.field.allStatic) {
 
   // ── Full scope with entry (derived from baseScope) ─────────
   const scope = needsFullScope
-    ? computed<TFoormFnScope>(() => {
-        const entry: TFoormFieldEvaluated = {
-          field: props.field.path,
+    ? computed<TFoormFnScope>(() =>
+        buildFieldEntry(prop, bs.value, props.field.path, {
           type: props.field.type,
           component: componentName,
           name: props.field.name,
@@ -308,12 +302,8 @@ if (props.field.allStatic) {
           disabled: unwrap(disabled),
           hidden: unwrap(hidden),
           readonly: unwrap(readonly),
-        }
-        const s = { ...bs.value, entry }
-        // Resolve options into entry (after scope is built to avoid circular dep)
-        entry.options = resolveOptions(prop, s) ?? undefined
-        return s
-      })
+        })
+      )
     : undefined
 
   // Safe alias — guaranteed non-null when hasFn.has() is true (implies needsFullScope)
@@ -483,17 +473,28 @@ const classes = computed(() => ({
   error: !!mergedError.value,
 }))
 
-// ── All props for the rendered component ─────────────────────
-const componentProps = computed(() => ({
+// ── Field-invariant props (setup-time constants) ──────────────
+const invariantProps = {
   onBlur,
-  error: mergedError.value,
   model: slotModel,
+  type: props.field.type,
+  altAction,
+  name: props.field.name,
+  field: props.field,
+  maxLength,
+  autocomplete,
+  level: isStructured ? myLevel : undefined,
+}
+
+// ── Display props — cached separately from error state ────────
+// For allStatic fields this computed has zero reactive deps (evaluated
+// once and cached). Error-only changes skip re-evaluating all unwrap() calls.
+const displayProps = computed(() => ({
   value: unwrap(phantomValue),
   label: unwrap(label),
   description: unwrap(description),
   hint: unwrap(hint),
   placeholder: unwrap(placeholder),
-  class: classes.value,
   style: unwrap(styles),
   optional: unwrap(optional),
   onToggleOptional: unwrap(optional) ? toggleOptional : undefined,
@@ -501,20 +502,21 @@ const componentProps = computed(() => ({
   disabled: unwrap(disabled),
   hidden: unwrap(hidden),
   readonly: unwrap(readonly),
-  type: props.field.type,
-  altAction,
-  name: props.field.name,
-  field: props.field,
   options: unwrap(options),
-  maxLength,
-  autocomplete,
   title: unwrap(title),
-  level: isStructured ? myLevel : undefined,
   onRemove: props.onRemove,
   canRemove: props.canRemove,
   removeLabel: props.removeLabel,
   arrayIndex: props.arrayIndex,
   ...unwrap(attrs),
+}))
+
+// ── Final component props — merges invariant + display + error state ──
+const componentProps = computed(() => ({
+  ...invariantProps,
+  ...displayProps.value,
+  error: mergedError.value,
+  class: classes.value,
 }))
 </script>
 

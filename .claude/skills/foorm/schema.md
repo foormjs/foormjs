@@ -75,7 +75,6 @@ Any field property can be dynamic. Function strings receive `(v, data, context, 
 | `@foorm.fn.disabled '(v, data) => ...'`     | `boolean`              |
 | `@foorm.fn.hidden '(v, data) => ...'`       | `boolean`              |
 | `@foorm.fn.readonly '(v, data) => ...'`     | `boolean`              |
-| `@foorm.fn.optional '(v, data) => ...'`     | `boolean`              |
 | `@foorm.fn.value '(v, data) => ...'`        | `any`                  |
 | `@foorm.fn.classes '(v, data) => ...'`      | `string \| object`     |
 | `@foorm.fn.styles '(v, data) => ...'`       | `string \| object`     |

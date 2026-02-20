@@ -113,7 +113,7 @@ export function createFoormDef(type: TAtscriptAnnotatedType): FoormDef {
  */
 function createFieldDef(path: string, prop: TAtscriptAnnotatedType): FoormFieldDef {
   const kind = prop.type.kind
-  const name = path.split('.').pop() ?? (path || '')
+  const name = path.slice(path.lastIndexOf('.') + 1)
   const allStatic = !hasComputedAnnotations(prop)
   const foormType = getFieldMeta(prop, 'foorm.type')
   const base = { path, prop, phantom: false, name, allStatic }
@@ -167,7 +167,15 @@ function createFieldDef(path: string, prop: TAtscriptAnnotatedType): FoormFieldD
 
   // Primitive / intersection / fallback
   const tags = kind === '' ? prop.type.tags : undefined
-  const foormTag = tags ? [...tags].find(t => FOORM_TAGS.has(t)) : undefined
+  let foormTag: string | undefined
+  if (tags) {
+    for (const t of tags) {
+      if (FOORM_TAGS.has(t)) {
+        foormTag = t
+        break
+      }
+    }
+  }
   const dt = kind === '' ? prop.type.designType : undefined
   return {
     ...base,
@@ -236,16 +244,7 @@ function createVariant(def: TAtscriptAnnotatedType): FoormUnionVariant {
       label, // variant label
       type: def,
       def: createFoormDef(def as TAtscriptAnnotatedType<TAtscriptTypeObject>),
-      itemField: hasComponent
-        ? {
-            path: '',
-            prop: def,
-            type: 'object',
-            phantom: false,
-            name: '',
-            allStatic: !hasComputedAnnotations(def),
-          }
-        : undefined,
+      itemField: hasComponent ? createFieldDef('', def) : undefined,
     }
   }
 

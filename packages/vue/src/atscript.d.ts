@@ -56,7 +56,6 @@ declare global {
     'foorm.fn.disabled': string
     'foorm.fn.hidden': string
     'foorm.fn.readonly': string
-    'foorm.fn.optional': string
     'foorm.fn.value': string
     'foorm.fn.classes': string
     'foorm.fn.styles': string

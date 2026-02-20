@@ -336,7 +336,6 @@ export const annotations: TAnnotationsTree = {
       disabled: fnAnnotation('Computed disabled state: (value, data, context, entry) => boolean'),
       hidden: fnAnnotation('Computed hidden state: (value, data, context, entry) => boolean'),
       readonly: fnAnnotation('Computed readonly state: (value, data, context, entry) => boolean'),
-      optional: fnAnnotation('Computed optional state: (value, data, context, entry) => boolean'),
       value: fnAnnotation('Computed default value: (value, data, context, entry) => any'),
       classes: fnAnnotation(
         'Computed CSS classes: (value, data, context, entry) => string | Record<string, boolean>'

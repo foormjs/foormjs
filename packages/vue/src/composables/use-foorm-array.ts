@@ -42,8 +42,15 @@ export function useFoormArray(field: FoormArrayFieldDef, disabled?: ComputedRef<
     while (itemKeys.length < arrayValue.value.length) {
       itemKeys.push(generateKey())
     }
-    while (itemKeys.length > arrayValue.value.length) {
-      itemKeys.pop()
+    const newLen = arrayValue.value.length
+    if (itemKeys.length > newLen) {
+      // Invalidate cached field defs for removed indices
+      for (const key of itemFieldCache.keys()) {
+        if (key >= newLen) itemFieldCache.delete(key)
+      }
+      while (itemKeys.length > newLen) {
+        itemKeys.pop()
+      }
     }
   }
 
@@ -108,6 +115,11 @@ export function useFoormArray(field: FoormArrayFieldDef, disabled?: ComputedRef<
     if (!canRemove.value) return
     ensureArray().splice(index, 1)
     itemKeys.splice(index, 1)
+    // Invalidate cached field defs at and above the removed index
+    // since items shift down and cached `path` values become stale
+    for (const key of itemFieldCache.keys()) {
+      if (key >= index) itemFieldCache.delete(key)
+    }
     handleChange('array-remove', pathPrefix.value, arrayValue.value)
   }
 

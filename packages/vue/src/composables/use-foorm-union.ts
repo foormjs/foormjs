@@ -1,6 +1,6 @@
 import type { FoormFieldDef, FoormUnionFieldDef } from '@foormjs/atscript'
 import { isUnionField, createItemData, detectUnionVariant } from '@foormjs/atscript'
-import { computed, inject, provide, ref, shallowRef, watch, type ComputedRef } from 'vue'
+import { computed, inject, provide, ref, type ComputedRef } from 'vue'
 import type {
   TFoormChangeType,
   TFoormComponentProps,
@@ -63,10 +63,7 @@ export function useFoormUnion(props: TFoormComponentProps) {
     return undefined
   }
 
-  const innerField = shallowRef<FoormFieldDef | undefined>(buildInnerField())
-  watch(localUnionIndex, () => {
-    innerField.value = buildInnerField()
-  })
+  const innerField = computed(buildInnerField)
 
   // ── Per-variant data stash ──────────────────────────────────
   // Stores previous variant data keyed by variant index so switching back

@@ -39,10 +39,11 @@ export {
   getFieldMeta,
   hasComputedAnnotations,
   parseStaticOptions,
+  buildFieldEntry,
   optKey,
   optLabel,
 } from './runtime/utils'
-export type { TResolveOptions } from './runtime/utils'
+export type { TResolveOptions, TBuildFieldEntryOpts } from './runtime/utils'
 
 // General utilities
 export {

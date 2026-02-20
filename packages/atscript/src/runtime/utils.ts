@@ -1,4 +1,10 @@
-import type { TFoormFnScope, TFoormEntryOptions, FoormFieldDef, FoormUnionVariant } from './types'
+import type {
+  TFoormFnScope,
+  TFoormEntryOptions,
+  TFoormFieldEvaluated,
+  FoormFieldDef,
+  FoormUnionVariant,
+} from './types'
 import type {
   TAtscriptAnnotatedType,
   TAtscriptTypeComplex,
@@ -215,12 +221,14 @@ export function resolveAttrs(
   if (!staticAttrs && !fnAttrs) return undefined
 
   const result: Record<string, unknown> = {}
+  let hasAttrs = false
 
   if (staticAttrs) {
     for (const item of asArray(staticAttrs)) {
       if (typeof item === 'object' && item !== null && 'name' in item && 'value' in item) {
         const { name, value } = item as { name: string; value: string }
         result[name] = value
+        hasAttrs = true
       }
     }
   }
@@ -230,11 +238,78 @@ export function resolveAttrs(
       if (typeof item === 'object' && item !== null && 'name' in item && 'fn' in item) {
         const { name, fn } = item as { name: string; fn: string }
         result[name] = compileFieldFn<unknown>(fn)(scope)
+        hasAttrs = true
       }
     }
   }
 
-  return Object.keys(result).length > 0 ? result : undefined
+  return hasAttrs ? result : undefined
+}
+
+// ── Entry builder (dual-scope pattern) ──────────────────────
+
+/** Options for buildFieldEntry — allows pre-resolved overrides. */
+export interface TBuildFieldEntryOpts {
+  /** Field name — if not provided, extracted from path */
+  name?: string
+  /** Field type — if not provided, reads from @foorm.type metadata (default 'text') */
+  type?: string
+  /** Component name — if not provided, reads from @foorm.component metadata */
+  component?: string
+  /** Pre-resolved constraint overrides — skip metadata resolution */
+  optional?: boolean
+  disabled?: boolean
+  hidden?: boolean
+  readonly?: boolean
+}
+
+/**
+ * Builds a `TFoormFieldEvaluated` entry and returns a full scope containing it.
+ *
+ * Implements the dual-scope pattern used by both the validator plugin and OoField:
+ * 1. Resolve constraints (disabled/hidden/readonly) from `baseScope`
+ * 2. Assemble the entry object
+ * 3. Build full scope (`{ ...baseScope, entry }`)
+ * 4. Resolve options into the entry using the full scope
+ *
+ * When overrides are provided in `opts`, those values are used directly
+ * instead of resolving from metadata (useful when constraints are already
+ * resolved reactively, e.g. in Vue components).
+ *
+ * @param prop - ATScript annotated type for the field
+ * @param baseScope - Scope without entry (v, data, context)
+ * @param path - Field path (e.g. 'address.city')
+ * @param opts - Optional overrides for field info and pre-resolved constraints
+ * @returns Full scope with the assembled entry
+ */
+export function buildFieldEntry(
+  prop: TAtscriptAnnotatedType,
+  baseScope: TFoormFnScope,
+  path: string,
+  opts?: TBuildFieldEntryOpts
+): TFoormFnScope {
+  const boolOpts = { staticAsBoolean: true } as const
+
+  const entry: TFoormFieldEvaluated = {
+    field: path,
+    type: opts?.type ?? getFieldMeta(prop, 'foorm.type') ?? 'text',
+    component: opts?.component ?? getFieldMeta(prop, 'foorm.component'),
+    name: opts?.name ?? path.slice(path.lastIndexOf('.') + 1),
+    optional: opts?.optional ?? prop.optional,
+    disabled:
+      opts?.disabled ??
+      resolveFieldProp<boolean>(prop, 'foorm.fn.disabled', 'foorm.disabled', baseScope, boolOpts),
+    hidden:
+      opts?.hidden ??
+      resolveFieldProp<boolean>(prop, 'foorm.fn.hidden', 'foorm.hidden', baseScope, boolOpts),
+    readonly:
+      opts?.readonly ??
+      resolveFieldProp<boolean>(prop, 'foorm.fn.readonly', 'foorm.readonly', baseScope, boolOpts),
+  }
+
+  const scope: TFoormFnScope = { ...baseScope, entry }
+  entry.options = resolveOptions(prop, scope)
+  return scope
 }
 
 // ── allStatic detection ─────────────────────────────────────

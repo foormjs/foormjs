@@ -15,7 +15,7 @@ export interface UseFoormFieldOptions<TValue = any, TFormData = any, TContext = 
 export function useFoormField<TValue = any, TFormData = any, TContext = any>(
   opts: UseFoormFieldOptions<TValue, TFormData, TContext>
 ) {
-  const foormState = inject<ComputedRef<TFoormState>>('__foorm_form')
+  const foormState = inject<TFoormState>('__foorm_form')
   const formData = inject<ComputedRef<TFormData | undefined>>('__foorm_form_data')
   const formContext = inject<ComputedRef<TContext | undefined>>('__foorm_form_context')
 
@@ -37,25 +37,23 @@ export function useFoormField<TValue = any, TFormData = any, TContext = any>(
       externalError.value = undefined
       touched.value = true
     },
-    { deep: true }
+    {}
   )
 
   const isValidationActive = computed(() => {
-    if (foormState?.value?.firstValidation) {
-      switch (foormState.value.firstValidation) {
-        case 'on-change':
-          return foormState.value.firstSubmitHappened || touched.value
-        case 'touched-on-blur':
-          return foormState.value.firstSubmitHappened || (blur.value && touched.value)
-        case 'on-blur':
-          return foormState.value.firstSubmitHappened || blur.value
-        case 'on-submit':
-          return foormState.value.firstSubmitHappened
-        case 'none':
-          return false
-      }
+    if (!foormState?.firstValidation) return false
+    switch (foormState.firstValidation) {
+      case 'on-change':
+        return foormState.firstSubmitHappened || touched.value
+      case 'touched-on-blur':
+        return foormState.firstSubmitHappened || (blur.value && touched.value)
+      case 'on-blur':
+        return foormState.firstSubmitHappened || blur.value
+      case 'on-submit':
+        return foormState.firstSubmitHappened
+      default:
+        return false
     }
-    return false
   })
 
   function validate(): string | undefined {
@@ -90,8 +88,8 @@ export function useFoormField<TValue = any, TFormData = any, TContext = any>(
   }
 
   // Register with form
-  if (foormState?.value) {
-    foormState.value.register(id, {
+  if (foormState) {
+    foormState.register(id, {
       path: opts.path,
       callbacks: {
         validate: () => {
@@ -115,7 +113,7 @@ export function useFoormField<TValue = any, TFormData = any, TContext = any>(
   }
 
   onUnmounted(() => {
-    foormState?.value?.unregister(id)
+    foormState?.unregister(id)
   })
 
   return { model, error, onBlur }
