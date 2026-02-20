@@ -4,7 +4,7 @@ import type {
   TFoormAltAction,
   TFoormEntryOptions,
 } from '@foormjs/atscript'
-import type { Ref } from 'vue'
+import type { Component, Ref } from 'vue'
 
 /**
  * Shared base props available to all custom foorm components.
@@ -28,7 +28,7 @@ export interface TFoormBaseComponentProps {
  */
 export interface TFoormComponentProps<V = unknown> extends TFoormBaseComponentProps {
   /** Called on field blur — triggers validation. */
-  onBlur: (event: FocusEvent) => void
+  onBlur: () => void
   /** Validation error message for this field, if any. */
   error?: string
   /** Reactive model wrapping the field value. Bind with `v-model="model.value"`. */
@@ -98,6 +98,25 @@ export type TFoormChangeType = 'update' | 'array-add' | 'array-remove' | 'union-
  * Consumed by header components (OoStructuredHeader, OoFieldShell) to render
  * the variant picker inline with the item's own header.
  */
+/**
+ * Type-to-component map for `OoForm`. Lists all built-in field types as
+ * required keys and accepts additional custom types via index signature.
+ *
+ * Use {@link createDefaultTypes} to get a pre-built map with all defaults.
+ */
+export type TFoormTypeComponents = {
+  text: Component
+  select: Component
+  radio: Component
+  checkbox: Component
+  paragraph: Component
+  action: Component
+  object: Component
+  array: Component
+  union: Component
+  tuple: Component
+} & Record<string, Component>
+
 export interface TFoormUnionContext {
   /** All available union variant branches. */
   variants: FoormUnionVariant[]

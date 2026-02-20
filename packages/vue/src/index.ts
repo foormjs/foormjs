@@ -15,15 +15,12 @@ export { default as OoIterator } from './components/oo-iterator.vue'
 
 // Default type components
 export {
-  OoFieldShell,
   OoInput,
   OoSelect,
   OoRadio,
   OoCheckbox,
   OoParagraph,
   OoAction,
-  OoVariantPicker,
-  OoStructuredHeader,
   OoObject,
   OoArray,
   OoUnion,
@@ -34,6 +31,7 @@ export {
 export type {
   TFoormBaseComponentProps,
   TFoormComponentProps,
+  TFoormTypeComponents,
   TFoormUnionContext,
   TFoormChangeType,
 } from './components/types'
@@ -43,3 +41,4 @@ export { useFoorm } from './composables/use-foorm'
 export { useFoormArray } from './composables/use-foorm-array'
 export { useFoormUnion } from './composables/use-foorm-union'
 export { useConsumeUnionContext, formatIndexedLabel } from './composables/use-foorm-context'
+export { createDefaultTypes } from './composables/create-default-types'

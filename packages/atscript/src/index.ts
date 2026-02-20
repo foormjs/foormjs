@@ -26,7 +26,7 @@ export type {
 export { isArrayField, isObjectField, isUnionField, isTupleField } from './runtime/types'
 
 // Core
-export { createFoormDef, buildUnionVariants } from './runtime/create-foorm'
+export { createFoormDef } from './runtime/create-foorm'
 export { getFormValidator, supportsAltAction, createFieldValidator } from './runtime/validate'
 export type { TFormValidatorCallOptions, TFieldValidatorOptions } from './runtime/validate'
 
@@ -37,8 +37,6 @@ export {
   resolveOptions,
   resolveAttrs,
   getFieldMeta,
-  hasComputedAnnotations,
-  parseStaticOptions,
   buildFieldEntry,
   optKey,
   optLabel,
@@ -54,9 +52,6 @@ export {
   createItemData,
   detectUnionVariant,
 } from './runtime/utils'
-
-// fn-compiler
-export { compileFieldFn, compileTopFn, compileValidatorFn } from './runtime/fn-compiler'
 
 // Validator plugin
 export { foormValidatorPlugin } from './runtime/validator-plugin'

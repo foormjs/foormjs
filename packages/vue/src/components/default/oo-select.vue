@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { optKey, optLabel } from '@foormjs/atscript'
 import type { TFoormComponentProps } from '../types'
-import OoFieldShell from './oo-field-shell.vue'
+import OoFieldShell from '../internal/oo-field-shell.vue'
 
 defineProps<TFoormComponentProps>()
 </script>
@@ -12,6 +12,7 @@ defineProps<TFoormComponentProps>()
       <select
         :id="inputId"
         v-model="model.value"
+        @change="onBlur"
         @blur="onBlur"
         :name="name"
         :disabled="disabled"

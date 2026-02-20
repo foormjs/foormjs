@@ -5,7 +5,7 @@ import OoField from './oo-field.vue'
 import type { FoormDef, TFoormFnScope } from '@foormjs/atscript'
 import { getFormValidator, resolveFormProp, supportsAltAction } from '@foormjs/atscript'
 import { computed, provide, ref, toRaw, type Component } from 'vue'
-import type { TFoormChangeType, TFoormComponentProps } from './types'
+import type { TFoormChangeType, TFoormComponentProps, TFoormTypeComponents } from './types'
 
 export interface Props<TF, TC> {
   def: FoormDef
@@ -15,10 +15,10 @@ export interface Props<TF, TC> {
   components?: Record<string, Component<TFoormComponentProps>>
   /**
    * Type-to-component map for field rendering. Maps field types to Vue components.
-   * Must include entries for all field types used in the form (e.g. `text`, `select`,
-   * `structure`, `array`). Import defaults from `@foormjs/vue` or supply your own.
+   * Must include entries for all built-in field types. Use `createDefaultTypes()`
+   * for a pre-filled map, or supply your own.
    */
-  types: Record<string, Component<TFoormComponentProps>>
+  types: TFoormTypeComponents
   errors?: Record<string, string | undefined>
 }
 

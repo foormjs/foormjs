@@ -666,3 +666,74 @@ test.describe('Computed Paragraph', () => {
     await expect(defaultP).toHaveText('Fill out your info above to see a summary.')
   })
 })
+
+// ── Change Events ─────────────────────────────────────────────────
+
+test.describe('Change Events', () => {
+  test('select fires change event immediately on selection', async ({ page }) => {
+    const form = getForm(page)
+    const countryField = form.locator('.oo-default-field').filter({ hasText: 'Country' })
+    await enableField(countryField)
+    const select = form.locator('select[name="country"]')
+
+    const logs: string[] = []
+    page.on('console', msg => {
+      if (msg.type() === 'log') logs.push(msg.text())
+    })
+
+    await select.selectOption('ca')
+    await page.waitForTimeout(100)
+
+    expect(logs.some(l => l.includes('change') && l.includes('update') && l.includes('country'))).toBe(true)
+  })
+
+  test('radio fires change event immediately on selection', async ({ page }) => {
+    const form = getForm(page)
+    const genderField = form.locator('.oo-default-field').filter({ hasText: 'Gender' })
+    await enableField(genderField)
+
+    const logs: string[] = []
+    page.on('console', msg => {
+      if (msg.type() === 'log') logs.push(msg.text())
+    })
+
+    await form.locator('input[name="gender"][value="female"]').check()
+    await page.waitForTimeout(100)
+
+    expect(logs.some(l => l.includes('change') && l.includes('update') && l.includes('gender'))).toBe(true)
+  })
+
+  test('checkbox fires change event immediately on toggle', async ({ page }) => {
+    const form = getForm(page)
+
+    const logs: string[] = []
+    page.on('console', msg => {
+      if (msg.type() === 'log') logs.push(msg.text())
+    })
+
+    await form.locator('input[name="agreeToTerms"]').check()
+    await page.waitForTimeout(100)
+
+    expect(logs.some(l => l.includes('change') && l.includes('update') && l.includes('agreeToTerms'))).toBe(true)
+  })
+
+  test('text input fires change event on blur', async ({ page }) => {
+    const form = getForm(page)
+
+    const logs: string[] = []
+    page.on('console', msg => {
+      if (msg.type() === 'log') logs.push(msg.text())
+    })
+
+    await form.locator('input[name="firstName"]').fill('Alice')
+
+    // No change event yet (only on blur)
+    await page.waitForTimeout(100)
+    expect(logs.some(l => l.includes('change') && l.includes('firstName'))).toBe(false)
+
+    // Blur triggers the change event
+    await form.locator('input[name="firstName"]').blur()
+    await page.waitForTimeout(100)
+    expect(logs.some(l => l.includes('change') && l.includes('update') && l.includes('firstName'))).toBe(true)
+  })
+})

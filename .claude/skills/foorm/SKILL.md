@@ -9,13 +9,13 @@ foormjs provides ATScript-first validatable forms for Vue. Define forms declarat
 
 ## Sub-Files
 
-| File                 | When to Read                                                                                                                 |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `getting-started.md` | Project setup, installation, ATScript config, Vite config, first form                                                        |
-| `schema.md`          | Writing `.as` form schemas — annotations, primitives, computed properties, validators, options, attrs, arrays, nested groups |
-| `vue-components.md`  | `OoForm`, `OoField`, `OoGroup`, `OoArray`, `useFoorm`, slots, events, custom components, arrays, nested groups               |
-| `core-api.md`        | `@foormjs/atscript` package API — `createFoormDef`, `getFormValidator`, resolve utilities, array/group types                 |
-| `serialization.md`   | Backend-driven forms — serializing/deserializing annotated types, sending schemas over the wire                              |
+| File                 | When to Read                                                                                                                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `getting-started.md` | Project setup, installation, ATScript config, Vite config, first form                                                                  |
+| `schema.md`          | Writing `.as` form schemas — annotations, primitives, computed properties, validators, options, attrs, arrays, nested groups           |
+| `vue-components.md`  | `OoForm`, types map, `createDefaultTypes`, custom components for every field type (text, select, checkbox, radio, object, array, union, tuple, paragraph, action), composables (`useFoormArray`, `useFoormUnion`), `OoIterator`, change events, form validation, error handling (client + server), slots, rendering architecture |
+| `core-api.md`        | `@foormjs/atscript` package API — `createFoormDef`, `getFormValidator`, resolve utilities, object/array/union/tuple types              |
+| `serialization.md`   | Backend-driven forms — serializing/deserializing annotated types, sending schemas over the wire                                        |
 
 ## Packages
 
@@ -24,7 +24,7 @@ foormjs provides ATScript-first validatable forms for Vue. Define forms declarat
 | `@foormjs/atscript`        | `@foormjs/atscript`    | Core form model — definitions, validation, metadata resolution                               |
 | `@foormjs/atscript/plugin` | `@foormjs/atscript`    | ATScript plugin — registers `@foorm.*` annotations and primitives for IDE/build              |
 | `@foormjs/composables`     | `@foormjs/composables` | Framework-agnostic form composables (`useFoormForm`, `useFoormField`)                        |
-| `@foormjs/vue`             | `@foormjs/vue`         | Renderless Vue components — `OoForm`, `OoField`, `OoGroup`, `OoArray`, `useFoorm` composable |
+| `@foormjs/vue`             | `@foormjs/vue`         | Vue form components — `OoForm`, `OoField`, `OoObject`, `OoArray`, `OoUnion`, `OoTuple`, `useFoorm` |
 
 ## How It Works
 
@@ -32,7 +32,8 @@ foormjs provides ATScript-first validatable forms for Vue. Define forms declarat
 .as schema file          @foormjs/atscript       @foormjs/vue
 ─────────────────    ─────────────────────    ─────────────────────
 @foorm.title '...'   createFoormDef(type)     useFoorm(Type)
-@meta.label '...'    → FoormDef { fields }    → { def, formData }
+@meta.label '...'    → FoormDef { rootField,  → { def, formData }
+                         fields, flatMap }
 @foorm.validate      getFormValidator(def)
 email: string.email  → (data) => { passed }   <OoForm :def :form-data>
                                                 → renders OoField per field
@@ -78,14 +79,18 @@ export default defineConfig({
 
 ```vue
 <script setup lang="ts">
-import { OoForm, useFoorm } from '@foormjs/vue'
+import { OoForm, createDefaultTypes, useFoorm } from '@foormjs/vue'
 import { MyForm } from './forms/my-form.as'
 
 const { def, formData } = useFoorm(MyForm)
+
+// createDefaultTypes() returns a complete TFoormTypeComponents map
+// with all default field components (text, select, object, array, etc.)
+const types = createDefaultTypes()
 </script>
 
 <template>
-  <OoForm :def="def" :form-data="formData" @submit="handleSubmit" />
+  <OoForm :def="def" :form-data="formData" :types="types" @submit="handleSubmit" />
 </template>
 ```
 
@@ -94,7 +99,8 @@ const { def, formData } = useFoorm(MyForm)
 - **ATScript is required** — forms are defined in `.as` files, not TypeScript. The `unplugin-atscript` Vite plugin must be installed for `.as` imports to work.
 - **`@foormjs/atscript/plugin`** is build-time only — import it in `atscript.config.ts`, never in runtime code.
 - **`@foorm.fn.*` functions are strings** — they're compiled at runtime via `new Function()`. This means no imports, no closures — only pure expressions using `v`, `data`, `context`, `entry`.
-- **Component resolution priority**: `@foorm.component` (named) > `components` prop > `types` prop > built-in defaults.
+- **`types` prop is required** on `OoForm`. It maps field type strings to Vue components. Every field type your form uses must have a corresponding entry. See `vue-components.md` for the complete types map reference and how to create custom components for each type.
+- **Component resolution priority**: `@foorm.component` (named) > `components` prop > `types` prop.
 - **Phantom fields** (`foorm.action`, `foorm.paragraph`) are excluded from form data, validation, and TypeScript types — they only exist in the rendered field list.
 - **`@foorm.order`** controls field rendering order. Fields without it appear in schema declaration order.
 - **Optional fields** use `?:` in the schema. Non-optional fields are required by the foorm validator.

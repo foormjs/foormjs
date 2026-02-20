@@ -110,10 +110,14 @@ export interface LoginForm {
 
 ```vue
 <script setup lang="ts">
-import { OoForm, useFoorm } from '@foormjs/vue'
+import { OoForm, createDefaultTypes, useFoorm } from '@foormjs/vue'
 import { LoginForm } from './forms/login.as'
 
 const { def, formData } = useFoorm(LoginForm)
+
+// createDefaultTypes() returns a complete TFoormTypeComponents map
+// You can spread it and override individual entries with custom components
+const types = createDefaultTypes()
 
 function handleSubmit(data: typeof formData) {
   console.log('Login:', data) // { email: string, password: string }
@@ -121,11 +125,11 @@ function handleSubmit(data: typeof formData) {
 </script>
 
 <template>
-  <OoForm :def="def" :form-data="formData" first-validation="on-blur" @submit="handleSubmit" />
+  <OoForm :def="def" :form-data="formData" :types="types" first-validation="on-blur" @submit="handleSubmit" />
 </template>
 ```
 
-This renders a working form with default HTML inputs, blur-triggered validation, and type-safe submit data.
+The `types` prop maps field type strings (like `'text'`, `'select'`, `'object'`) to Vue components. `createDefaultTypes()` provides all built-in defaults. You can spread it and override individual entries with your own custom components — see `vue-components.md` for examples of creating custom components for each type.
 
 ---
 

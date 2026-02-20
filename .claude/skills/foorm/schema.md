@@ -90,7 +90,7 @@ Any field property can be dynamic. Function strings receive `(v, data, context, 
 
 | Property    | Type                   | Description                                   |
 | ----------- | ---------------------- | --------------------------------------------- |
-| `field`     | `string \| undefined`  | Field path (e.g., `'address.city'`)           |
+| `field`     | `string`               | Field path (e.g., `'address.city'`). `''` for root |
 | `type`      | `string`               | Resolved input type (`'text'`, `'select'`...) |
 | `component` | `string \| undefined`  | Named component from `@foorm.component`       |
 | `name`      | `string`               | Field name (last segment of path)             |
@@ -264,12 +264,11 @@ The add button shows one option per variant. Items include a variant selector dr
 
 | Annotation                              | Description                                             |
 | --------------------------------------- | ------------------------------------------------------- |
-| `@foorm.array.add.label 'text'`         | Label for the add-item button (default: "Add item")     |
-| `@foorm.array.add.component 'Name'`     | Named component for a custom add button                 |
-| `@foorm.array.remove.label 'text'`      | Label for the remove-item button (default: "Remove")    |
-| `@foorm.array.variant.component 'Name'` | Named component for the union variant selector per item |
-| `@expect.minLength N, 'msg'`            | Minimum number of items (validated on submit)           |
-| `@expect.maxLength N, 'msg'`            | Maximum number of items (add button disabled at max)    |
+| `@foorm.array.add.label 'text'`    | Label for the add-item button (default: "Add item")  |
+| `@foorm.array.remove.label 'text'` | Label for the remove-item button (default: "Remove") |
+| `@foorm.array.sortable`            | Marks the array as sortable (drag-and-drop reorder)  |
+| `@expect.minLength N, 'msg'`       | Minimum number of items (validated on submit)        |
+| `@expect.maxLength N, 'msg'`       | Maximum number of items (add button disabled at max) |
 
 ---
 

@@ -18,15 +18,15 @@ Requires `vue@^3.5` as a peer dependency.
 
 ### `useFoormForm(options)`
 
-Manages form state: field registry, submit handling, and validation state. Provides `TFoormState` to child fields via `provide('__foorm_form', ...)`.
+Manages form state: field registry, submit handling, and validation state. Provides state to child fields via three inject keys: `__foorm_form` (TFoormState), `__foorm_form_data` (form data), `__foorm_form_context` (external context).
 
 **Options:**
 
 | Option            | Type                                          | Description                      |
 | ----------------- | --------------------------------------------- | -------------------------------- |
-| `formData`        | `ComputedRef<TFormData>`                      | Reactive form data object        |
-| `formContext`     | `ComputedRef<TContext>`                       | External context passed to rules |
-| `firstValidation` | `ComputedRef<TFoormState['firstValidation']>` | When to start showing errors     |
+| `formData`        | `MaybeRef<TFormData>`                         | Reactive form data object        |
+| `formContext`     | `MaybeRef<TContext>`                          | External context passed to rules |
+| `firstValidation` | `MaybeRef<TFoormState['firstValidation']>`    | When to start showing errors     |
 | `submitValidator` | `TFoormSubmitValidator`                       | Validator called on submit       |
 
 **Returns:**
@@ -37,20 +37,21 @@ Manages form state: field registry, submit handling, and validation state. Provi
 | `reset`       | `() => void`                                        | Resets all fields and clears errors      |
 | `submit`      | `() => true \| { path: string; message: string }[]` | Validates and returns result             |
 | `setErrors`   | `(errors: Record<string, string>) => void`          | Sets external errors on fields           |
-| `foormState`  | `ComputedRef<TFoormState>`                          | Reactive form state (provided to fields) |
+| `foormState`  | `reactive<TFoormState>`                             | Reactive form state (provided to fields) |
 
 ### `useFoormField(options)`
 
-Manages a single field's validation state, touch tracking, and error display. Injects `TFoormState` from the nearest parent `useFoormForm` via `inject('__foorm_form')`.
+Manages a single field's validation state, touch tracking, and error display. Injects `TFoormState` from the nearest parent `useFoormForm` via `inject('__foorm_form')`, and form data/context from `__foorm_form_data` / `__foorm_form_context`.
 
 **Options:**
 
-| Option     | Type                        | Description                   |
-| ---------- | --------------------------- | ----------------------------- |
-| `getValue` | `() => unknown`             | Getter for the current value  |
-| `setValue` | `(v: unknown) => void`      | Setter for the current value  |
-| `rules`    | `TFoormRule[]`              | Validation rules array        |
-| `path`     | `() => string \| undefined` | Field path for error matching |
+| Option       | Type                        | Description                                                     |
+| ------------ | --------------------------- | --------------------------------------------------------------- |
+| `getValue`   | `() => unknown`             | Getter for the current value                                    |
+| `setValue`    | `(v: unknown) => void`      | Setter for the current value                                    |
+| `rules`      | `TFoormRule[]`              | Validation rules array                                          |
+| `path`       | `() => string`              | Field path for error matching                                   |
+| `resetValue` | `TValue`                    | Value to set on reset (default: `''`). Use `[]` for arrays, `{}` for objects |
 
 **Returns:**
 
@@ -87,18 +88,16 @@ import type {
 } from '@foormjs/composables'
 ```
 
-### `TFoormState<TFormData, TContext>`
+### `TFoormState`
 
 The state object provided to child fields via `inject('__foorm_form')`:
 
 ```ts
-interface TFoormState<TFormData, TContext> {
+interface TFoormState {
   firstSubmitHappened: boolean
   firstValidation: 'on-change' | 'touched-on-blur' | 'on-blur' | 'on-submit' | 'none'
   register: (id: symbol, registration: TFoormFieldRegistration) => void
   unregister: (id: symbol) => void
-  formData: TFormData
-  formContext?: TContext
 }
 ```
 

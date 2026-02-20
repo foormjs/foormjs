@@ -7,8 +7,8 @@ import { useConsumeUnionContext } from '../../composables/use-foorm-context'
 import { useFoormArray } from '../../composables/use-foorm-array'
 import { useDropdown } from '../../composables/use-dropdown'
 import OoField from '../oo-field.vue'
-import OoNoData from './oo-no-data.vue'
-import OoStructuredHeader from './oo-structured-header.vue'
+import OoNoData from '../internal/oo-no-data.vue'
+import OoStructuredHeader from '../internal/oo-structured-header.vue'
 
 const props = defineProps<TFoormComponentProps>()
 

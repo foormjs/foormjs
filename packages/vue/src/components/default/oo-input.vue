@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TFoormComponentProps } from '../types'
-import OoFieldShell from './oo-field-shell.vue'
+import OoFieldShell from '../internal/oo-field-shell.vue'
 
 defineProps<TFoormComponentProps>()
 </script>

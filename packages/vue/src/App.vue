@@ -7,18 +7,7 @@ import CustomActionButton from './app-components/custom-action-button.vue'
 import CustomTextInput from './app-components/custom-text-input.vue'
 import CustomGroup from './app-components/custom-group.vue'
 import CustomSelect from './app-components/custom-select.vue'
-import {
-  OoInput,
-  OoSelect,
-  OoRadio,
-  OoCheckbox,
-  OoParagraph,
-  OoAction,
-  OoObject,
-  OoArray,
-  OoUnion,
-  OoTuple,
-} from './components/default'
+import { createDefaultTypes } from './composables/create-default-types'
 import { useFoorm } from '@/composables/use-foorm'
 import { E2eTestForm } from './forms/e2e-test-form.as'
 import { NestedForm } from './forms/nested-form.as'
@@ -72,20 +61,7 @@ const arrayFormContext = {
   categoryOptions,
 }
 
-const defaultTypes: Record<string, Component> = {
-  text: OoInput,
-  password: OoInput,
-  number: OoInput,
-  select: OoSelect,
-  radio: OoRadio,
-  checkbox: OoCheckbox,
-  paragraph: OoParagraph,
-  action: OoAction,
-  object: OoObject,
-  array: OoArray,
-  union: OoUnion,
-  tuple: OoTuple,
-}
+const defaultTypes = createDefaultTypes()
 
 const customComponents = {
   CustomInput: CustomStarInput,
@@ -96,7 +72,7 @@ const arrayCustomComponents: Record<string, Component> = {
   CustomActionButton,
 }
 
-const arrayCustomTypes: Record<string, Component> = {
+const arrayCustomTypes = {
   ...defaultTypes,
   text: CustomTextInput,
   select: CustomSelect,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TFoormComponentProps } from '../types'
 import OoField from '../oo-field.vue'
-import OoNoData from './oo-no-data.vue'
+import OoNoData from '../internal/oo-no-data.vue'
 import { useFoormUnion } from '../../composables/use-foorm-union'
 
 const props = defineProps<TFoormComponentProps>()

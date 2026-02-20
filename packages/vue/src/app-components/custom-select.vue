@@ -28,14 +28,14 @@ function toggle() {
 function select(key: string) {
   props.model.value = key
   isOpen.value = false
-  props.onBlur({} as FocusEvent)
+  props.onBlur()
 }
 
 function handleBlur(e: FocusEvent) {
   const root = triggerRef.value?.closest('.ct-select-wrapper')
   if (root && e.relatedTarget instanceof Node && root.contains(e.relatedTarget)) return
   isOpen.value = false
-  props.onBlur(e)
+  props.onBlur()
 }
 
 function optKey(opt: string | { key: string; label: string }): string {

@@ -55,23 +55,25 @@ const serialized = await response.json()
 // Deserialize into a live annotated type
 const type = deserializeAnnotatedType(serialized)
 
-// Create form definition and data — same as with .as imports
+// Create form definition and data container — same as with .as imports
 const def = createFoormDef(type)
-const data = createFormData(type, def.fields)
+const formData = createFormData(type, def.fields)
+// formData = { value: { ...defaults } } — pass directly to OoForm
 ```
 
 ### With Vue
 
 ```vue
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { deserializeAnnotatedType } from '@atscript/typescript/utils'
 import { createFoormDef, createFormData } from '@foormjs/atscript'
-import { OoForm } from '@foormjs/vue'
+import { OoForm, createDefaultTypes } from '@foormjs/vue'
 import type { FoormDef } from '@foormjs/atscript'
 
 const def = ref<FoormDef>()
-const formData = ref<Record<string, unknown>>({})
+const formData = ref<{ value: Record<string, unknown> }>()
+const types = createDefaultTypes()
 
 onMounted(async () => {
   const res = await fetch('/api/form/registration')
@@ -79,12 +81,12 @@ onMounted(async () => {
   const type = deserializeAnnotatedType(serialized)
 
   def.value = createFoormDef(type)
-  formData.value = createFormData(type, def.value.fields)
+  formData.value = reactive(createFormData(type, def.value.fields))
 })
 </script>
 
 <template>
-  <OoForm v-if="def" :def="def" :form-data="formData" @submit="handleSubmit" />
+  <OoForm v-if="def && formData" :def="def" :form-data="formData" :types="types" @submit="handleSubmit" />
 </template>
 ```
 
@@ -106,7 +108,7 @@ validator.validate(data) // throws ValidatorError on failure
 // Foorm validator (with foorm-specific handling)
 const def = createFoormDef(type)
 const validate = getFormValidator(def)
-const errors = validate({ data }) // Record<string, string> — empty = passed
+const errors = validate({ data: formData.value }) // Record<string, string> — empty = passed
 ```
 
 Both `@expect.*` constraints and `@foorm.validate` function strings survive serialization and work on the frontend.
