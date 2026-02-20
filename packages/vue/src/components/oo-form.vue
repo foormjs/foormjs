@@ -5,7 +5,7 @@ import OoField from './oo-field.vue'
 import type { FoormDef, TFoormFnScope } from '@foormjs/atscript'
 import { getFormValidator, resolveFormProp, supportsAltAction } from '@foormjs/atscript'
 import { computed, provide, ref, toRaw, type Component } from 'vue'
-import type { TFoormComponentProps } from './types'
+import type { TFoormChangeType, TFoormComponentProps } from './types'
 
 export interface Props<TF, TC> {
   def: FoormDef
@@ -96,6 +96,7 @@ const emit = defineEmits<{
   (e: 'error', errors: { path: string; message: string }[]): void
   (e: 'action', name: string, data: TFormData): void
   (e: 'unsupported-action', name: string, data: TFormData): void
+  (e: 'change', type: TFoormChangeType, path: string, value: unknown, formData: TFormData): void
 }>()
 
 // ── Action handler (provided to OoField tree) ──────────────
@@ -110,6 +111,11 @@ function handleAction(name: string) {
 }
 
 provide('__foorm_action_handler', handleAction)
+
+function handleChange(type: TFoormChangeType, path: string, value: unknown) {
+  emit('change', type, path, value, domainData())
+}
+provide('__foorm_change_handler', handleChange)
 
 function onSubmit() {
   const result = submit()

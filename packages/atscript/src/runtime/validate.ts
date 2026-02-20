@@ -99,7 +99,5 @@ export function createFieldValidator(
  * @returns `true` if at least one field has a matching `@foorm.altAction` annotation
  */
 export function supportsAltAction(def: FoormDef, altAction: string): boolean {
-  return def.fields.some(
-    f => getFieldMeta<{ id: string }>(f.prop, 'foorm.altAction')?.id === altAction
-  )
+  return def.fields.some(f => getFieldMeta(f.prop, 'foorm.altAction')?.id === altAction)
 }

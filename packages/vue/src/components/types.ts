@@ -84,6 +84,16 @@ export interface TFoormComponentProps<V = unknown> extends TFoormBaseComponentPr
 }
 
 /**
+ * Discriminated type for the `change` event emitted by `OoForm`.
+ *
+ * - `'update'` — leaf field value committed (blur)
+ * - `'array-add'` — array item added
+ * - `'array-remove'` — array item removed
+ * - `'union-switch'` — union variant switched
+ */
+export type TFoormChangeType = 'update' | 'array-add' | 'array-remove' | 'union-switch'
+
+/**
  * Union context provided by `OoUnion` via `__foorm_union` inject key.
  * Consumed by header components (OoStructuredHeader, OoFieldShell) to render
  * the variant picker inline with the item's own header.

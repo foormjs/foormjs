@@ -114,6 +114,10 @@ function handleAction(name: string, d: unknown) {
 function onError(e: unknown) {
   console.log('error', e)
 }
+
+function onChange(type: string, path: string, value: unknown, formData: unknown) {
+  console.log('change', type, path, value, formData)
+}
 </script>
 
 <template>
@@ -142,6 +146,7 @@ function onError(e: unknown) {
       @submit="handleSubmit"
       @action="handleAction"
       @error="onError"
+      @change="onChange"
     />
     <OoForm
       v-if="activeTab === 'Nested'"
@@ -152,6 +157,7 @@ function onError(e: unknown) {
       first-validation="on-blur"
       @submit="handleSubmit"
       @error="onError"
+      @change="onChange"
     />
     <OoForm
       v-if="activeTab === 'Array'"
@@ -164,6 +170,7 @@ function onError(e: unknown) {
       @submit="handleSubmit"
       @action="handleAction"
       @error="onError"
+      @change="onChange"
     />
     <OoForm
       v-if="activeTab === 'Custom Array'"
@@ -177,6 +184,7 @@ function onError(e: unknown) {
       @submit="handleSubmit"
       @action="handleAction"
       @error="onError"
+      @change="onChange"
     />
     <OoForm
       v-if="activeTab === 'Playground'"
@@ -187,6 +195,7 @@ function onError(e: unknown) {
       first-validation="on-blur"
       @submit="handleSubmit"
       @error="onError"
+      @change="onChange"
     />
   </main>
 </template>

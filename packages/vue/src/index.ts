@@ -34,8 +34,10 @@ export type {
   TFoormBaseComponentProps,
   TFoormComponentProps,
   TFoormUnionContext,
+  TFoormChangeType,
 } from './components/types'
 
 // Composables
 export { useFoorm } from './composables/use-foorm'
 export { useFoormArray } from './composables/use-foorm-array'
+export { useFoormUnion } from './composables/use-foorm-union'

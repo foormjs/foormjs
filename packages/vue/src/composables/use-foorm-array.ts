@@ -5,7 +5,8 @@ import type {
   FoormUnionVariant,
 } from '@foormjs/atscript'
 import { getFieldMeta, createItemData, createDefaultValue, isUnionField } from '@foormjs/atscript'
-import { computed, reactive, watch, type ComputedRef } from 'vue'
+import { computed, inject, reactive, watch, type ComputedRef } from 'vue'
+import type { TFoormChangeType } from '../components/types'
 import { useFoormContext } from './use-foorm-context'
 
 /**
@@ -18,6 +19,10 @@ import { useFoormContext } from './use-foorm-context'
 export function useFoormArray(field: FoormArrayFieldDef, disabled?: ComputedRef<boolean>) {
   // ── Context (root data, path, getByPath) ──────────────────────
   const { pathPrefix, getByPath, setByPath } = useFoormContext('useFoormArray')
+  const handleChange = inject<(type: TFoormChangeType, path: string, value: unknown) => void>(
+    '__foorm_change_handler',
+    () => {}
+  )
 
   // ── Array value reference ───────────────────────────────────
   const arrayValue = computed<unknown[]>(() => {
@@ -67,8 +72,8 @@ export function useFoormArray(field: FoormArrayFieldDef, disabled?: ComputedRef<
   }
 
   // ── Length constraints ──────────────────────────────────────
-  const minLengthMeta = getFieldMeta<{ length: number }>(field.prop, 'expect.minLength')
-  const maxLengthMeta = getFieldMeta<{ length: number }>(field.prop, 'expect.maxLength')
+  const minLengthMeta = getFieldMeta(field.prop, 'expect.minLength')
+  const maxLengthMeta = getFieldMeta(field.prop, 'expect.maxLength')
   const minLength = minLengthMeta?.length ?? 0
   const maxLength = maxLengthMeta?.length ?? Infinity
   const canAdd = computed(() => !disabled?.value && arrayValue.value.length < maxLength)
@@ -96,17 +101,19 @@ export function useFoormArray(field: FoormArrayFieldDef, disabled?: ComputedRef<
     }
     ensureArray().push(newItem)
     itemKeys.push(generateKey())
+    handleChange('array-add', pathPrefix.value, arrayValue.value)
   }
 
   function removeItem(index: number) {
     if (!canRemove.value) return
     ensureArray().splice(index, 1)
     itemKeys.splice(index, 1)
+    handleChange('array-remove', pathPrefix.value, arrayValue.value)
   }
 
   // ── Labels from annotations ─────────────────────────────────
-  const addLabel = getFieldMeta<string>(field.prop, 'foorm.array.add.label') ?? 'Add item'
-  const removeLabel = getFieldMeta<string>(field.prop, 'foorm.array.remove.label') ?? 'Remove'
+  const addLabel = getFieldMeta(field.prop, 'foorm.array.add.label') ?? 'Add item'
+  const removeLabel = getFieldMeta(field.prop, 'foorm.array.remove.label') ?? 'Remove'
 
   return {
     arrayValue,

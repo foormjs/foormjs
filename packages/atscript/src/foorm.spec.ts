@@ -257,7 +257,7 @@ describe('getFieldMeta', () => {
       props: { email: { metadata: { 'foorm.autocomplete': 'email' }, designType: 'string' } },
     })
     const def = createFoormDef(type)
-    expect(getFieldMeta<string>(def.fields[0].prop, 'foorm.autocomplete')).toBe('email')
+    expect(getFieldMeta(def.fields[0].prop, 'foorm.autocomplete')).toBe('email')
   })
 
   it('returns undefined for missing metadata', () => {
@@ -265,7 +265,7 @@ describe('getFieldMeta', () => {
       props: { name: { metadata: {}, designType: 'string' } },
     })
     const def = createFoormDef(type)
-    expect(getFieldMeta<string>(def.fields[0].prop, 'foorm.autocomplete')).toBeUndefined()
+    expect(getFieldMeta(def.fields[0].prop, 'foorm.autocomplete')).toBeUndefined()
   })
 })
 
@@ -649,8 +649,8 @@ describe('createFoormDef', () => {
       },
     })
     const def = createFoormDef(type)
-    expect(getFieldMeta<string>(def.fields[0].prop, 'meta.label')).toBe('Full Name')
-    expect(getFieldMeta<string>(def.fields[0].prop, 'foorm.autocomplete')).toBe('name')
+    expect(getFieldMeta(def.fields[0].prop, 'meta.label')).toBe('Full Name')
+    expect(getFieldMeta(def.fields[0].prop, 'foorm.autocomplete')).toBe('name')
   })
 
   it('detects field type from foorm.type annotation', () => {
@@ -742,7 +742,7 @@ describe('createFoormDef', () => {
 
     const street = def.fields.find(f => f.path === 'address.street')
     expect(street?.name).toBe('street')
-    expect(getFieldMeta<string>(street?.prop as any, 'meta.label')).toBe('Street')
+    expect(getFieldMeta(street?.prop as any, 'meta.label')).toBe('Street')
   })
 
   it('stores type reference', () => {
@@ -868,7 +868,7 @@ describe('createFormData', () => {
       },
     })
     const def = createFoormDef(type)
-    const data = createFormData(type, def.fields) as { value: Record<string, unknown> }
+    const data = createFormData(type, def.fields)
     expect(data).toEqual({ value: { name: '' } })
     expect('save' in data.value).toBe(false)
   })

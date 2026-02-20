@@ -63,17 +63,14 @@ export function createFoormDef(type: TAtscriptAnnotatedType): FoormDef {
       const hasTitle =
         getFieldMeta(originalProp, 'foorm.title') !== undefined ||
         getFieldMeta(originalProp, 'foorm.fn.title') !== undefined
-      const hasComponent = getFieldMeta<string>(originalProp, 'foorm.component') !== undefined
+      const hasComponent = getFieldMeta(originalProp, 'foorm.component') !== undefined
       if (!hasTitle && !hasComponent) continue
     }
 
     // Nested arrays without component: unsupported
     if (kind === 'array') {
       const arrayType = originalProp.type as TAtscriptTypeArray
-      if (
-        arrayType.of.type.kind === 'array' &&
-        !getFieldMeta<string>(originalProp, 'foorm.component')
-      )
+      if (arrayType.of.type.kind === 'array' && !getFieldMeta(originalProp, 'foorm.component'))
         continue
     }
 
@@ -89,7 +86,7 @@ export function createFoormDef(type: TAtscriptAnnotatedType): FoormDef {
   // repeated getFieldMeta calls inside the comparator (O(N log N)).
   const decorated = fields.map(f => ({
     f,
-    order: getFieldMeta<number>(f.prop, 'foorm.order') ?? Infinity,
+    order: getFieldMeta(f.prop, 'foorm.order') ?? Infinity,
   }))
   decorated.sort((a, b) => a.order - b.order)
   fields.length = 0
@@ -118,7 +115,7 @@ function createFieldDef(path: string, prop: TAtscriptAnnotatedType): FoormFieldD
   const kind = prop.type.kind
   const name = path.split('.').pop() ?? (path || '')
   const allStatic = !hasComputedAnnotations(prop)
-  const foormType = getFieldMeta<string>(prop, 'foorm.type')
+  const foormType = getFieldMeta(prop, 'foorm.type')
   const base = { path, prop, phantom: false, name, allStatic }
 
   // Array
@@ -233,11 +230,8 @@ function createVariant(def: TAtscriptAnnotatedType): FoormUnionVariant {
   const kind = def.type.kind
 
   if (kind === 'object') {
-    const label =
-      getFieldMeta<string>(def, 'meta.label') ??
-      getFieldMeta<string>(def, 'foorm.title') ??
-      'Object'
-    const hasComponent = getFieldMeta<string>(def, 'foorm.component') !== undefined
+    const label = getFieldMeta(def, 'meta.label') ?? getFieldMeta(def, 'foorm.title') ?? 'Object'
+    const hasComponent = getFieldMeta(def, 'foorm.component') !== undefined
     return {
       label, // variant label
       type: def,

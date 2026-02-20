@@ -50,8 +50,8 @@ export function foormValidatorPlugin(): TValidatorPlugin {
     // Build entry object with field metadata
     const entry: TFoormFieldEvaluated = {
       field: ctx.path,
-      type: getFieldMeta<string>(def, 'foorm.type') || 'text',
-      component: getFieldMeta<string>(def, 'foorm.component'),
+      type: getFieldMeta(def, 'foorm.type') || 'text',
+      component: getFieldMeta(def, 'foorm.component'),
       name: fieldName,
       optional,
       disabled: resolveFieldProp<boolean>(def, 'foorm.fn.disabled', 'foorm.disabled', baseScope, {

@@ -487,7 +487,7 @@ describe('createFormData with single-type forms', () => {
     })
     const def = createFoormDef(type)
     const data = createFormData(type, def.fields)
-    expect((data as { value: Record<string, unknown> }).value.tags).toBeUndefined()
+    expect(data.value.tags).toBeUndefined()
   })
 
   it('preserves optional flag on array field def prop', () => {
@@ -508,6 +508,6 @@ describe('createFormData with single-type forms', () => {
     })
     const def = createFoormDef(type)
     const data = createFormData(type, def.fields)
-    expect((data as { value: Record<string, unknown> }).value.tags).toEqual([])
+    expect(data.value.tags).toEqual([])
   })
 })

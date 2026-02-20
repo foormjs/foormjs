@@ -20,6 +20,7 @@ import {
 } from '@foormjs/atscript'
 import { computed, inject, isRef, provide, watch, type Component, type ComputedRef } from 'vue'
 import { useFoormContext } from '../composables/use-foorm-context'
+import type { TFoormChangeType } from './types'
 
 const props = defineProps<{
   field: FoormFieldDef
@@ -35,6 +36,10 @@ const types = inject<ComputedRef<Record<string, Component>>>('__foorm_types')
 const components = inject<ComputedRef<Record<string, Component> | undefined>>('__foorm_components')
 const errors = inject<ComputedRef<Record<string, string | undefined> | undefined>>('__foorm_errors')
 const handleAction = inject<(name: string) => void>('__foorm_action_handler', () => {})
+const handleChange = inject<(type: TFoormChangeType, path: string, value: unknown) => void>(
+  '__foorm_change_handler',
+  () => {}
+)
 
 // ── Foorm context ────────────────────────────────────────────
 const { rootFormData, formContext, joinPath, buildPath, getByPath, setByPath, buildScope } =
@@ -99,14 +104,14 @@ function buildFieldClasses(
 const prop = props.field.prop
 
 // ── Static reads (always) ──────────────────────────────────
-const autocomplete = getFieldMeta<string>(prop, 'foorm.autocomplete')
-const maxLength = getFieldMeta<number>(prop, 'expect.maxLength')
-const componentName = getFieldMeta<string>(prop, 'foorm.component')
-const altActionMeta = getFieldMeta<{ id: string; label?: string }>(prop, 'foorm.altAction')
+const autocomplete = getFieldMeta(prop, 'foorm.autocomplete')
+const maxLength = getFieldMeta(prop, 'expect.maxLength')?.length
+const componentName = getFieldMeta(prop, 'foorm.component')
+const altActionMeta = getFieldMeta(prop, 'foorm.altAction')
 const altAction: TFoormAltAction | undefined = altActionMeta
   ? {
       id: altActionMeta.id,
-      label: altActionMeta.label ?? getFieldMeta<string>(prop, 'meta.label') ?? props.field.name,
+      label: altActionMeta.label ?? getFieldMeta(prop, 'meta.label') ?? props.field.name,
     }
   : undefined
 
@@ -134,15 +139,14 @@ function toggleOptional(enabled: boolean) {
       setModel(explicit)
     } else if (isObjectField(props.field)) {
       const objField = props.field as FoormObjectFieldDef
-      setModel(
-        (createFormData(objField.prop, objField.objectDef.fields) as { value: unknown }).value
-      )
+      setModel(createFormData(objField.prop, objField.objectDef.fields).value)
     } else {
       setModel(createDefaultValue(props.field.prop))
     }
   } else {
     setModel(undefined)
   }
+  handleChange('update', absolutePath.value, getModel())
 }
 
 // ── Component resolution ────────────────────────────────────
@@ -196,10 +200,10 @@ if (props.field.allStatic) {
   required = props.field.phantom ? undefined : hasMetaRequired
 
   // Display: static reads
-  label = getFieldMeta<string>(prop, 'meta.label') ?? props.field.name
-  description = getFieldMeta<string>(prop, 'meta.description')
-  hint = getFieldMeta<string>(prop, 'meta.hint')
-  placeholder = getFieldMeta<string>(prop, 'meta.placeholder')
+  label = getFieldMeta(prop, 'meta.label') ?? props.field.name
+  description = getFieldMeta(prop, 'meta.description')
+  hint = getFieldMeta(prop, 'meta.hint')
+  placeholder = getFieldMeta(prop, 'meta.placeholder')
   styles = getFieldMeta(prop, 'foorm.styles')
   options = resolveOptions(prop, emptyScope)
   attrs =
@@ -207,9 +211,7 @@ if (props.field.allStatic) {
 
   // Title: static (for structure/array fields)
   title = isStructured
-    ? (getFieldMeta<string>(prop, 'foorm.title') ??
-      getFieldMeta<string>(prop, 'meta.label') ??
-      props.field.name)
+    ? (getFieldMeta(prop, 'foorm.title') ?? getFieldMeta(prop, 'meta.label') ?? props.field.name)
     : undefined
 
   // Classes: plain object (no computed)
@@ -322,25 +324,25 @@ if (props.field.allStatic) {
     hasFn.has('label'),
     () =>
       resolveFieldProp<string>(prop, 'foorm.fn.label', 'meta.label', fs.value) ?? props.field.name,
-    getFieldMeta<string>(prop, 'meta.label') ?? props.field.name
+    getFieldMeta(prop, 'meta.label') ?? props.field.name
   )
 
   description = maybeComputed(
     hasFn.has('description'),
     () => resolveFieldProp<string>(prop, 'foorm.fn.description', 'meta.description', fs.value),
-    getFieldMeta<string>(prop, 'meta.description')
+    getFieldMeta(prop, 'meta.description')
   )
 
   hint = maybeComputed(
     hasFn.has('hint'),
     () => resolveFieldProp<string>(prop, 'foorm.fn.hint', 'meta.hint', fs.value),
-    getFieldMeta<string>(prop, 'meta.hint')
+    getFieldMeta(prop, 'meta.hint')
   )
 
   placeholder = maybeComputed(
     hasFn.has('placeholder'),
     () => resolveFieldProp<string>(prop, 'foorm.fn.placeholder', 'meta.placeholder', fs.value),
-    getFieldMeta<string>(prop, 'meta.placeholder')
+    getFieldMeta(prop, 'meta.placeholder')
   )
 
   styles = maybeComputed(
@@ -368,11 +370,9 @@ if (props.field.allStatic) {
         hasFn.has('title'),
         () =>
           resolveFieldProp<string>(prop, 'foorm.fn.title', 'foorm.title', fs.value) ??
-          getFieldMeta<string>(prop, 'meta.label') ??
+          getFieldMeta(prop, 'meta.label') ??
           props.field.name,
-        getFieldMeta<string>(prop, 'foorm.title') ??
-          getFieldMeta<string>(prop, 'meta.label') ??
-          props.field.name
+        getFieldMeta(prop, 'foorm.title') ?? getFieldMeta(prop, 'meta.label') ?? props.field.name
       )
     : undefined
 
@@ -432,7 +432,7 @@ const isOptionalField = props.field.prop.optional ?? false
 const {
   model,
   error: foormError,
-  onBlur,
+  onBlur: _onBlur,
 } = useFoormField({
   getValue: getModel,
   setValue: setModel,
@@ -446,6 +446,20 @@ const {
         ? { resetValue: {} }
         : {}),
 })
+
+// Leaf fields emit 'update' on blur only when value changed since last emit.
+let lastEmittedValue: unknown = model.value
+const onBlur =
+  isStructured || isUnion
+    ? _onBlur
+    : () => {
+        _onBlur()
+        const current = model.value
+        if (current !== lastEmittedValue) {
+          lastEmittedValue = current
+          handleChange('update', absolutePath.value, current)
+        }
+      }
 
 // Merged error: external errors map > prop > foorm composable error
 const mergedError = computed(() => {

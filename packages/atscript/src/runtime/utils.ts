@@ -16,18 +16,23 @@ export function asArray<T>(x: T | T[]): T[] {
 
 // ── Metadata access ─────────────────────────────────────────
 
-/** Loose metadata accessor for internal use. */
-type TMetadataAccessor = { get(key: string): unknown; keys(): Iterable<string> }
-
 /**
  * Reads a static metadata value from an ATScript prop.
  *
+ * For keys declared in the global `AtscriptMetadata` interface (generated `atscript.d.ts`),
+ * the return type is inferred automatically. Unknown keys fall back to `unknown`.
+ *
  * @param prop - ATScript annotated type for the field
  * @param key - Metadata key to read (e.g., `'foorm.autocomplete'`)
- * @returns The metadata value cast to `T`, or `undefined` if not present
+ * @returns The typed metadata value, or `undefined` if not present
  */
-export function getFieldMeta<T>(prop: TAtscriptAnnotatedType, key: string): T | undefined {
-  return (prop.metadata as unknown as TMetadataAccessor).get(key) as T | undefined
+export function getFieldMeta<K extends keyof AtscriptMetadata>(
+  prop: TAtscriptAnnotatedType,
+  key: K
+): AtscriptMetadata[K] | undefined
+export function getFieldMeta(prop: TAtscriptAnnotatedType, key: string): unknown
+export function getFieldMeta(prop: TAtscriptAnnotatedType, key: string): unknown {
+  return prop.metadata.get(key as keyof AtscriptMetadata)
 }
 
 // ── Resolve on demand ───────────────────────────────────────
@@ -60,20 +65,20 @@ type TCompileFn<T> = (fnStr: string) => (scope: TFoormFnScope) => T
  * @returns The resolved value, or `undefined` if neither fn nor static metadata exists
  */
 function resolveAnnotatedProp<T>(
-  metadata: TMetadataAccessor,
+  metadata: TAtscriptAnnotatedType['metadata'],
   fnKey: string,
   staticKey: string | undefined,
   scope: TFoormFnScope,
   compileFn: TCompileFn<T>,
   opts?: TResolveOptions<T>
 ): T | undefined {
-  const fnStr = metadata.get(fnKey)
+  const fnStr = metadata.get(fnKey as keyof AtscriptMetadata)
   if (typeof fnStr === 'string') {
     return compileFn(fnStr)(scope)
   }
 
   if (staticKey !== undefined) {
-    const staticVal = metadata.get(staticKey)
+    const staticVal = metadata.get(staticKey as keyof AtscriptMetadata)
     if (staticVal !== undefined) {
       if (opts?.staticAsBoolean) return true as T
       if (opts?.transform) return opts.transform(staticVal)
@@ -102,7 +107,7 @@ export function resolveFieldProp<T>(
   opts?: TResolveOptions<T>
 ): T | undefined {
   return resolveAnnotatedProp(
-    prop.metadata as unknown as TMetadataAccessor,
+    prop.metadata,
     fnKey,
     staticKey,
     scope,
@@ -130,7 +135,7 @@ export function resolveFormProp<T>(
   opts?: TResolveOptions<T>
 ): T | undefined {
   return resolveAnnotatedProp(
-    type.metadata as unknown as TMetadataAccessor,
+    type.metadata,
     fnKey,
     staticKey,
     scope,
@@ -204,9 +209,8 @@ export function resolveAttrs(
   prop: TAtscriptAnnotatedType,
   scope: TFoormFnScope
 ): Record<string, unknown> | undefined {
-  const metadata = prop.metadata as unknown as TMetadataAccessor
-  const staticAttrs = metadata.get('foorm.attr')
-  const fnAttrs = metadata.get('foorm.fn.attr')
+  const staticAttrs = prop.metadata.get('foorm.attr')
+  const fnAttrs = prop.metadata.get('foorm.fn.attr')
 
   if (!staticAttrs && !fnAttrs) return undefined
 
@@ -243,10 +247,9 @@ export function resolveAttrs(
  * @returns `true` if dynamic annotations are present
  */
 export function hasComputedAnnotations(prop: TAtscriptAnnotatedType): boolean {
-  const metadata = prop.metadata as unknown as TMetadataAccessor
-  if (metadata.get('foorm.validate') !== undefined) return true
-  for (const key of metadata.keys()) {
-    if (key.startsWith('foorm.fn.')) return true
+  if (prop.metadata.get('foorm.validate') !== undefined) return true
+  for (const key of prop.metadata.keys()) {
+    if ((key as string).startsWith('foorm.fn.')) return true
   }
   return false
 }
@@ -323,9 +326,9 @@ export function createFormData<T = Record<string, unknown>>(
   type: TAtscriptAnnotatedType,
   fields: FoormFieldDef[],
   opts?: { skipOptional?: boolean }
-): T {
+): { value: T } {
   if (type.type.kind !== 'object') {
-    return { value: createDefaultValue(type) } as T
+    return { value: createDefaultValue(type) as T }
   }
   const fieldsByPath = new Map<string, FoormFieldDef>()
   for (const f of fields) {
@@ -337,8 +340,8 @@ export function createFormData<T = Record<string, unknown>>(
       fieldsByPath,
       '',
       opts?.skipOptional ?? false
-    ),
-  } as T
+    ) as T,
+  }
 }
 
 /**
@@ -401,7 +404,7 @@ function buildNestedData(
         ? {
             field: field.path,
             type: field.type,
-            component: getFieldMeta<string>(prop, 'foorm.component'),
+            component: getFieldMeta(prop, 'foorm.component'),
             name: field.name,
           }
         : undefined,
@@ -475,12 +478,9 @@ export function createDefaultValue(type: TAtscriptAnnotatedType): unknown {
  */
 export function createItemData(variant: FoormUnionVariant): unknown {
   if (variant.def) {
-    // createFormData wraps in { value: ... } — unwrap for array items (they're raw domain data)
-    return (
-      createFormData(
-        variant.type as TAtscriptAnnotatedType<TAtscriptTypeObject>,
-        variant.def.fields
-      ) as Record<string, unknown>
+    return createFormData(
+      variant.type as TAtscriptAnnotatedType<TAtscriptTypeObject>,
+      variant.def.fields
     ).value
   }
   // Primitives and complex types (tuple, array, etc.)
