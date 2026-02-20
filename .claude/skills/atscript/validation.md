@@ -52,7 +52,7 @@ validate<TT = DataType>(value: any, safe?: boolean, context?: unknown): value is
 ```typescript
 const validator = Product.validator({
   partial: true,
-  unknwonProps: 'strip',
+  unknownProps: 'strip',
   errorLimit: 5,
   skipList: new Set(['metadata', 'audit.createdBy']),
   replace: (type, path) => (path === 'status' ? customStatusType : type),
@@ -63,7 +63,7 @@ const validator = Product.validator({
 | Option         | Values                                                            | Description                                                                                                                                             |
 | -------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `partial`      | `false` (default), `true`, `'deep'`, or `(type, path) => boolean` | Controls whether missing required properties are errors. `true` = top-level optional, `'deep'` = recursively optional, function = fine-grained per path |
-| `unknwonProps` | `'error'` (default), `'ignore'`, `'strip'`                        | How unknown properties are handled. `'strip'` removes them from the data                                                                                |
+| `unknownProps` | `'error'` (default), `'ignore'`, `'strip'`                        | How unknown properties are handled. `'strip'` removes them from the data                                                                                |
 | `errorLimit`   | number (default: `10`)                                            | Max errors collected before stopping                                                                                                                    |
 | `skipList`     | `Set<string>`                                                     | Property paths to skip during validation                                                                                                                |
 | `replace`      | `(type, path) => type`                                            | Dynamically replace type definitions at specific paths                                                                                                  |

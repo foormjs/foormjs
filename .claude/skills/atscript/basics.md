@@ -564,7 +564,7 @@ if (validator.validate(data, true)) {
 ```typescript
 const validator = Product.validator({
   partial: true, // true | 'deep' | (type, path) => boolean
-  unknwonProps: 'strip', // 'error' (default) | 'ignore' | 'strip'
+  unknownProps: 'strip', // 'error' (default) | 'ignore' | 'strip'
   errorLimit: 10,
   skipList: new Set(['metadata', 'audit.createdBy']),
   replace: (type, path) => (path === 'status' ? customStatusType : type),
@@ -574,7 +574,7 @@ const validator = Product.validator({
 | Option         | Values                                            | Description                          |
 | -------------- | ------------------------------------------------- | ------------------------------------ |
 | `partial`      | `false`, `true`, `'deep'`, `(type, path) => bool` | Control required property validation |
-| `unknwonProps` | `'error'`, `'ignore'`, `'strip'`                  | Handle undefined properties          |
+| `unknownProps` | `'error'`, `'ignore'`, `'strip'`                  | Handle undefined properties          |
 | `errorLimit`   | `number`                                          | Max validation errors (default: 10)  |
 | `skipList`     | `Set<string>`                                     | Property paths to skip               |
 | `replace`      | `(type, path) => type`                            | Dynamic type overriding              |

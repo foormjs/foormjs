@@ -27,6 +27,15 @@ const props = defineProps<Props<TFormData, TFormContext>>()
 const _data = ref<TFormData>({} as TFormData)
 const data = computed<TFormData>(() => props.formData || (_data.value as TFormData))
 
+/**
+ * Unwraps domain data from the form data container.
+ * Form data is `{ value: domainData }` — getByPath/setByPath handle this
+ * wrapper automatically, but scope/validator callers need the inner value.
+ */
+function getDomainData(): Record<string, unknown> {
+  return (data.value as Record<string, unknown>).value as Record<string, unknown>
+}
+
 // ── Full-type validator (created once per def, called per-submit) ──
 const formValidator = computed(() => getFormValidator(props.def))
 
@@ -37,7 +46,7 @@ const { clearErrors, reset, submit, setErrors } = useFoormForm({
   firstValidation: computed(() => props.firstValidation),
   submitValidator: () =>
     formValidator.value({
-      data: (data.value as Record<string, unknown>).value as Record<string, unknown>,
+      data: getDomainData(),
       context: (props.formContext ?? {}) as Record<string, unknown>,
     }),
 })
@@ -67,7 +76,7 @@ provide(
 // ── Form-level resolved props ──────────────────────────────
 const ctx = computed<TFoormFnScope>(() => ({
   v: undefined,
-  data: (data.value as Record<string, unknown>).value as Record<string, unknown>,
+  data: getDomainData(),
   context: (props.formContext ?? {}) as Record<string, unknown>,
   entry: undefined,
 }))
@@ -100,7 +109,7 @@ const emit = defineEmits<{
 }>()
 
 // ── Action handler (provided to OoField tree) ──────────────
-const domainData = () => toRaw((data.value as Record<string, unknown>).value) as TFormData
+const domainData = () => toRaw(getDomainData()) as TFormData
 
 function handleAction(name: string) {
   if (supportsAltAction(props.def, name)) {

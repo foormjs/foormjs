@@ -45,10 +45,10 @@
     "pub": "pnpm publish --access public --no-git-checks"
   },
   "dependencies": {
-    "@atscript/core": "^0.1.18",
+    "@atscript/core": "^0.1.19",
     "@prostojs/deserialize-fn": "^0.0.5"
   },
   "peerDependencies": {
-    "@atscript/typescript": "^0.1.18"
+    "@atscript/typescript": "^0.1.19"
   }
 }

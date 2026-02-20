@@ -467,12 +467,6 @@ const slotModel = {
   },
 }
 
-// Computed classes with error flag
-const classes = computed(() => ({
-  ...unwrap(classesBase),
-  error: !!mergedError.value,
-}))
-
 // ── Field-invariant props (setup-time constants) ──────────────
 const invariantProps = {
   onBlur,
@@ -516,7 +510,7 @@ const componentProps = computed(() => ({
   ...invariantProps,
   ...displayProps.value,
   error: mergedError.value,
-  class: classes.value,
+  class: { ...unwrap(classesBase), error: !!mergedError.value },
 }))
 </script>
 

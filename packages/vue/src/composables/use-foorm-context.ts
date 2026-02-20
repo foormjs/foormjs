@@ -22,7 +22,10 @@ export function useFoormContext<TFormData = any, TFormContext = any>(componentNa
 
   // ── Root form data ─────────────────────────────────────────
   const rootData = inject<ComputedRef<TFormData>>('__foorm_root_data')
-  const rootFormData = () => (rootData?.value ?? {}) as Record<string, unknown>
+  if (!rootData) {
+    throw new Error(`${componentName} must be used inside an OoForm component (missing root data)`)
+  }
+  const rootFormData = () => rootData.value as Record<string, unknown>
 
   // ── Path prefix ───────────────────────────────────────────
   const pathPrefix = inject<ComputedRef<string>>('__foorm_path_prefix', EMPTY_PREFIX)

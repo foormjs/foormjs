@@ -31,7 +31,7 @@ export function getFormValidator(
 ): (callOpts: TFormValidatorCallOptions) => Record<string, string> {
   const validator = new Validator(def.type, {
     plugins: [_foormPlugin],
-    unknwonProps: 'ignore',
+    unknownProps: 'ignore',
     ...opts,
   })
 

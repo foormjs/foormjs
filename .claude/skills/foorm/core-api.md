@@ -298,7 +298,7 @@ validator.validate(value, true, { data: formData, context })
 
 // Whole-form validation (what getFormValidator does internally)
 const plugin = foormValidatorPlugin()
-const validator = new Validator(def.type, { plugins: [plugin], unknwonProps: 'ignore' })
+const validator = new Validator(def.type, { plugins: [plugin], unknownProps: 'ignore' })
 validator.validate(formData, true, { data: formData, context })
 ```
 
