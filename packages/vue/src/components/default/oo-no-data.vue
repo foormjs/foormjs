@@ -7,7 +7,7 @@ const hovered = ref(false)
 
 <template>
   <div
-    class="oo-optional-na"
+    class="oo-no-data"
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
     @click="onEdit"
@@ -16,12 +16,12 @@ const hovered = ref(false)
     @keydown.enter="onEdit"
     @keydown.space.prevent="onEdit"
   >
-    <span class="oo-optional-na-text">{{ hovered ? 'Edit' : 'No Data' }}</span>
+    <span class="oo-no-data-text">{{ hovered ? 'Edit' : 'No Data' }}</span>
   </div>
 </template>
 
 <style>
-.oo-optional-na {
+.oo-no-data {
   position: relative;
   display: flex;
   align-items: center;
@@ -39,7 +39,7 @@ const hovered = ref(false)
   );
 }
 
-.oo-optional-na:hover {
+.oo-no-data:hover {
   border-color: #b5c1d9;
   background: linear-gradient(
     to top right,
@@ -49,7 +49,7 @@ const hovered = ref(false)
   );
 }
 
-.oo-optional-na-text {
+.oo-no-data-text {
   font-size: 12px;
   color: #9ca3af;
   background: #fff;
@@ -58,7 +58,7 @@ const hovered = ref(false)
   user-select: none;
 }
 
-.oo-optional-na:hover .oo-optional-na-text {
+.oo-no-data:hover .oo-no-data-text {
   color: #6366f1;
   font-weight: 500;
 }

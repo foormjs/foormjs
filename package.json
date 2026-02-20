@@ -41,7 +41,7 @@
   },
   "homepage": "https://github.com/foormjs/foormjs#readme",
   "devDependencies": {
-    "@atscript/core": "^0.1.17",
+    "@atscript/core": "^0.1.18",
     "@prostojs/dye": "^0.3.0",
     "@rollup/plugin-commonjs": "^25.0.8",
     "@rollup/plugin-node-resolve": "^15.3.1",

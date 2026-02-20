@@ -11,6 +11,7 @@ import {
   getFieldMeta,
   createDefaultValue,
   createFormData,
+  createFieldValidator,
   type FoormFieldDef,
   type FoormObjectFieldDef,
   type TFoormAltAction,
@@ -19,7 +20,6 @@ import {
 } from '@foormjs/atscript'
 import { computed, inject, isRef, provide, watch, type Component, type ComputedRef } from 'vue'
 import { useFoormContext } from '../composables/use-foorm-context'
-import { useFoormValidator } from '../composables/use-foorm-validator'
 
 const props = defineProps<{
   field: FoormFieldDef
@@ -37,20 +37,13 @@ const errors = inject<ComputedRef<Record<string, string | undefined> | undefined
 const handleAction = inject<(name: string) => void>('__foorm_action_handler', () => {})
 
 // ── Foorm context ────────────────────────────────────────────
-const {
-  foormState,
-  rootFormData,
-  formContext,
-  joinPath,
-  buildPath,
-  getByPath,
-  setByPath,
-  buildScope,
-} = useFoormContext<TFormData, TFormContext>('OoField')
+const { rootFormData, formContext, joinPath, buildPath, getByPath, setByPath, buildScope } =
+  useFoormContext<TFormData, TFormContext>('OoField')
 const absolutePath = joinPath(() => props.field.path)
 
 // ── Structured field detection ──────────────────────────────
-const isStructured = isObjectField(props.field) || isArrayField(props.field) || isTupleField(props.field)
+const isStructured =
+  isObjectField(props.field) || isArrayField(props.field) || isTupleField(props.field)
 const isUnion = isUnionField(props.field)
 
 // ── Nesting level tracking ──────────────────────────────────
@@ -79,6 +72,30 @@ if (isStructured) {
 // Helper to unwrap value (handles both static and computed)
 const unwrap = <T,>(v: T | ComputedRef<T>): T => (isRef(v) ? v.value : v)
 
+// Helper: returns a computed when dynamic, static value otherwise
+function maybeComputed<T>(
+  isDynamic: boolean,
+  dynamicFn: () => T,
+  staticVal: T
+): T | ComputedRef<T> {
+  return isDynamic ? computed(dynamicFn) : staticVal
+}
+
+// Helper to build the class object from a raw class value + state flags
+function buildFieldClasses(
+  classValue: unknown,
+  isDisabled: boolean,
+  isRequired: boolean
+): Record<string, boolean> {
+  return {
+    ...(typeof classValue === 'string'
+      ? { [classValue]: true }
+      : (classValue as Record<string, boolean> | undefined)),
+    disabled: isDisabled,
+    required: isRequired,
+  }
+}
+
 const prop = props.field.prop
 
 // ── Static reads (always) ──────────────────────────────────
@@ -94,7 +111,7 @@ const altAction: TFoormAltAction | undefined = altActionMeta
   : undefined
 
 // ── Cached validator (created once per field) ────────────────
-const { validate: foormValidate } = useFoormValidator(
+const foormValidate = createFieldValidator(
   prop,
   isStructured || isUnion ? { rootOnly: true } : undefined
 )
@@ -112,12 +129,7 @@ function setModel(value: unknown) {
 function toggleOptional(enabled: boolean) {
   if (enabled) {
     // Check explicit @foorm.value / @foorm.fn.value first
-    const explicit = resolveFieldProp(
-      prop,
-      'foorm.fn.value',
-      'foorm.value',
-      buildScope(undefined)
-    )
+    const explicit = resolveFieldProp(prop, 'foorm.fn.value', 'foorm.value', buildScope(undefined))
     if (explicit !== undefined) {
       setModel(explicit)
     } else if (isObjectField(props.field)) {
@@ -195,18 +207,17 @@ if (props.field.allStatic) {
 
   // Title: static (for structure/array fields)
   title = isStructured
-    ? (getFieldMeta<string>(prop, 'foorm.title') ?? getFieldMeta<string>(prop, 'meta.label') ?? props.field.name)
+    ? (getFieldMeta<string>(prop, 'foorm.title') ??
+      getFieldMeta<string>(prop, 'meta.label') ??
+      props.field.name)
     : undefined
 
   // Classes: plain object (no computed)
-  const staticClassValue = getFieldMeta(prop, 'foorm.classes')
-  classesBase = {
-    ...(typeof staticClassValue === 'string'
-      ? { [staticClassValue]: true }
-      : (staticClassValue as Record<string, boolean> | undefined)),
-    disabled: disabled as boolean,
-    required: hasMetaRequired,
-  }
+  classesBase = buildFieldClasses(
+    getFieldMeta(prop, 'foorm.classes'),
+    disabled as boolean,
+    hasMetaRequired
+  )
 
   // Phantom value: static
   phantomValue = props.field.phantom ? getFieldMeta(prop, 'foorm.value') : undefined
@@ -214,82 +225,72 @@ if (props.field.allStatic) {
   // ══════════════════════════════════════════════════════════
   // DYNAMIC PATH: per-property static/dynamic detection
   // ══════════════════════════════════════════════════════════
-  const hasFn = {
-    disabled: getFieldMeta(prop, 'foorm.fn.disabled') !== undefined,
-    hidden: getFieldMeta(prop, 'foorm.fn.hidden') !== undefined,
-    optional: getFieldMeta(prop, 'foorm.fn.optional') !== undefined,
-    readonly: getFieldMeta(prop, 'foorm.fn.readonly') !== undefined,
-    label: getFieldMeta(prop, 'foorm.fn.label') !== undefined,
-    description: getFieldMeta(prop, 'foorm.fn.description') !== undefined,
-    hint: getFieldMeta(prop, 'foorm.fn.hint') !== undefined,
-    placeholder: getFieldMeta(prop, 'foorm.fn.placeholder') !== undefined,
-    classes: getFieldMeta(prop, 'foorm.fn.classes') !== undefined,
-    styles: getFieldMeta(prop, 'foorm.fn.styles') !== undefined,
-    options: getFieldMeta(prop, 'foorm.fn.options') !== undefined,
-    value: getFieldMeta(prop, 'foorm.fn.value') !== undefined,
-    attr: getFieldMeta(prop, 'foorm.fn.attr') !== undefined,
-    title: getFieldMeta(prop, 'foorm.fn.title') !== undefined,
+  // Single scan of metadata keys to detect all foorm.fn.* annotations
+  const hasFn = new Set<string>()
+  for (const key of (prop.metadata as unknown as Map<string, unknown>).keys()) {
+    const k = String(key)
+    if (k.startsWith('foorm.fn.')) hasFn.add(k.slice(9))
   }
   hasCustomValidators = getFieldMeta(prop, 'foorm.validate') !== undefined
 
   // ── Lazy scope construction ────────────────────────────────
-  const needsBaseScope = hasFn.disabled || hasFn.hidden || hasFn.optional || hasFn.readonly
+  const needsBaseScope =
+    hasFn.has('disabled') || hasFn.has('hidden') || hasFn.has('optional') || hasFn.has('readonly')
   const needsFullScope =
-    hasFn.label ||
-    hasFn.description ||
-    hasFn.hint ||
-    hasFn.placeholder ||
-    hasFn.classes ||
-    hasFn.styles ||
-    hasFn.options ||
-    hasFn.value ||
-    hasFn.attr ||
-    hasFn.title ||
+    hasFn.has('label') ||
+    hasFn.has('description') ||
+    hasFn.has('hint') ||
+    hasFn.has('placeholder') ||
+    hasFn.has('classes') ||
+    hasFn.has('styles') ||
+    hasFn.has('options') ||
+    hasFn.has('value') ||
+    hasFn.has('attr') ||
+    hasFn.has('title') ||
     hasCustomValidators
   const needsScope = needsBaseScope || needsFullScope
 
   // Base scope for constraints (no entry)
   const baseScope = needsScope ? computed(() => buildScope(getModel())) : undefined
 
-  // Safe alias — guaranteed non-null when hasFn.* is true (implies needsScope)
+  // Safe alias — guaranteed non-null when hasFn.has() is true (implies needsScope)
   const bs = baseScope as ComputedRef<TFoormFnScope>
 
   // ── Constraints (baseScope phase) ──────────────────────────
-  disabled = hasFn.disabled
-    ? computed(
-        () =>
-          resolveFieldProp<boolean>(prop, 'foorm.fn.disabled', 'foorm.disabled', bs.value, {
-            staticAsBoolean: true,
-          }) ?? false
-      )
-    : getFieldMeta(prop, 'foorm.disabled') !== undefined
+  const boolOpts = { staticAsBoolean: true } as const
 
-  hidden = hasFn.hidden
-    ? computed(
-        () =>
-          resolveFieldProp<boolean>(prop, 'foorm.fn.hidden', 'foorm.hidden', bs.value, {
-            staticAsBoolean: true,
-          }) ?? false
-      )
-    : getFieldMeta(prop, 'foorm.hidden') !== undefined
+  disabled = maybeComputed(
+    hasFn.has('disabled'),
+    () =>
+      resolveFieldProp<boolean>(prop, 'foorm.fn.disabled', 'foorm.disabled', bs.value, boolOpts) ??
+      false,
+    getFieldMeta(prop, 'foorm.disabled') !== undefined
+  )
 
-  optional = hasFn.optional
-    ? computed(
-        () =>
-          resolveFieldProp<boolean>(prop, 'foorm.fn.optional', undefined, bs.value) ??
-          props.field.prop.optional ??
-          false
-      )
-    : (props.field.prop.optional ?? false)
+  hidden = maybeComputed(
+    hasFn.has('hidden'),
+    () =>
+      resolveFieldProp<boolean>(prop, 'foorm.fn.hidden', 'foorm.hidden', bs.value, boolOpts) ??
+      false,
+    getFieldMeta(prop, 'foorm.hidden') !== undefined
+  )
 
-  readonly = hasFn.readonly
-    ? computed(
-        () =>
-          resolveFieldProp<boolean>(prop, 'foorm.fn.readonly', 'foorm.readonly', bs.value, {
-            staticAsBoolean: true,
-          }) ?? false
-      )
-    : getFieldMeta(prop, 'foorm.readonly') !== undefined
+  optional = maybeComputed(
+    hasFn.has('optional'),
+    () =>
+      resolveFieldProp<boolean>(prop, 'foorm.fn.optional', undefined, bs.value) ??
+      props.field.prop.optional ??
+      false,
+    props.field.prop.optional ?? false
+  )
+
+  readonly = maybeComputed(
+    hasFn.has('readonly'),
+    () =>
+      resolveFieldProp<boolean>(prop, 'foorm.fn.readonly', 'foorm.readonly', bs.value, boolOpts) ??
+      false,
+    getFieldMeta(prop, 'foorm.readonly') !== undefined
+  )
 
   // Derived: required based on @meta.required (skip for phantom)
   required = props.field.phantom ? undefined : hasMetaRequired
@@ -314,97 +315,93 @@ if (props.field.allStatic) {
       })
     : undefined
 
-  // Safe alias — guaranteed non-null when hasFn.* is true (implies needsFullScope)
+  // Safe alias — guaranteed non-null when hasFn.has() is true (implies needsFullScope)
   const fs = scope as ComputedRef<TFoormFnScope>
 
   // ── Display props (full scope phase) ───────────────────────
-  label = hasFn.label
-    ? computed(
-        () =>
-          resolveFieldProp<string>(prop, 'foorm.fn.label', 'meta.label', fs.value) ??
-          props.field.name
-      )
-    : (getFieldMeta<string>(prop, 'meta.label') ?? props.field.name)
+  label = maybeComputed(
+    hasFn.has('label'),
+    () =>
+      resolveFieldProp<string>(prop, 'foorm.fn.label', 'meta.label', fs.value) ?? props.field.name,
+    getFieldMeta<string>(prop, 'meta.label') ?? props.field.name
+  )
 
-  description = hasFn.description
-    ? computed(() =>
-        resolveFieldProp<string>(prop, 'foorm.fn.description', 'meta.description', fs.value)
-      )
-    : getFieldMeta<string>(prop, 'meta.description')
+  description = maybeComputed(
+    hasFn.has('description'),
+    () => resolveFieldProp<string>(prop, 'foorm.fn.description', 'meta.description', fs.value),
+    getFieldMeta<string>(prop, 'meta.description')
+  )
 
-  hint = hasFn.hint
-    ? computed(() => resolveFieldProp<string>(prop, 'foorm.fn.hint', 'meta.hint', fs.value))
-    : getFieldMeta<string>(prop, 'meta.hint')
+  hint = maybeComputed(
+    hasFn.has('hint'),
+    () => resolveFieldProp<string>(prop, 'foorm.fn.hint', 'meta.hint', fs.value),
+    getFieldMeta<string>(prop, 'meta.hint')
+  )
 
-  placeholder = hasFn.placeholder
-    ? computed(() =>
-        resolveFieldProp<string>(prop, 'foorm.fn.placeholder', 'meta.placeholder', fs.value)
-      )
-    : getFieldMeta<string>(prop, 'meta.placeholder')
+  placeholder = maybeComputed(
+    hasFn.has('placeholder'),
+    () => resolveFieldProp<string>(prop, 'foorm.fn.placeholder', 'meta.placeholder', fs.value),
+    getFieldMeta<string>(prop, 'meta.placeholder')
+  )
 
-  styles = hasFn.styles
-    ? computed(() => resolveFieldProp(prop, 'foorm.fn.styles', 'foorm.styles', fs.value))
-    : getFieldMeta(prop, 'foorm.styles')
+  styles = maybeComputed(
+    hasFn.has('styles'),
+    () => resolveFieldProp(prop, 'foorm.fn.styles', 'foorm.styles', fs.value),
+    getFieldMeta(prop, 'foorm.styles')
+  )
 
-  options = hasFn.options
-    ? computed(() => resolveOptions(prop, fs.value))
-    : resolveOptions(prop, emptyScope)
+  options = maybeComputed(
+    hasFn.has('options'),
+    () => resolveOptions(prop, fs.value),
+    resolveOptions(prop, emptyScope)
+  )
 
   attrs =
-    hasFn.attr || getFieldMeta(prop, 'foorm.attr') !== undefined
-      ? hasFn.attr
+    hasFn.has('attr') || getFieldMeta(prop, 'foorm.attr') !== undefined
+      ? hasFn.has('attr')
         ? computed(() => resolveAttrs(prop, fs.value))
         : resolveAttrs(prop, emptyScope)
       : undefined
 
   // ── Title (for structure/array fields) ─────────────────────
   title = isStructured
-    ? hasFn.title
-      ? computed(
-          () =>
-            resolveFieldProp<string>(prop, 'foorm.fn.title', 'foorm.title', fs.value) ??
-            getFieldMeta<string>(prop, 'meta.label') ??
-            props.field.name
-        )
-      : (getFieldMeta<string>(prop, 'foorm.title') ?? getFieldMeta<string>(prop, 'meta.label') ?? props.field.name)
+    ? maybeComputed(
+        hasFn.has('title'),
+        () =>
+          resolveFieldProp<string>(prop, 'foorm.fn.title', 'foorm.title', fs.value) ??
+          getFieldMeta<string>(prop, 'meta.label') ??
+          props.field.name,
+        getFieldMeta<string>(prop, 'foorm.title') ??
+          getFieldMeta<string>(prop, 'meta.label') ??
+          props.field.name
+      )
     : undefined
 
   // ── Classes — conditional computed ─────────────────────────
   classesBase =
-    hasFn.classes || typeof disabled !== 'boolean'
-      ? computed(() => {
-          const classValue = hasFn.classes
-            ? resolveFieldProp(prop, 'foorm.fn.classes', undefined, fs.value)
-            : getFieldMeta(prop, 'foorm.classes')
-
-          return {
-            ...(typeof classValue === 'string'
-              ? { [classValue]: true }
-              : (classValue as Record<string, boolean> | undefined)),
-            disabled: unwrap(disabled),
-            required: hasMetaRequired,
-          }
-        })
-      : (() => {
-          const staticClassValue = getFieldMeta(prop, 'foorm.classes')
-          return {
-            ...(typeof staticClassValue === 'string'
-              ? { [staticClassValue]: true }
-              : (staticClassValue as Record<string, boolean> | undefined)),
-            disabled: disabled as boolean,
-            required: hasMetaRequired,
-          }
-        })()
+    hasFn.has('classes') || typeof disabled !== 'boolean'
+      ? computed(() =>
+          buildFieldClasses(
+            hasFn.has('classes')
+              ? resolveFieldProp(prop, 'foorm.fn.classes', undefined, fs.value)
+              : getFieldMeta(prop, 'foorm.classes'),
+            unwrap(disabled),
+            hasMetaRequired
+          )
+        )
+      : buildFieldClasses(getFieldMeta(prop, 'foorm.classes'), disabled as boolean, hasMetaRequired)
 
   // ── Phantom value (paragraph, action display) ──────────────
   phantomValue = props.field.phantom
-    ? hasFn.value
-      ? computed(() => resolveFieldProp(prop, 'foorm.fn.value', 'foorm.value', fs.value))
-      : getFieldMeta(prop, 'foorm.value')
+    ? maybeComputed(
+        hasFn.has('value'),
+        () => resolveFieldProp(prop, 'foorm.fn.value', 'foorm.value', fs.value),
+        getFieldMeta(prop, 'foorm.value')
+      )
     : undefined
 
   // ── Readonly watcher (computed derived fields) ─────────────
-  if (hasFn.value && !props.field.phantom) {
+  if (hasFn.has('value') && !props.field.phantom) {
     const computedValue = computed(() => {
       if (unwrap(readonly)) return resolveFieldProp(prop, 'foorm.fn.value', 'foorm.value', fs.value)
       return undefined
@@ -479,8 +476,6 @@ const componentProps = computed(() => ({
   error: mergedError.value,
   model: slotModel,
   value: unwrap(phantomValue),
-  formData: foormState.value.formData,
-  formContext: foormState.value.formContext,
   label: unwrap(label),
   description: unwrap(description),
   hint: unwrap(hint),

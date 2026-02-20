@@ -95,6 +95,19 @@ function fnTopAnnotation(description: string): AnnotationSpec {
   })
 }
 
+export const BUILTIN_TYPES = [
+  'text',
+  'password',
+  'number',
+  'select',
+  'textarea',
+  'checkbox',
+  'radio',
+  'date',
+  'paragraph',
+  'action',
+] as const
+
 export const annotations: TAnnotationsTree = {
   foorm: {
     // ── Form-level static annotations ────────────────────────
@@ -132,18 +145,7 @@ export const annotations: TAnnotationsTree = {
       argument: {
         name: 'type',
         type: 'string',
-        values: [
-          'text',
-          'password',
-          'number',
-          'select',
-          'textarea',
-          'checkbox',
-          'radio',
-          'date',
-          'paragraph',
-          'action',
-        ],
+        values: [...BUILTIN_TYPES],
         description: 'The input type for this field',
       },
     }),

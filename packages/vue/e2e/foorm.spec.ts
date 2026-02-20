@@ -7,6 +7,7 @@ function getForm(page: Page): Locator {
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
+  await page.getByRole('button', { name: 'Basic', exact: true }).click()
   await page.locator('form').first().waitFor()
 })
 

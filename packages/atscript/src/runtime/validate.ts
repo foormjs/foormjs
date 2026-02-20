@@ -1,5 +1,5 @@
+import type { TAtscriptAnnotatedType, TValidatorOptions } from '@atscript/typescript/utils'
 import { Validator } from '@atscript/typescript/utils'
-import type { TValidatorOptions } from '@atscript/typescript/utils'
 import type { FoormDef } from './types'
 import { getFieldMeta } from './utils'
 import { foormValidatorPlugin } from './validator-plugin'
@@ -47,6 +47,47 @@ export function getFormValidator(
       errors[err.path] = err.message
     }
     return errors
+  }
+}
+
+// ── Field-level validator ────────────────────────────────────
+
+/** Options for createFieldValidator. */
+export interface TFieldValidatorOptions {
+  /** Only report errors at the root path (for structure/array container validation). */
+  rootOnly?: boolean
+}
+
+/**
+ * Creates a cached validator function for a single ATScript prop.
+ *
+ * The `Validator` instance is created lazily on first call and reused on
+ * every subsequent call. Returns `true` when valid, or the first error
+ * message string when invalid.
+ *
+ * @param prop - ATScript annotated type for the field
+ * @param opts - Optional validator options (rootOnly)
+ * @returns A validate function `(value, externalCtx?) => true | string`
+ */
+export function createFieldValidator(
+  prop: TAtscriptAnnotatedType,
+  opts?: TFieldValidatorOptions
+): (value: unknown, externalCtx?: { data: unknown; context: unknown }) => true | string {
+  const plugin = foormValidatorPlugin()
+  let cached: InstanceType<typeof Validator> | undefined
+
+  return (value: unknown, externalCtx?: { data: unknown; context: unknown }): true | string => {
+    cached ??= new Validator(prop, { plugins: [plugin] })
+    const isValid = cached.validate(value, true, externalCtx)
+    if (!isValid) {
+      if (opts?.rootOnly) {
+        const rootError = cached.errors?.find(e => e.path === '')
+        if (rootError) return rootError.message
+        return true
+      }
+      return cached.errors?.[0]?.message || 'Invalid value'
+    }
+    return true
   }
 }
 

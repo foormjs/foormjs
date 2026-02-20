@@ -4,36 +4,28 @@ import { isTupleField } from '@foormjs/atscript'
 import { computed } from 'vue'
 import type { TFoormComponentProps } from '../types'
 import OoField from '../oo-field.vue'
-import OoOptionalNa from './oo-optional-na.vue'
+import OoNoData from './oo-no-data.vue'
+import OoStructuredHeader from './oo-structured-header.vue'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const props = defineProps<TFoormComponentProps<unknown, any, any>>()
+const props = defineProps<TFoormComponentProps>()
 
-const tupleField = isTupleField(props.field!)
-  ? (props.field as FoormTupleFieldDef)
-  : undefined
+const tupleField = isTupleField(props.field!) ? (props.field as FoormTupleFieldDef) : undefined
 
 const optionalEnabled = computed(() => props.model?.value !== undefined)
 </script>
 
 <template>
   <div class="oo-tuple" v-show="!hidden">
-    <div v-if="title || optional" class="oo-tuple-header">
-      <div class="oo-tuple-header-content">
-        <h3 v-if="title" class="oo-tuple-title">{{ title }}</h3>
-      </div>
-      <button
-        v-if="optional && optionalEnabled"
-        type="button"
-        class="oo-optional-clear"
-        @click="onToggleOptional?.(false)"
-      >
-        &times;
-      </button>
-    </div>
+    <OoStructuredHeader
+      :title="title"
+      :level="level"
+      :optional="optional"
+      :optional-enabled="optionalEnabled"
+      :on-toggle-optional="onToggleOptional"
+    />
 
     <template v-if="optional && !optionalEnabled">
-      <OoOptionalNa :on-edit="() => onToggleOptional?.(true)" />
+      <OoNoData :on-edit="() => onToggleOptional?.(true)" />
     </template>
     <template v-else>
       <template v-if="tupleField">
@@ -46,22 +38,8 @@ const optionalEnabled = computed(() => props.model?.value !== undefined)
 </template>
 
 <style>
-.oo-tuple-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-.oo-tuple-header-content {
-  flex: 1;
-}
-
-.oo-tuple-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #374151;
+.oo-tuple {
+  margin: 12px 0;
 }
 
 .oo-tuple-error {

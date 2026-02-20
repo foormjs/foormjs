@@ -81,7 +81,7 @@ test.describe('String Array — Tags', () => {
 
     const item = form.locator('.oo-array').first().locator(FIELD_ITEM).first()
     await expect(item.locator('input')).toBeVisible()
-    await expect(item.locator('.oo-array-inline-remove')).toBeVisible()
+    await expect(item.locator('.oo-field-remove-btn')).toBeVisible()
   })
 
   test('can add multiple items', async ({ page }) => {
@@ -120,7 +120,7 @@ test.describe('String Array — Tags', () => {
     await addBtn.click()
     await expect(tagsArray.locator(FIELD_ITEM)).toHaveCount(2)
 
-    await tagsArray.locator('.oo-array-inline-remove').first().click()
+    await tagsArray.locator('.oo-field-remove-btn').first().click()
     await expect(tagsArray.locator(FIELD_ITEM)).toHaveCount(1)
   })
 
@@ -149,7 +149,7 @@ test.describe('String Array — Tags', () => {
     }
     await expect(addBtn).toBeDisabled()
 
-    await tagsArray.locator('.oo-array-inline-remove').first().click()
+    await tagsArray.locator('.oo-field-remove-btn').first().click()
     await expect(addBtn).toBeEnabled()
   })
 })
@@ -183,7 +183,9 @@ test.describe('Number Array — Scores', () => {
 test.describe('Object Array — Addresses', () => {
   test('renders group title', async ({ page }) => {
     const form = getForm(page)
-    await expect(form.locator('.oo-array-title').filter({ hasText: 'Addresses' })).toBeVisible()
+    await expect(
+      form.locator('.oo-structured-title').filter({ hasText: 'Addresses' })
+    ).toBeVisible()
   })
 
   test('add creates item with sub-fields', async ({ page }) => {
@@ -272,13 +274,13 @@ test.describe('Object Array — Addresses', () => {
     await secondItem.locator('input[name="street"]').fill('Second')
 
     // Remove the first item (object items have remove in the group header)
-    await addressArray.locator('.oo-object-remove-btn').first().click()
+    await addressArray.locator('.oo-structured-remove-btn').first().click()
 
     // Second item should now be first
     await expect(addressArray.locator(OBJ_ITEM)).toHaveCount(1)
-    await expect(addressArray.locator(OBJ_ITEM).first().locator('input[name="street"]')).toHaveValue(
-      'Second'
-    )
+    await expect(
+      addressArray.locator(OBJ_ITEM).first().locator('input[name="street"]')
+    ).toHaveValue('Second')
   })
 })
 
@@ -287,7 +289,7 @@ test.describe('Object Array — Addresses', () => {
 test.describe('Nested Group — Settings', () => {
   test('renders group title', async ({ page }) => {
     const form = getForm(page)
-    await expect(form.locator('.oo-object-title').filter({ hasText: 'Settings' })).toBeVisible()
+    await expect(form.locator('.oo-structured-title').filter({ hasText: 'Settings' })).toBeVisible()
   })
 
   test('renders checkbox field', async ({ page }) => {
@@ -318,28 +320,33 @@ test.describe('Nested Group — Settings', () => {
 test.describe('Union Array — Contacts', () => {
   test('renders group title', async ({ page }) => {
     const form = getForm(page)
-    await expect(form.locator('.oo-array-title').filter({ hasText: 'Contacts' })).toBeVisible()
+    await expect(form.locator('.oo-structured-title').filter({ hasText: 'Contacts' })).toBeVisible()
   })
 
-  test('shows variant picker with two add buttons', async ({ page }) => {
+  test('shows add dropdown with two variant options', async ({ page }) => {
     const form = getForm(page)
     const contactsSection = form.locator('.oo-array').last()
-    const addButtons = contactsSection.locator('.oo-array-union-picker .oo-array-add-btn')
-    await expect(addButtons).toHaveCount(2)
+    const addTrigger = contactsSection.locator('.oo-array-add .oo-array-add-btn')
+
+    // Click the add dropdown trigger
+    await addTrigger.click()
+    const dropdownItems = contactsSection.locator('.oo-array-add .oo-dropdown-item')
+    await expect(dropdownItems).toHaveCount(2)
   })
 
   test('add object variant creates item with sub-fields', async ({ page }) => {
     const form = getForm(page)
     const contactsSection = form.locator('.oo-array').last()
-    const addButtons = contactsSection.locator('.oo-array-union-picker .oo-array-add-btn')
 
-    await addButtons.first().click()
+    // Open add dropdown and click first variant (object)
+    await contactsSection.locator('.oo-array-add .oo-array-add-btn').click()
+    await contactsSection.locator('.oo-array-add .oo-dropdown-item').first().click()
 
     const item = contactsSection.locator(UNION_ITEM).first()
     await expect(item).toBeVisible()
 
-    // Should have variant selector and object sub-fields
-    await expect(item.locator('.oo-union-picker')).toBeVisible()
+    // Should have variant dropdown trigger and object sub-fields
+    await expect(item.locator('.oo-dropdown-trigger')).toBeVisible()
     await expect(item.locator('input[name="fullName"]')).toBeVisible()
     await expect(item.locator('input[name="email"]')).toBeVisible()
     await expect(item.locator('input[name="phone"]')).toBeVisible()
@@ -348,23 +355,26 @@ test.describe('Union Array — Contacts', () => {
   test('add string variant creates scalar input with variant selector', async ({ page }) => {
     const form = getForm(page)
     const contactsSection = form.locator('.oo-array').last()
-    const addButtons = contactsSection.locator('.oo-array-union-picker .oo-array-add-btn')
 
-    await addButtons.nth(1).click()
+    // Open add dropdown and click second variant (string)
+    await contactsSection.locator('.oo-array-add .oo-array-add-btn').click()
+    await contactsSection.locator('.oo-array-add .oo-dropdown-item').nth(1).click()
 
     const item = contactsSection.locator(UNION_ITEM).first()
     await expect(item).toBeVisible()
     await expect(item.locator(SCALAR_INPUT)).toBeVisible()
     await expect(item.locator(SCALAR_INPUT)).toHaveAttribute('type', 'text')
-    // Union selector is still visible so user can switch back
-    await expect(item.locator('.oo-union-picker')).toBeVisible()
+    // Union variant dropdown trigger is still visible so user can switch back
+    await expect(item.locator('.oo-dropdown-trigger')).toBeVisible()
   })
 
   test('can fill object variant sub-fields', async ({ page }) => {
     const form = getForm(page)
     const contactsSection = form.locator('.oo-array').last()
-    const addButtons = contactsSection.locator('.oo-array-union-picker .oo-array-add-btn')
-    await addButtons.first().click()
+
+    // Add object variant via dropdown
+    await contactsSection.locator('.oo-array-add .oo-array-add-btn').click()
+    await contactsSection.locator('.oo-array-add .oo-dropdown-item').first().click()
 
     const item = contactsSection.locator(UNION_ITEM).first()
     await item.locator('input[name="fullName"]').fill('Jane Doe')
@@ -379,20 +389,23 @@ test.describe('Union Array — Contacts', () => {
   test('variant selector switches between object and scalar', async ({ page }) => {
     const form = getForm(page)
     const contactsSection = form.locator('.oo-array').last()
-    const addButtons = contactsSection.locator('.oo-array-union-picker .oo-array-add-btn')
 
-    // Add an object variant item
-    await addButtons.first().click()
+    // Add an object variant item via dropdown
+    await contactsSection.locator('.oo-array-add .oo-array-add-btn').click()
+    await contactsSection.locator('.oo-array-add .oo-dropdown-item').first().click()
+
     const allItems = contactsSection.locator(UNION_ITEM)
     await expect(allItems.first().locator('input[name="fullName"]')).toBeVisible()
 
-    // Switch to string variant via button click
-    await allItems.first().locator('.oo-union-btn').nth(1).click()
+    // Switch to string variant via dropdown
+    await allItems.first().locator('.oo-dropdown-trigger').click()
+    await allItems.first().locator('.oo-dropdown-item').nth(1).click()
     await expect(contactsSection.locator('input[name="fullName"]')).toHaveCount(0)
     await expect(contactsSection.locator(UNION_SCALAR)).toBeVisible()
 
-    // Switch back to object variant via button click
-    await contactsSection.locator(UNION_ITEM).first().locator('.oo-union-btn').first().click()
+    // Switch back to object variant via dropdown
+    await contactsSection.locator(UNION_ITEM).first().locator('.oo-dropdown-trigger').click()
+    await contactsSection.locator(UNION_ITEM).first().locator('.oo-dropdown-item').first().click()
     await expect(contactsSection.locator('input[name="fullName"]')).toBeVisible()
     await expect(contactsSection.locator(UNION_SCALAR)).toHaveCount(0)
   })
@@ -400,11 +413,14 @@ test.describe('Union Array — Contacts', () => {
   test('can mix object and scalar items', async ({ page }) => {
     const form = getForm(page)
     const contactsSection = form.locator('.oo-array').last()
-    const addButtons = contactsSection.locator('.oo-array-union-picker .oo-array-add-btn')
 
-    // Add object, then string
-    await addButtons.first().click()
-    await addButtons.nth(1).click()
+    // Add object variant
+    await contactsSection.locator('.oo-array-add .oo-array-add-btn').click()
+    await contactsSection.locator('.oo-array-add .oo-dropdown-item').first().click()
+
+    // Add string variant
+    await contactsSection.locator('.oo-array-add .oo-array-add-btn').click()
+    await contactsSection.locator('.oo-array-add .oo-dropdown-item').nth(1).click()
 
     const allItems = contactsSection.locator(UNION_ITEM)
     await expect(allItems).toHaveCount(2)
@@ -417,15 +433,20 @@ test.describe('Union Array — Contacts', () => {
   test('remove works for union items', async ({ page }) => {
     const form = getForm(page)
     const contactsSection = form.locator('.oo-array').last()
-    const addButtons = contactsSection.locator('.oo-array-union-picker .oo-array-add-btn')
 
-    await addButtons.first().click()
-    await addButtons.nth(1).click()
+    // Add object variant
+    await contactsSection.locator('.oo-array-add .oo-array-add-btn').click()
+    await contactsSection.locator('.oo-array-add .oo-dropdown-item').first().click()
+
+    // Add string variant
+    await contactsSection.locator('.oo-array-add .oo-array-add-btn').click()
+    await contactsSection.locator('.oo-array-add .oo-dropdown-item').nth(1).click()
+
     const allItems = contactsSection.locator(UNION_ITEM)
     await expect(allItems).toHaveCount(2)
 
     // Remove first item (object items have remove in the group header)
-    await contactsSection.locator('.oo-object-remove-btn').first().click()
+    await contactsSection.locator('.oo-structured-remove-btn').first().click()
     await expect(contactsSection.locator(UNION_ITEM)).toHaveCount(1)
 
     // Remaining item should be the scalar one

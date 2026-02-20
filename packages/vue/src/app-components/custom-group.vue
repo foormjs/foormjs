@@ -4,8 +4,7 @@ import { isObjectField } from '@foormjs/atscript'
 import type { TFoormComponentProps } from '../components/types'
 import OoIterator from '../components/oo-iterator.vue'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const props = defineProps<TFoormComponentProps<unknown, any, any>>()
+const props = defineProps<TFoormComponentProps>()
 
 const objectDef = isObjectField(props.field!)
   ? (props.field as FoormObjectFieldDef).objectDef

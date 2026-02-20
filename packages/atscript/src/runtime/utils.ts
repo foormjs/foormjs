@@ -1,10 +1,4 @@
-import type {
-  TComputed,
-  TFoormFnScope,
-  TFoormEntryOptions,
-  FoormFieldDef,
-  FoormUnionVariant,
-} from './types'
+import type { TFoormFnScope, TFoormEntryOptions, FoormFieldDef, FoormUnionVariant } from './types'
 import type {
   TAtscriptAnnotatedType,
   TAtscriptTypeComplex,
@@ -12,6 +6,13 @@ import type {
 } from '@atscript/typescript/utils'
 import { isPhantomType } from '@atscript/typescript/utils'
 import { compileFieldFn, compileTopFn } from './fn-compiler'
+
+// ── Array coercion ───────────────────────────────────────────
+
+/** Ensures a value is an array — returns as-is if already one, wraps in `[x]` otherwise. */
+export function asArray<T>(x: T | T[]): T[] {
+  return Array.isArray(x) ? x : [x]
+}
 
 // ── Metadata access ─────────────────────────────────────────
 
@@ -39,33 +40,36 @@ export interface TResolveOptions<T> {
   transform?: (raw: unknown) => T
 }
 
+/** Compile function signature used by resolveAnnotatedProp. */
+type TCompileFn<T> = (fnStr: string) => (scope: TFoormFnScope) => T
+
 /**
- * Core field-level resolver. Reads metadata on demand:
- * 1. Check fnKey — if found, compile and call with scope
+ * Shared resolver for both field-level and form-level metadata.
+ * 1. Check fnKey — if found, compile with `compileFn` and call with scope
  * 2. Check staticKey — if found, return static value (optionally transformed)
  * 3. Return undefined
  *
  * FNPool caching makes repeated calls for the same fn string essentially free.
  *
- * @param prop - ATScript annotated type for the field
+ * @param metadata - Metadata accessor from an ATScript annotated type
  * @param fnKey - Metadata key for the computed function string (e.g., `'foorm.fn.label'`)
  * @param staticKey - Metadata key for the static value (e.g., `'meta.label'`), or `undefined` to skip
- * @param scope - Current form scope with value, data, context, and entry
+ * @param scope - Current form scope
+ * @param compileFn - Function compiler (`compileFieldFn` or `compileTopFn`)
  * @param opts - Optional resolve options (staticAsBoolean, transform)
  * @returns The resolved value, or `undefined` if neither fn nor static metadata exists
  */
-export function resolveFieldProp<T>(
-  prop: TAtscriptAnnotatedType,
+function resolveAnnotatedProp<T>(
+  metadata: TMetadataAccessor,
   fnKey: string,
   staticKey: string | undefined,
   scope: TFoormFnScope,
+  compileFn: TCompileFn<T>,
   opts?: TResolveOptions<T>
 ): T | undefined {
-  const metadata = prop.metadata as unknown as TMetadataAccessor
-
   const fnStr = metadata.get(fnKey)
   if (typeof fnStr === 'string') {
-    return compileFieldFn<T>(fnStr)(scope)
+    return compileFn(fnStr)(scope)
   }
 
   if (staticKey !== undefined) {
@@ -81,7 +85,34 @@ export function resolveFieldProp<T>(
 }
 
 /**
- * Form-level resolver. Same as resolveFieldProp but uses compileTopFn
+ * Core field-level resolver. Reads metadata on demand using `compileFieldFn`.
+ *
+ * @param prop - ATScript annotated type for the field
+ * @param fnKey - Metadata key for the computed function string (e.g., `'foorm.fn.label'`)
+ * @param staticKey - Metadata key for the static value (e.g., `'meta.label'`), or `undefined` to skip
+ * @param scope - Current form scope with value, data, context, and entry
+ * @param opts - Optional resolve options (staticAsBoolean, transform)
+ * @returns The resolved value, or `undefined` if neither fn nor static metadata exists
+ */
+export function resolveFieldProp<T>(
+  prop: TAtscriptAnnotatedType,
+  fnKey: string,
+  staticKey: string | undefined,
+  scope: TFoormFnScope,
+  opts?: TResolveOptions<T>
+): T | undefined {
+  return resolveAnnotatedProp(
+    prop.metadata as unknown as TMetadataAccessor,
+    fnKey,
+    staticKey,
+    scope,
+    compileFieldFn as TCompileFn<T>,
+    opts
+  )
+}
+
+/**
+ * Form-level resolver. Same logic as resolveFieldProp but uses `compileTopFn`
  * (scope has `data` and `context`, no `v` or `entry`).
  *
  * @param type - ATScript annotated type for the form (root interface)
@@ -98,23 +129,32 @@ export function resolveFormProp<T>(
   scope: TFoormFnScope,
   opts?: TResolveOptions<T>
 ): T | undefined {
-  const metadata = type.metadata as unknown as TMetadataAccessor
+  return resolveAnnotatedProp(
+    type.metadata as unknown as TMetadataAccessor,
+    fnKey,
+    staticKey,
+    scope,
+    compileTopFn as TCompileFn<T>,
+    opts
+  )
+}
 
-  const fnStr = metadata.get(fnKey)
-  if (typeof fnStr === 'string') {
-    return compileTopFn<T>(fnStr)(scope)
-  }
+// ── Option helpers ───────────────────────────────────────────
 
-  if (staticKey !== undefined) {
-    const staticVal = metadata.get(staticKey)
-    if (staticVal !== undefined) {
-      if (opts?.staticAsBoolean) return true as T
-      if (opts?.transform) return opts.transform(staticVal)
-      return staticVal as T
-    }
-  }
+/**
+ * Extracts the key from an option entry.
+ * For string options the value itself is the key; for objects it's `opt.key`.
+ */
+export function optKey(opt: TFoormEntryOptions): string {
+  return typeof opt === 'string' ? opt : opt.key
+}
 
-  return undefined
+/**
+ * Extracts the display label from an option entry.
+ * For string options the value itself is the label; for objects it's `opt.label`.
+ */
+export function optLabel(opt: TFoormEntryOptions): string {
+  return typeof opt === 'string' ? opt : opt.label
 }
 
 // ── Specialized resolvers ───────────────────────────────────
@@ -126,7 +166,7 @@ export function resolveFormProp<T>(
  * @returns Normalized array of TFoormEntryOptions
  */
 export function parseStaticOptions(raw: unknown): TFoormEntryOptions[] {
-  const items = Array.isArray(raw) ? raw : [raw]
+  const items = asArray(raw)
   return items.map(item => {
     if (typeof item === 'object' && item !== null && 'label' in item) {
       const { label, value } = item as { label: string; value?: string }
@@ -173,8 +213,7 @@ export function resolveAttrs(
   const result: Record<string, unknown> = {}
 
   if (staticAttrs) {
-    const items = Array.isArray(staticAttrs) ? staticAttrs : [staticAttrs]
-    for (const item of items) {
+    for (const item of asArray(staticAttrs)) {
       if (typeof item === 'object' && item !== null && 'name' in item && 'value' in item) {
         const { name, value } = item as { name: string; value: string }
         result[name] = value
@@ -183,8 +222,7 @@ export function resolveAttrs(
   }
 
   if (fnAttrs) {
-    const items = Array.isArray(fnAttrs) ? fnAttrs : [fnAttrs]
-    for (const item of items) {
+    for (const item of asArray(fnAttrs)) {
       if (typeof item === 'object' && item !== null && 'name' in item && 'fn' in item) {
         const { name, fn } = item as { name: string; fn: string }
         result[name] = compileFieldFn<unknown>(fn)(scope)
@@ -211,31 +249,6 @@ export function hasComputedAnnotations(prop: TAtscriptAnnotatedType): boolean {
     if (String(key).startsWith('foorm.fn.')) return true
   }
   return false
-}
-
-// ── evalComputed (kept for TComputed<T> usage) ──────────────
-
-/**
- * Resolves a TComputed value: if it is a function, calls it with
- * the scope. Otherwise returns the static value as-is.
- *
- * @param value - A static value or a function of TFoormFnScope
- * @param scope - Current form scope
- * @returns The resolved value
- */
-export function evalComputed<T>(value: TComputed<T>, scope: TFoormFnScope): T
-export function evalComputed<T>(
-  value: TComputed<T> | undefined,
-  scope: TFoormFnScope
-): T | undefined
-export function evalComputed<T>(
-  value: TComputed<T> | undefined,
-  scope: TFoormFnScope
-): T | undefined {
-  if (typeof value === 'function') {
-    return (value as (scope: TFoormFnScope) => T)(scope)
-  }
-  return value
 }
 
 // ── Path utilities ──────────────────────────────────────────
@@ -394,6 +407,8 @@ function getDefaultForDesignType(prop: TAtscriptAnnotatedType): unknown {
     return items.map(item => createDefaultValue(item))
   }
   if (prop.type.kind !== '') return undefined
+  // Literal types (e.g., type: 'address'): use the literal value directly
+  if (prop.type.value !== undefined) return prop.type.value
   switch (prop.type.designType) {
     case 'boolean':
       return false
@@ -447,6 +462,21 @@ export function createItemData(variant: FoormUnionVariant): unknown {
   return createDefaultValue(variant.type)
 }
 
+// Lazily-cached validators keyed by variant type identity.
+const variantValidatorCache = new WeakMap<
+  TAtscriptAnnotatedType,
+  ReturnType<TAtscriptAnnotatedType['validator']>
+>()
+
+function getVariantValidator(variant: FoormUnionVariant) {
+  let v = variantValidatorCache.get(variant.type)
+  if (!v) {
+    v = variant.type.validator()
+    variantValidatorCache.set(variant.type, v)
+  }
+  return v
+}
+
 /**
  * Detects which union variant an existing value matches.
  *
@@ -459,7 +489,7 @@ export function detectUnionVariant(value: unknown, variants: FoormUnionVariant[]
 
   for (let i = 0; i < variants.length; i++) {
     try {
-      if (variants[i]?.type.validator().validate(value, true)) return i
+      if (getVariantValidator(variants[i]!).validate(value, true)) return i
     } catch {
       // Validator threw — skip this variant
     }

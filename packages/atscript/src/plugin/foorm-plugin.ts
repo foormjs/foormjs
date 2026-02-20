@@ -1,7 +1,7 @@
 import type { TAnnotationsTree, TAtscriptPlugin } from '@atscript/core'
 import { AnnotationSpec } from '@atscript/core'
 
-import { annotations } from './annotations'
+import { annotations, BUILTIN_TYPES } from './annotations'
 import { primitives } from './primitives'
 
 export interface TFoormPluginOptions {
@@ -18,19 +18,6 @@ export interface TFoormPluginOptions {
    */
   components?: string[]
 }
-
-const BUILTIN_TYPES = [
-  'text',
-  'password',
-  'number',
-  'select',
-  'textarea',
-  'checkbox',
-  'radio',
-  'date',
-  'paragraph',
-  'action',
-]
 
 /**
  * Creates an ATScript plugin that registers foorm annotations and primitives.

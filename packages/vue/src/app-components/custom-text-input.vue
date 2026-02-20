@@ -2,8 +2,7 @@
 import { useId } from 'vue'
 import type { TFoormComponentProps } from '../components/types'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-defineProps<TFoormComponentProps<string, any, any>>()
+defineProps<TFoormComponentProps<string>>()
 
 defineEmits<{
   (e: 'update:modelValue', value: string): void

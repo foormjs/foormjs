@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import type { TFoormComponentProps } from '../components/types'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-defineProps<TFoormComponentProps<never, any, any>>()
+defineProps<TFoormComponentProps<never>>()
 </script>
 
 <template>

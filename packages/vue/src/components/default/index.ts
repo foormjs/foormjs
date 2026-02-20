@@ -1,9 +1,13 @@
+import './oo-defaults.css'
+
+export { default as OoFieldShell } from './oo-field-shell.vue'
 export { default as OoInput } from './oo-input.vue'
 export { default as OoSelect } from './oo-select.vue'
 export { default as OoRadio } from './oo-radio.vue'
 export { default as OoCheckbox } from './oo-checkbox.vue'
 export { default as OoParagraph } from './oo-paragraph.vue'
 export { default as OoAction } from './oo-action.vue'
+export { default as OoStructuredHeader } from './oo-structured-header.vue'
 export { default as OoObject } from './oo-object.vue'
 export { default as OoArray } from './oo-array.vue'
 export { default as OoUnion } from './oo-union.vue'

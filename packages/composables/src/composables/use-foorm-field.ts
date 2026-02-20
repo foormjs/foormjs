@@ -15,7 +15,9 @@ export interface UseFoormFieldOptions<TValue = any, TFormData = any, TContext = 
 export function useFoormField<TValue = any, TFormData = any, TContext = any>(
   opts: UseFoormFieldOptions<TValue, TFormData, TContext>
 ) {
-  const foormState = inject<ComputedRef<TFoormState<TFormData, TContext>>>('__foorm_form')
+  const foormState = inject<ComputedRef<TFoormState>>('__foorm_form')
+  const formData = inject<ComputedRef<TFormData | undefined>>('__foorm_form_data')
+  const formContext = inject<ComputedRef<TContext | undefined>>('__foorm_form_context')
 
   const id = Symbol('foorm-field')
   const submitError = ref<string>()
@@ -28,11 +30,15 @@ export function useFoormField<TValue = any, TFormData = any, TContext = any>(
     set: opts.setValue,
   })
 
-  watch(model, () => {
-    submitError.value = undefined
-    externalError.value = undefined
-    touched.value = true
-  }, { deep: true })
+  watch(
+    model,
+    () => {
+      submitError.value = undefined
+      externalError.value = undefined
+      touched.value = true
+    },
+    { deep: true }
+  )
 
   const isValidationActive = computed(() => {
     if (foormState?.value?.firstValidation) {
@@ -57,8 +63,8 @@ export function useFoormField<TValue = any, TFormData = any, TContext = any>(
       for (const rule of opts.rules) {
         const result = rule(
           model.value as TValue,
-          foormState?.value?.formData,
-          foormState?.value?.formContext
+          formData?.value as TFormData,
+          formContext?.value as TContext
         )
         if (result !== true) {
           return (result as string) || 'Wrong value'
@@ -70,7 +76,10 @@ export function useFoormField<TValue = any, TFormData = any, TContext = any>(
 
   const error = computed<string | undefined>(() => {
     if (externalError.value) return externalError.value
-    if (isValidationActive.value || submitError.value) {
+    // Return submitError directly — validate() already ran during the submit callback,
+    // calling it again here would double-validate every field on every submit.
+    if (submitError.value) return submitError.value
+    if (isValidationActive.value) {
       return validate()
     }
     return undefined

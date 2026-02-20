@@ -15,12 +15,14 @@ export { default as OoIterator } from './components/oo-iterator.vue'
 
 // Default type components
 export {
+  OoFieldShell,
   OoInput,
   OoSelect,
   OoRadio,
   OoCheckbox,
   OoParagraph,
   OoAction,
+  OoStructuredHeader,
   OoObject,
   OoArray,
   OoUnion,
@@ -28,10 +30,7 @@ export {
 } from './components/default'
 
 // Types
-export type {
-  TFoormBaseComponentProps,
-  TFoormComponentProps,
-} from './components/types'
+export type { TFoormBaseComponentProps, TFoormComponentProps } from './components/types'
 
 // Composables
 export { useFoorm } from './composables/use-foorm'

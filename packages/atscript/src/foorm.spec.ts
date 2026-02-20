@@ -3,7 +3,6 @@ import type { TAtscriptAnnotatedType, TAtscriptTypeObject } from '@atscript/type
 import { compileFieldFn, compileTopFn, compileValidatorFn } from './runtime/fn-compiler'
 import { createFoormDef } from './runtime/create-foorm'
 import {
-  evalComputed,
   getByPath,
   setByPath,
   createFormData,
@@ -28,6 +27,7 @@ function makeType(opts: {
       optional?: boolean
       tags?: string[]
       designType?: string
+      value?: string | number | boolean
       kind?: 'object'
       nestedProps?: Record<
         string,
@@ -36,6 +36,7 @@ function makeType(opts: {
           optional?: boolean
           tags?: string[]
           designType?: string
+          value?: string | number | boolean
         }
       >
     }
@@ -66,6 +67,9 @@ function makeType(opts: {
           if (nestedDef.designType) {
             nestedProp.designType(nestedDef.designType as any)
           }
+          if (nestedDef.value !== undefined) {
+            nestedProp.value(nestedDef.value)
+          }
           if (nestedDef.tags) {
             nestedProp.tags(...nestedDef.tags)
           }
@@ -89,6 +93,9 @@ function makeType(opts: {
         prop = defineAnnotatedType()
         if (propDef.designType) {
           prop.designType(propDef.designType as any)
+        }
+        if (propDef.value !== undefined) {
+          prop.value(propDef.value)
         }
         if (propDef.tags) {
           prop.tags(...propDef.tags)
@@ -167,27 +174,6 @@ describe('compileValidatorFn', () => {
   it('returns error message on fail', () => {
     const fn = compileValidatorFn('(v) => v.length >= 2 || "Too short"')
     expect(fn({ v: 'a', data: {}, context: {}, entry: undefined })).toBe('Too short')
-  })
-})
-
-// ── evalComputed ────────────────────────────────────────────
-
-describe('evalComputed', () => {
-  it('returns static values as-is', () => {
-    expect(evalComputed('hello', emptyScope)).toBe('hello')
-    expect(evalComputed(42, emptyScope)).toBe(42)
-    expect(evalComputed(true, emptyScope)).toBe(true)
-    expect(evalComputed(false, emptyScope)).toBe(false)
-  })
-
-  it('calls function with scope', () => {
-    const scope: TFoormFnScope = { v: 'test', data: { x: 1 }, context: {} }
-    const fn = (s: TFoormFnScope) => `value: ${s.v}`
-    expect(evalComputed(fn, scope)).toBe('value: test')
-  })
-
-  it('returns undefined for undefined input', () => {
-    expect(evalComputed(undefined, emptyScope)).toBeUndefined()
   })
 })
 
@@ -813,6 +799,64 @@ describe('createFormData', () => {
     const def = createFoormDef(type)
     expect(createFormData(type, def.fields)).toEqual({
       value: { address: { city: '', zip: '' } },
+    })
+  })
+
+  it('uses literal string value as default', () => {
+    const type = makeType({
+      props: {
+        kind: { metadata: {}, designType: 'string', value: 'address' },
+        name: { metadata: {}, designType: 'string' },
+      },
+    })
+    const def = createFoormDef(type)
+    expect(createFormData(type, def.fields)).toEqual({
+      value: { kind: 'address', name: '' },
+    })
+  })
+
+  it('uses literal number value as default', () => {
+    const type = makeType({
+      props: { version: { metadata: {}, designType: 'number', value: 42 } },
+    })
+    const def = createFoormDef(type)
+    expect(createFormData(type, def.fields)).toEqual({ value: { version: 42 } })
+  })
+
+  it('uses literal boolean value as default', () => {
+    const type = makeType({
+      props: { locked: { metadata: {}, designType: 'boolean', value: true } },
+    })
+    const def = createFoormDef(type)
+    expect(createFormData(type, def.fields)).toEqual({ value: { locked: true } })
+  })
+
+  it('foorm.value overrides literal value', () => {
+    const type = makeType({
+      props: {
+        kind: { metadata: { 'foorm.value': 'custom' }, designType: 'string', value: 'address' },
+      },
+    })
+    const def = createFoormDef(type)
+    expect(createFormData(type, def.fields)).toEqual({ value: { kind: 'custom' } })
+  })
+
+  it('uses literal value in nested object types', () => {
+    const type = makeType({
+      props: {
+        address: {
+          kind: 'object',
+          metadata: {},
+          nestedProps: {
+            type: { metadata: {}, designType: 'string', value: 'home' },
+            city: { metadata: {}, designType: 'string' },
+          },
+        },
+      },
+    })
+    const def = createFoormDef(type)
+    expect(createFormData(type, def.fields)).toEqual({
+      value: { address: { type: 'home', city: '' } },
     })
   })
 

@@ -1,0 +1,285 @@
+/* ── Shared default field styles ──────────────────────────── */
+
+.oo-default-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.oo-default-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.oo-default-field.required label::after {
+  content: ' *';
+  color: #ef4444;
+}
+
+.oo-default-field span {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.oo-default-field input,
+.oo-default-field select {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1d1d1f;
+  background: #fff;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+  outline: none;
+}
+
+.oo-default-field input::placeholder {
+  color: #9ca3af;
+}
+
+.oo-default-field input:focus,
+.oo-default-field select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.oo-default-field input:disabled,
+.oo-default-field select:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.oo-default-field.error input,
+.oo-default-field.error select {
+  border-color: #ef4444;
+}
+
+.oo-default-field.error input:focus,
+.oo-default-field.error select:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.oo-default-field .oo-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.oo-field-input-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.oo-field-input-row > input,
+.oo-field-input-row > select {
+  flex: 1;
+}
+
+/* ── Field header row (label + action buttons) ───────── */
+
+.oo-field-header-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.oo-field-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.oo-field-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.oo-field-remove-btn {
+  padding: 2px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 12px;
+  color: #6b7280;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.oo-field-remove-btn:hover:not(:disabled) {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+.oo-field-remove-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.oo-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.oo-radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #1d1d1f;
+  cursor: pointer;
+}
+
+.oo-radio-group input[type='radio'] {
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.oo-checkbox-field > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #1d1d1f;
+  cursor: pointer;
+}
+
+.oo-checkbox-field > label input[type='checkbox'] {
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.oo-default-field .oo-error-slot {
+  min-height: 16px;
+  line-height: 16px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.oo-default-field.error .oo-error-slot {
+  color: #ef4444;
+}
+
+.oo-default-field.oo-action-field button {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.oo-default-field.oo-action-field button:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* ── Optional clear button ──────────────────────────────── */
+
+.oo-optional-clear {
+  padding: 2px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 12px;
+  color: #6b7280;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.oo-optional-clear:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+/* ── Dropdown ─────────────────────────────────────────── */
+
+.oo-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.oo-dropdown-anchor {
+  position: relative;
+}
+
+.oo-dropdown-trigger {
+  padding: 2px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 12px;
+  color: #6b7280;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.oo-dropdown-trigger:hover:not(:disabled) {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
+.oo-dropdown-trigger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.oo-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 50;
+  min-width: 120px;
+  margin-top: 4px;
+  padding: 4px 0;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.oo-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: #374151;
+  text-align: left;
+  cursor: pointer;
+}
+
+.oo-dropdown-item:hover {
+  background: #f3f4f6;
+  color: #6366f1;
+}
+
+.oo-dropdown-item--active {
+  background: #eef2ff;
+  color: #6366f1;
+  font-weight: 500;
+}

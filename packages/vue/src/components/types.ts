@@ -20,7 +20,7 @@ export interface TFoormBaseComponentProps {
  * @typeParam TFormData - The full form data object type
  * @typeParam TFormContext - The external context object type
  */
-export interface TFoormComponentProps<V, TFormData, TFormContext> extends TFoormBaseComponentProps {
+export interface TFoormComponentProps<V = unknown> extends TFoormBaseComponentProps {
   /** Called on field blur — triggers validation. */
   onBlur: (event: FocusEvent) => void
   /** Validation error message for this field, if any. */
@@ -29,10 +29,6 @@ export interface TFoormComponentProps<V, TFormData, TFormContext> extends TFoorm
   model: { value: V }
   /** Phantom field display value from `@foorm.value` / `@foorm.fn.value` (paragraphs, actions). `undefined` for data fields. */
   value?: unknown
-  /** The full reactive form data object. */
-  formData: TFormData
-  /** External context passed to the form (e.g., user session, feature flags). */
-  formContext?: TFormContext
   /** Resolved field label from `@label` or `@foorm.fn.label`. */
   label?: string
   /** Resolved field description from `@description` or `@foorm.fn.description`. */

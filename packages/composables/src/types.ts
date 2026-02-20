@@ -16,11 +16,9 @@ export interface TFoormFieldRegistration {
   callbacks: TFoormFieldCallbacks
 }
 
-export interface TFoormState<TFormData, TContext> {
+export interface TFoormState {
   firstSubmitHappened: boolean
   firstValidation: 'on-change' | 'touched-on-blur' | 'on-blur' | 'on-submit' | 'none'
   register: (id: symbol, registration: TFoormFieldRegistration) => void
   unregister: (id: symbol) => void
-  formData: TFormData
-  formContext?: TContext
 }

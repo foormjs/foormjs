@@ -1,7 +1,7 @@
 import type { TValidatorPlugin } from '@atscript/typescript/utils'
 import type { TFoormFieldEvaluated } from './types'
 import { compileValidatorFn } from './fn-compiler'
-import { resolveFieldProp, resolveOptions, getFieldMeta } from './utils'
+import { resolveFieldProp, resolveOptions, getFieldMeta, asArray } from './utils'
 
 /**
  * ATScript validator plugin that processes @foorm.validate annotations.
@@ -72,7 +72,7 @@ export function foormValidatorPlugin(): TValidatorPlugin {
     entry.options = resolveOptions(def, scope)
 
     // Run custom validators with full scope
-    const fns = Array.isArray(hasValidators) ? hasValidators : [hasValidators]
+    const fns = asArray(hasValidators)
     for (const fnStr of fns) {
       if (typeof fnStr !== 'string') {
         continue

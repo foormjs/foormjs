@@ -7,7 +7,7 @@ export type TFoormSubmitValidator = () => Record<string, string>
 export function useFoormForm<TFormData, TContext>(opts: {
   formData: MaybeRef<TFormData>
   formContext?: MaybeRef<TContext>
-  firstValidation?: MaybeRef<TFoormState<TFormData, TContext>['firstValidation'] | undefined>
+  firstValidation?: MaybeRef<TFoormState['firstValidation'] | undefined>
   /** When provided, replaces per-field iteration on submit. */
   submitValidator?: TFoormSubmitValidator
 }) {
@@ -22,16 +22,25 @@ export function useFoormForm<TFormData, TContext>(opts: {
     fieldsById.delete(id)
   }
 
-  const foormState = computed<TFoormState<TFormData, TContext>>(() => ({
+  // foormState is decoupled from formData/formContext — it only changes on
+  // validation-state transitions (firstSubmitHappened, firstValidation), NOT on
+  // every keystroke. formData and formContext are provided separately.
+  const foormState = computed<TFoormState>(() => ({
     firstSubmitHappened: firstSubmitHappened.value,
     firstValidation: toValue(opts.firstValidation) ?? 'on-change',
     register,
     unregister,
-    formData: toValue(opts.formData),
-    formContext: opts.formContext ? toValue(opts.formContext) : undefined,
   }))
 
   provide('__foorm_form', foormState)
+  provide(
+    '__foorm_form_data',
+    computed(() => toValue(opts.formData))
+  )
+  provide(
+    '__foorm_form_context',
+    computed(() => (opts.formContext ? toValue(opts.formContext) : undefined))
+  )
 
   function clearErrors() {
     firstSubmitHappened.value = false

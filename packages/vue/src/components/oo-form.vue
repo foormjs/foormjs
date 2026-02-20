@@ -11,16 +11,14 @@ export interface Props<TF, TC> {
   def: FoormDef
   formData?: TF
   formContext?: TC
-  firstValidation?: TFoormState<TF, TC>['firstValidation']
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  components?: Record<string, Component<TFoormComponentProps<any, TF, TC>>>
+  firstValidation?: TFoormState['firstValidation']
+  components?: Record<string, Component<TFoormComponentProps>>
   /**
    * Type-to-component map for field rendering. Maps field types to Vue components.
    * Must include entries for all field types used in the form (e.g. `text`, `select`,
    * `structure`, `array`). Import defaults from `@foormjs/vue` or supply your own.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  types: Record<string, Component<TFoormComponentProps<any, TF, TC>>>
+  types: Record<string, Component<TFoormComponentProps>>
   errors?: Record<string, string | undefined>
 }
 
@@ -177,7 +175,7 @@ function onSubmit() {
 <style>
 button[type='submit'],
 button:not([type]) {
-  margin-top: 8px;
+  margin-top: 16px;
   padding: 10px 20px;
   border: none;
   border-radius: 6px;

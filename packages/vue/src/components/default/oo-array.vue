@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import type { FoormArrayFieldDef } from '@foormjs/atscript'
 import { isArrayField } from '@foormjs/atscript'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { TFoormComponentProps } from '../types'
 import { useFoormArray } from '../../composables/use-foorm-array'
+import { useDropdown } from '../../composables/use-dropdown'
 import OoField from '../oo-field.vue'
-import OoOptionalNa from './oo-optional-na.vue'
+import OoNoData from './oo-no-data.vue'
+import OoStructuredHeader from './oo-structured-header.vue'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const props = defineProps<TFoormComponentProps<unknown, any, any>>()
+const props = defineProps<TFoormComponentProps>()
 
 const arrayField = isArrayField(props.field!) ? (props.field as FoormArrayFieldDef) : undefined
 
@@ -30,6 +31,10 @@ const {
   arrayField!,
   computed(() => props.disabled ?? false)
 )
+
+// ── Union add dropdown ──────────────────────────────────────
+const addDropdownRef = ref<HTMLElement | null>(null)
+const { isOpen: addOpen, toggle: toggleAdd, select: selectAdd } = useDropdown(addDropdownRef)
 </script>
 
 <template>
@@ -38,34 +43,19 @@ const {
     :class="{ 'oo-array--root': level === 0, 'oo-array--nested': (level ?? 0) > 0 }"
     v-show="!hidden"
   >
-    <!-- Header (title + clear/remove buttons) -->
-    <div class="oo-array-header" v-if="title || onRemove || optional">
-      <div class="oo-array-header-content">
-        <h2 v-if="title && level === 0" class="oo-array-title oo-form-title">{{ title }}</h2>
-        <h3 v-else-if="title" class="oo-array-title">{{ title }}</h3>
-      </div>
-      <button
-        v-if="optional && optionalEnabled"
-        type="button"
-        class="oo-optional-clear"
-        @click="onToggleOptional?.(false)"
-      >
-        &times;
-      </button>
-      <button
-        v-if="onRemove"
-        type="button"
-        class="oo-array-remove-btn"
-        :disabled="!props.canRemove"
-        :aria-label="props.removeLabel || 'Remove item'"
-        @click="onRemove"
-      >
-        {{ props.removeLabel || 'Remove' }}
-      </button>
-    </div>
+    <OoStructuredHeader
+      :title="title"
+      :level="level"
+      :on-remove="onRemove"
+      :can-remove="props.canRemove"
+      :remove-label="props.removeLabel"
+      :optional="optional"
+      :optional-enabled="optionalEnabled"
+      :on-toggle-optional="onToggleOptional"
+    />
 
     <template v-if="optional && !optionalEnabled">
-      <OoOptionalNa :on-edit="() => onToggleOptional?.(true)" />
+      <OoNoData :on-edit="() => onToggleOptional?.(true)" />
     </template>
     <template v-else>
       <!-- Items — each rendered as a single OoField -->
@@ -92,18 +82,22 @@ const {
           {{ addLabel }}
         </button>
 
-        <!-- Union: one button per variant -->
-        <div v-else class="oo-array-union-picker">
-          <button
-            v-for="(v, vi) in unionVariants"
-            :key="vi"
-            type="button"
-            class="oo-array-add-btn"
-            :disabled="!canAdd"
-            @click="addItem(vi)"
-          >
-            {{ addLabel }}: {{ v.label }}
+        <!-- Union: single button with variant dropdown -->
+        <div v-else ref="addDropdownRef" class="oo-dropdown">
+          <button type="button" class="oo-array-add-btn" :disabled="!canAdd" @click="toggleAdd">
+            {{ addLabel }} &#x25BE;
           </button>
+          <div v-if="addOpen" class="oo-dropdown-menu">
+            <button
+              v-for="(v, vi) in unionVariants"
+              :key="vi"
+              type="button"
+              class="oo-dropdown-item"
+              @click="selectAdd(() => addItem(vi))"
+            >
+              {{ v.label }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -117,58 +111,13 @@ const {
 .oo-array {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin: 8px 0;
+  gap: 12px;
+  margin: 12px 0;
 }
 
 .oo-array--nested {
-  padding-left: 12px;
-  border-left: 2px solid #e5e7eb;
-}
-
-.oo-array-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.oo-array-title.oo-form-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1d1d1f;
-}
-
-.oo-array-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.oo-array-header-content {
-  flex: 1;
-}
-
-.oo-array-remove-btn {
-  padding: 4px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  background: #fff;
-  font-size: 12px;
-  color: #6b7280;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.oo-array-remove-btn:hover:not(:disabled) {
-  background: #fee2e2;
-  border-color: #fca5a5;
-  color: #dc2626;
-}
-
-.oo-array-remove-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  padding-left: 16px;
+  border-left: 2px solid #d1d5db;
 }
 
 .oo-array-error {
@@ -198,11 +147,5 @@ const {
 .oo-array-add-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-}
-
-.oo-array-union-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
 }
 </style>

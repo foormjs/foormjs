@@ -2,8 +2,7 @@
 import { ref, computed, useId } from 'vue'
 import type { TFoormComponentProps } from '../components/types'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const props = defineProps<TFoormComponentProps<string, any, any>>()
+const props = defineProps<TFoormComponentProps<string>>()
 
 const id = useId()
 const labelId = `ct-select-${id}-label`

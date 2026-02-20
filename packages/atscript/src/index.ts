@@ -27,8 +27,8 @@ export { isArrayField, isObjectField, isUnionField, isTupleField } from './runti
 
 // Core
 export { createFoormDef, buildUnionVariants } from './runtime/create-foorm'
-export { getFormValidator, supportsAltAction } from './runtime/validate'
-export type { TFormValidatorCallOptions } from './runtime/validate'
+export { getFormValidator, supportsAltAction, createFieldValidator } from './runtime/validate'
+export type { TFormValidatorCallOptions, TFieldValidatorOptions } from './runtime/validate'
 
 // Resolve utilities
 export {
@@ -39,12 +39,13 @@ export {
   getFieldMeta,
   hasComputedAnnotations,
   parseStaticOptions,
+  optKey,
+  optLabel,
 } from './runtime/utils'
 export type { TResolveOptions } from './runtime/utils'
 
 // General utilities
 export {
-  evalComputed,
   getByPath,
   setByPath,
   createFormData,

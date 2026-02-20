@@ -70,7 +70,10 @@ export function createFoormDef(type: TAtscriptAnnotatedType): FoormDef {
     // Nested arrays without component: unsupported
     if (kind === 'array') {
       const arrayType = originalProp.type as TAtscriptTypeArray
-      if (arrayType.of.type.kind === 'array' && !getFieldMeta<string>(originalProp, 'foorm.component'))
+      if (
+        arrayType.of.type.kind === 'array' &&
+        !getFieldMeta<string>(originalProp, 'foorm.component')
+      )
         continue
     }
 
@@ -82,11 +85,15 @@ export function createFoormDef(type: TAtscriptAnnotatedType): FoormDef {
     fields.push(createFieldDef(path, originalProp))
   }
 
-  fields.sort((a, b) => {
-    const orderA = getFieldMeta<number>(a.prop, 'foorm.order') ?? Infinity
-    const orderB = getFieldMeta<number>(b.prop, 'foorm.order') ?? Infinity
-    return orderA - orderB
-  })
+  // Schwartzian transform: pre-compute order values (O(N)) to avoid
+  // repeated getFieldMeta calls inside the comparator (O(N log N)).
+  const decorated = fields.map(f => ({
+    f,
+    order: getFieldMeta<number>(f.prop, 'foorm.order') ?? Infinity,
+  }))
+  decorated.sort((a, b) => a.order - b.order)
+  fields.length = 0
+  for (const { f } of decorated) fields.push(f)
 
   const def: FoormDef = { type, rootField: undefined!, fields, flatMap }
   def.rootField = {
@@ -112,17 +119,14 @@ function createFieldDef(path: string, prop: TAtscriptAnnotatedType): FoormFieldD
   const name = path.split('.').pop() ?? (path || '')
   const allStatic = !hasComputedAnnotations(prop)
   const foormType = getFieldMeta<string>(prop, 'foorm.type')
+  const base = { path, prop, phantom: false, name, allStatic }
 
   // Array
   if (kind === 'array') {
     const arrayType = prop.type as TAtscriptTypeArray
     return {
-      path,
-      prop,
+      ...base,
       type: 'array',
-      phantom: false,
-      name,
-      allStatic,
       itemType: arrayType.of,
       itemField: createFieldDef('', arrayType.of),
     } as FoormArrayFieldDef
@@ -131,12 +135,8 @@ function createFieldDef(path: string, prop: TAtscriptAnnotatedType): FoormFieldD
   // Object
   if (kind === 'object') {
     return {
-      path,
-      prop,
+      ...base,
       type: 'object',
-      phantom: false,
-      name,
-      allStatic,
       objectDef: createFoormDef(prop as TAtscriptAnnotatedType<TAtscriptTypeObject>),
     } as FoormObjectFieldDef
   }
@@ -145,29 +145,13 @@ function createFieldDef(path: string, prop: TAtscriptAnnotatedType): FoormFieldD
   if (kind === 'union') {
     const unionVariants = buildUnionVariants(prop)
     if (unionVariants.length > 1) {
-      return {
-        path,
-        prop,
-        type: 'union',
-        phantom: false,
-        name,
-        allStatic,
-        unionVariants,
-      } as FoormUnionFieldDef
+      return { ...base, type: 'union', unionVariants } as FoormUnionFieldDef
     }
     // Single variant → use its type directly
     const v = unionVariants[0]
     if (v?.itemField) return { ...v.itemField, path, name, allStatic }
     if (v?.def) {
-      return {
-        path,
-        prop,
-        type: 'object',
-        phantom: false,
-        name,
-        allStatic,
-        objectDef: v.def,
-      } as FoormObjectFieldDef
+      return { ...base, type: 'object', objectDef: v.def } as FoormObjectFieldDef
     }
   }
 
@@ -175,12 +159,8 @@ function createFieldDef(path: string, prop: TAtscriptAnnotatedType): FoormFieldD
   if (kind === 'tuple') {
     const tupleType = prop.type as TAtscriptTypeComplex
     return {
-      path,
-      prop,
+      ...base,
       type: 'tuple',
-      phantom: false,
-      name,
-      allStatic,
       itemFields: tupleType.items.map((item, i) => ({
         ...createFieldDef(String(i), item),
         name: '',
@@ -193,15 +173,12 @@ function createFieldDef(path: string, prop: TAtscriptAnnotatedType): FoormFieldD
   const foormTag = tags ? [...tags].find(t => FOORM_TAGS.has(t)) : undefined
   const dt = kind === '' ? prop.type.designType : undefined
   return {
-    path,
-    prop,
+    ...base,
     type:
       foormType ??
       foormTag ??
       (dt === 'number' ? 'number' : dt === 'boolean' ? 'checkbox' : 'text'),
     phantom: kind === '' && dt === 'phantom',
-    name,
-    allStatic,
   }
 }
 

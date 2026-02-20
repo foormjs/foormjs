@@ -1,51 +1,54 @@
 <script setup lang="ts">
 import type { FoormFieldDef, FoormUnionFieldDef } from '@foormjs/atscript'
 import { isUnionField, createItemData, detectUnionVariant } from '@foormjs/atscript'
-import { computed, ref } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 import type { TFoormComponentProps } from '../types'
 import OoField from '../oo-field.vue'
-import OoOptionalNa from './oo-optional-na.vue'
+import OoNoData from './oo-no-data.vue'
+import { useDropdown } from '../../composables/use-dropdown'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const props = defineProps<TFoormComponentProps<unknown, any, any>>()
+const props = defineProps<TFoormComponentProps>()
 
 // ── Union field def ─────────────────────────────────────────
 const unionField = computed(() =>
   props.field && isUnionField(props.field) ? (props.field as FoormUnionFieldDef) : undefined
 )
 
-// ── Local union state ───────────────────────────────────────
-const localUnionIndex = ref(
-  unionField.value
-    ? detectUnionVariant(props.model?.value, unionField.value.unionVariants)
-    : 0
+const hasMultipleVariants = computed(
+  () => unionField.value !== undefined && unionField.value.unionVariants.length > 1
 )
 
-const currentUnionIndex = computed(() => localUnionIndex.value)
+// ── Local union state ───────────────────────────────────────
+const localUnionIndex = ref(
+  unionField.value ? detectUnionVariant(props.model?.value, unionField.value.unionVariants) : 0
+)
 
 const currentVariant = computed(() => {
   const variants = unionField.value?.unionVariants
   if (!variants) return undefined
-  return variants[currentUnionIndex.value] ?? variants[0]
+  return variants[localUnionIndex.value] ?? variants[0]
 })
 
-// ── Inner field def (resolves current variant to actual field) ──
-const innerField = computed<FoormFieldDef | undefined>(() => {
+// ── Inner field def (stable ref — only rebuilt on variant change) ──
+function buildInnerField(): FoormFieldDef | undefined {
   const variant = currentVariant.value
   if (!variant) return undefined
 
   const fieldName = unionField.value?.name ?? ''
 
   if (variant.def) {
-    // Object variant: override name for identification
     return { ...variant.def.rootField, path: '', name: fieldName }
   }
   if (variant.itemField) {
-    // Primitive variant: keep original name from itemField
     return { ...variant.itemField, path: '' }
   }
 
   return undefined
+}
+
+const innerField = shallowRef<FoormFieldDef | undefined>(buildInnerField())
+watch(localUnionIndex, () => {
+  innerField.value = buildInnerField()
 })
 
 // ── Change variant handler ──────────────────────────────────
@@ -58,13 +61,54 @@ function onChangeVariant(newIndex: number) {
 }
 
 const optionalEnabled = computed(() => props.model?.value !== undefined)
+
+// ── Dropdown ────────────────────────────────────────────────
+const dropdownRef = ref<HTMLElement | null>(null)
+const { isOpen, toggle, select } = useDropdown(dropdownRef)
+
+function onSelectVariant(index: number) {
+  select(() => onChangeVariant(index))
+}
+
+// For optional union N/A: clicking opens variant picker or just enables
+function handleNaClick() {
+  if (hasMultipleVariants.value) {
+    toggle()
+  } else {
+    props.onToggleOptional?.(true)
+  }
+}
 </script>
 
 <template>
   <div class="oo-union" v-show="!hidden">
-    <!-- Label with optional clear -->
-    <div v-if="label || optional" class="oo-union-header">
+    <!-- Header: label + variant dropdown trigger + optional clear -->
+    <div v-if="label || hasMultipleVariants || optional" class="oo-union-header">
       <label v-if="label" class="oo-union-label">{{ label }}</label>
+
+      <!-- Variant dropdown trigger (only when multiple variants and content is active) -->
+      <div
+        v-if="hasMultipleVariants && (!optional || optionalEnabled)"
+        ref="dropdownRef"
+        class="oo-dropdown"
+      >
+        <button type="button" class="oo-dropdown-trigger" :disabled="disabled" @click="toggle">
+          {{ currentVariant?.label ?? '' }} &#x25BE;
+        </button>
+        <div v-if="isOpen" class="oo-dropdown-menu">
+          <button
+            v-for="(v, vi) in unionField!.unionVariants"
+            :key="vi"
+            type="button"
+            class="oo-dropdown-item"
+            :class="{ 'oo-dropdown-item--active': localUnionIndex === vi }"
+            @click="onSelectVariant(vi)"
+          >
+            {{ v.label }}
+          </button>
+        </div>
+      </div>
+
       <button
         v-if="optional && optionalEnabled"
         type="button"
@@ -75,28 +119,34 @@ const optionalEnabled = computed(() => props.model?.value !== undefined)
       </button>
     </div>
 
+    <!-- Optional N/A state: click opens variant picker when multiple variants -->
     <template v-if="optional && !optionalEnabled">
-      <OoOptionalNa :on-edit="() => onToggleOptional?.(true)" />
+      <div v-if="hasMultipleVariants" ref="dropdownRef" class="oo-dropdown-anchor">
+        <OoNoData :on-edit="handleNaClick" />
+        <div v-if="isOpen" class="oo-dropdown-menu">
+          <button
+            v-for="(v, vi) in unionField!.unionVariants"
+            :key="vi"
+            type="button"
+            class="oo-dropdown-item"
+            @click="
+              select(() => {
+                onChangeVariant(vi)
+                onToggleOptional?.(true)
+              })
+            "
+          >
+            {{ v.label }}
+          </button>
+        </div>
+      </div>
+      <OoNoData v-else :on-edit="() => onToggleOptional?.(true)" />
     </template>
     <template v-else>
-      <!-- Union picker (only when multiple variants) -->
-      <div v-if="unionField && unionField.unionVariants.length > 1" class="oo-union-picker">
-        <button
-          v-for="(v, vi) in unionField.unionVariants"
-          :key="vi"
-          type="button"
-          class="oo-union-btn"
-          :class="{ 'oo-union-btn--active': currentUnionIndex === vi }"
-          :disabled="disabled || currentUnionIndex === vi"
-          @click="onChangeVariant(vi)"
-        >
-          {{ v.label }}
-        </button>
-      </div>
-
       <!-- Inner field content -->
       <OoField
         v-if="innerField"
+        :key="localUnionIndex"
         :field="innerField"
         :on-remove="onRemove"
         :can-remove="canRemove"
@@ -107,60 +157,20 @@ const optionalEnabled = computed(() => props.model?.value !== undefined)
 </template>
 
 <style>
+.oo-union {
+  margin: 12px 0;
+}
+
 .oo-union-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .oo-union-label {
   font-size: 13px;
   font-weight: 600;
   color: #374151;
-}
-
-.oo-union-picker {
-  display: inline-flex;
-  margin-bottom: 6px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.oo-union-btn {
-  padding: 2px 8px;
-  border: none;
-  border-right: 1px solid #d1d5db;
-  font-size: 0.8rem;
-  line-height: 1.4;
-  background: #fff;
-  color: #6b7280;
-  cursor: pointer;
-}
-
-.oo-union-btn:last-child {
-  border-right: none;
-}
-
-.oo-union-btn:hover:not(:disabled) {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.oo-union-btn--active {
-  background: #6366f1;
-  color: #fff;
-  cursor: default;
-}
-
-.oo-union-btn--active:hover {
-  background: #6366f1;
-  color: #fff;
-}
-
-.oo-union-btn:disabled:not(.oo-union-btn--active) {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 </style>

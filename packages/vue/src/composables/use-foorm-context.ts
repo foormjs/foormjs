@@ -11,16 +11,15 @@ import { computed, inject, type ComputedRef } from 'vue'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useFoormContext<TFormData = any, TFormContext = any>(componentName: string) {
   // ── Form state (with throw guard) ─────────────────────────
-  const _foormState = inject<ComputedRef<TFoormState<TFormData, TFormContext>>>('__foorm_form')
+  const _foormState = inject<ComputedRef<TFoormState>>('__foorm_form')
   if (!_foormState) {
     throw new Error(`${componentName} must be used inside an OoForm component`)
   }
   const foormState = _foormState
 
-  // ── Root form data (fallback chain) ───────────────────────
+  // ── Root form data ─────────────────────────────────────────
   const rootData = inject<ComputedRef<TFormData>>('__foorm_root_data')
-  const rootFormData = () =>
-    (rootData?.value ?? foormState.value?.formData ?? {}) as Record<string, unknown>
+  const rootFormData = () => (rootData?.value ?? {}) as Record<string, unknown>
 
   // ── Path prefix ───────────────────────────────────────────
   const pathPrefix = inject<ComputedRef<string>>(
@@ -28,10 +27,9 @@ export function useFoormContext<TFormData = any, TFormContext = any>(componentNa
     computed(() => '')
   )
 
-  // ── Derived: formContext with fallback ────────────────────
-  const formContext = computed(
-    () => (foormState.value.formContext ?? {}) as Record<string, unknown>
-  )
+  // ── Form context (separate injection — decoupled from foormState) ──
+  const _formContext = inject<ComputedRef<TFormContext | undefined>>('__foorm_form_context')
+  const formContext = computed(() => (_formContext?.value ?? {}) as Record<string, unknown>)
 
   // ── Path-join utility (reactive — returns ComputedRef) ────
   function joinPath(segment: string | (() => string)): ComputedRef<string> {

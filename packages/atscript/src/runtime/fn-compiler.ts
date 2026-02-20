@@ -41,6 +41,7 @@ export function compileTopFn<R = unknown>(fnStr: string): (scope: TFoormFnScope)
 
 /**
  * Compiles a validator function string from a `@foorm.validate` annotation.
+ * Delegates to `compileFieldFn` with a narrowed return type.
  *
  * The function string should be:
  *   `"(v, data, ctx, entry) => boolean | string"`
@@ -50,7 +51,6 @@ export function compileTopFn<R = unknown>(fnStr: string): (scope: TFoormFnScope)
  * @param fnStr - The function string from a `@foorm.validate` metadata annotation
  * @returns A compiled validator function that takes a TFoormFnScope and returns `true` or an error string
  */
-export function compileValidatorFn(fnStr: string): (scope: TFoormFnScope) => boolean | string {
-  const code = `return (${fnStr})(v, data, context, entry)`
-  return pool.getFn(code) as (scope: TFoormFnScope) => boolean | string
+export function compileValidatorFn(fnStr: string) {
+  return compileFieldFn<boolean | string>(fnStr)
 }

@@ -23,18 +23,16 @@ import { useFoorm } from '@/composables/use-foorm'
 import { E2eTestForm } from './forms/e2e-test-form.as'
 import { NestedForm } from './forms/nested-form.as'
 import { ArrayForm, ArrayFormCustom } from './forms/array-form.as'
-import { SimpleForm } from './forms/simple-form.as'
+import { PlaygroundForm } from './forms/playground-form.as'
 
 const { def, formData } = useFoorm(E2eTestForm)
 const { def: nestedDef, formData: nestedFormData } = useFoorm(NestedForm)
 const { def: arrayDef, formData: arrayFormData } = useFoorm(ArrayForm)
 const { def: arrayCustomDef, formData: arrayCustomFormData } = useFoorm(ArrayFormCustom)
-const { def: simpleDef, formData: simpleFormData } = useFoorm(SimpleForm)
+const { def: playgroundDef, formData: playgroundFormData } = useFoorm(PlaygroundForm)
 
-
-
-const tabs = ['Basic', 'Nested', 'Array', 'Custom Array', 'Simple'] as const
-const activeTab = ref<(typeof tabs)[number]>('Basic')
+const tabs = ['Playground', 'Basic', 'Nested', 'Array', 'Custom Array'] as const
+const activeTab = ref<(typeof tabs)[number]>(tabs[0])
 
 const categoryPool = [
   { key: 'frontend', label: 'Frontend' },
@@ -181,10 +179,10 @@ function onError(e: unknown) {
       @error="onError"
     />
     <OoForm
-      v-if="activeTab === 'Simple'"
+      v-if="activeTab === 'Playground'"
       class="form"
-      :def="simpleDef"
-      :form-data="simpleFormData"
+      :def="playgroundDef"
+      :form-data="playgroundFormData"
       :types="defaultTypes"
       first-validation="on-blur"
       @submit="handleSubmit"
