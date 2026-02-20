@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { FoormFieldDef, FoormUnionFieldDef } from '@foormjs/atscript'
 import { isUnionField, createItemData, detectUnionVariant } from '@foormjs/atscript'
-import { computed, ref, shallowRef, watch } from 'vue'
-import type { TFoormComponentProps } from '../types'
+import { computed, provide, ref, shallowRef, watch } from 'vue'
+import type { TFoormComponentProps, TFoormUnionContext } from '../types'
 import OoField from '../oo-field.vue'
 import OoNoData from './oo-no-data.vue'
 import { useDropdown } from '../../composables/use-dropdown'
@@ -62,13 +62,18 @@ function onChangeVariant(newIndex: number) {
 
 const optionalEnabled = computed(() => props.model?.value !== undefined)
 
-// ── Dropdown ────────────────────────────────────────────────
+// ── Provide union context for consumers ─────────────────────
+if (unionField.value) {
+  provide<TFoormUnionContext>('__foorm_union', {
+    variants: unionField.value.unionVariants,
+    currentIndex: localUnionIndex,
+    changeVariant: onChangeVariant,
+  })
+}
+
+// ── Dropdown (only for optional N/A variant picker) ─────────
 const dropdownRef = ref<HTMLElement | null>(null)
 const { isOpen, toggle, select } = useDropdown(dropdownRef)
-
-function onSelectVariant(index: number) {
-  select(() => onChangeVariant(index))
-}
 
 // For optional union N/A: clicking opens variant picker or just enables
 function handleNaClick() {
@@ -82,43 +87,6 @@ function handleNaClick() {
 
 <template>
   <div class="oo-union" v-show="!hidden">
-    <!-- Header: label + variant dropdown trigger + optional clear -->
-    <div v-if="label || hasMultipleVariants || optional" class="oo-union-header">
-      <label v-if="label" class="oo-union-label">{{ label }}</label>
-
-      <!-- Variant dropdown trigger (only when multiple variants and content is active) -->
-      <div
-        v-if="hasMultipleVariants && (!optional || optionalEnabled)"
-        ref="dropdownRef"
-        class="oo-dropdown"
-      >
-        <button type="button" class="oo-dropdown-trigger" :disabled="disabled" @click="toggle">
-          {{ currentVariant?.label ?? '' }} &#x25BE;
-        </button>
-        <div v-if="isOpen" class="oo-dropdown-menu">
-          <button
-            v-for="(v, vi) in unionField!.unionVariants"
-            :key="vi"
-            type="button"
-            class="oo-dropdown-item"
-            :class="{ 'oo-dropdown-item--active': localUnionIndex === vi }"
-            @click="onSelectVariant(vi)"
-          >
-            {{ v.label }}
-          </button>
-        </div>
-      </div>
-
-      <button
-        v-if="optional && optionalEnabled"
-        type="button"
-        class="oo-optional-clear"
-        @click="onToggleOptional?.(false)"
-      >
-        &times;
-      </button>
-    </div>
-
     <!-- Optional N/A state: click opens variant picker when multiple variants -->
     <template v-if="optional && !optionalEnabled">
       <div v-if="hasMultipleVariants" ref="dropdownRef" class="oo-dropdown-anchor">
@@ -143,11 +111,21 @@ function handleNaClick() {
       <OoNoData v-else :on-edit="() => onToggleOptional?.(true)" />
     </template>
     <template v-else>
-      <!-- Inner field content -->
+      <!-- Optional clear button -->
+      <button
+        v-if="optional"
+        type="button"
+        class="oo-optional-clear"
+        @click="onToggleOptional?.(false)"
+      >
+        &times;
+      </button>
+      <!-- Inner field — variant picker rendered by consumer via union context -->
       <OoField
         v-if="innerField"
         :key="localUnionIndex"
         :field="innerField"
+        :array-index="arrayIndex"
         :on-remove="onRemove"
         :can-remove="canRemove"
         :remove-label="removeLabel"
@@ -158,19 +136,6 @@ function handleNaClick() {
 
 <style>
 .oo-union {
-  margin: 12px 0;
-}
-
-.oo-union-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.oo-union-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
+  margin: 0;
 }
 </style>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { FoormArrayFieldDef } from '@foormjs/atscript'
 import { isArrayField } from '@foormjs/atscript'
-import { computed, ref } from 'vue'
-import type { TFoormComponentProps } from '../types'
+import { computed, inject, provide, ref } from 'vue'
+import type { TFoormComponentProps, TFoormUnionContext } from '../types'
 import { useFoormArray } from '../../composables/use-foorm-array'
 import { useDropdown } from '../../composables/use-dropdown'
 import OoField from '../oo-field.vue'
@@ -12,6 +12,10 @@ import OoStructuredHeader from './oo-structured-header.vue'
 const props = defineProps<TFoormComponentProps>()
 
 const arrayField = isArrayField(props.field!) ? (props.field as FoormArrayFieldDef) : undefined
+
+// ── Union context: consume and clear for nested children ────
+const unionCtx = inject<TFoormUnionContext | undefined>('__foorm_union', undefined)
+provide('__foorm_union', undefined)
 
 const optionalEnabled = computed(() => Array.isArray(props.model?.value))
 
@@ -52,6 +56,8 @@ const { isOpen: addOpen, toggle: toggleAdd, select: selectAdd } = useDropdown(ad
       :optional="optional"
       :optional-enabled="optionalEnabled"
       :on-toggle-optional="onToggleOptional"
+      :disabled="disabled"
+      :union-context="unionCtx"
     />
 
     <template v-if="optional && !optionalEnabled">
@@ -111,7 +117,7 @@ const { isOpen: addOpen, toggle: toggleAdd, select: selectAdd } = useDropdown(ad
 .oo-array {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
   margin: 12px 0;
 }
 

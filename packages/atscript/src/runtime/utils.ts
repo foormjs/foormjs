@@ -321,7 +321,8 @@ const NON_DATA_TYPES = new Set(['action', 'paragraph'])
  */
 export function createFormData<T = Record<string, unknown>>(
   type: TAtscriptAnnotatedType,
-  fields: FoormFieldDef[]
+  fields: FoormFieldDef[],
+  opts?: { skipOptional?: boolean }
 ): T {
   if (type.type.kind !== 'object') {
     return { value: createDefaultValue(type) } as T
@@ -331,14 +332,35 @@ export function createFormData<T = Record<string, unknown>>(
     if (f.path !== undefined) fieldsByPath.set(f.path, f)
   }
   return {
-    value: buildNestedData(type as TAtscriptAnnotatedType<TAtscriptTypeObject>, fieldsByPath, ''),
+    value: buildNestedData(
+      type as TAtscriptAnnotatedType<TAtscriptTypeObject>,
+      fieldsByPath,
+      '',
+      opts?.skipOptional ?? false
+    ),
   } as T
+}
+
+/**
+ * Coerces a static `@foorm.value` annotation string to the field's expected type.
+ * Strings are returned as-is; other types go through `JSON.parse` with a fallback
+ * to the type's default value on parse failure.
+ */
+function parseStaticDefault(raw: unknown, prop: TAtscriptAnnotatedType): unknown {
+  if (typeof raw !== 'string') return raw
+  if (prop.type.kind === '' && prop.type.designType === 'string') return raw
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return getDefaultForDesignType(prop)
+  }
 }
 
 function buildNestedData(
   typeDef: TAtscriptAnnotatedType<TAtscriptTypeObject>,
   fieldsByPath: Map<string, FoormFieldDef>,
-  prefix: string
+  prefix: string,
+  skipOptional: boolean
 ): Record<string, unknown> {
   const data: Record<string, unknown> = {}
 
@@ -353,7 +375,8 @@ function buildNestedData(
         : buildNestedData(
             prop as TAtscriptAnnotatedType<TAtscriptTypeObject>,
             fieldsByPath,
-            fullPath
+            fullPath,
+            skipOptional
           )
       continue
     }
@@ -383,11 +406,13 @@ function buildNestedData(
           }
         : undefined,
     }
-    const defaultValue = resolveFieldProp<unknown>(prop, 'foorm.fn.value', 'foorm.value', scope)
+    const defaultValue = resolveFieldProp<unknown>(prop, 'foorm.fn.value', 'foorm.value', scope, {
+      transform: (raw) => parseStaticDefault(raw, prop),
+    })
 
     if (defaultValue !== undefined) {
       data[key] = defaultValue
-    } else {
+    } else if (!skipOptional || !prop.optional) {
       data[key] = getDefaultForDesignType(prop)
     }
   }

@@ -27,6 +27,8 @@ import { reactive } from 'vue'
 export function useFoorm<T extends TAtscriptAnnotatedType>(type: T) {
   const def = createFoormDef(type)
   // createFormData always returns an object (non-object types are wrapped in { value: ... })
-  const formData = reactive(createFormData<InferDataType<T['type']>>(type, def.fields) as object)
+  const formData = reactive(
+    createFormData<InferDataType<T['type']>>(type, def.fields, { skipOptional: true }) as object
+  )
   return { def, formData }
 }

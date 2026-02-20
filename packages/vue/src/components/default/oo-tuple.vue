@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { FoormTupleFieldDef } from '@foormjs/atscript'
 import { isTupleField } from '@foormjs/atscript'
-import { computed } from 'vue'
-import type { TFoormComponentProps } from '../types'
+import { computed, inject, provide } from 'vue'
+import type { TFoormComponentProps, TFoormUnionContext } from '../types'
 import OoField from '../oo-field.vue'
 import OoNoData from './oo-no-data.vue'
 import OoStructuredHeader from './oo-structured-header.vue'
@@ -10,6 +10,10 @@ import OoStructuredHeader from './oo-structured-header.vue'
 const props = defineProps<TFoormComponentProps>()
 
 const tupleField = isTupleField(props.field!) ? (props.field as FoormTupleFieldDef) : undefined
+
+// ── Union context: consume and clear for nested children ────
+const unionCtx = inject<TFoormUnionContext | undefined>('__foorm_union', undefined)
+provide('__foorm_union', undefined)
 
 const optionalEnabled = computed(() => props.model?.value !== undefined)
 </script>
@@ -22,6 +26,8 @@ const optionalEnabled = computed(() => props.model?.value !== undefined)
       :optional="optional"
       :optional-enabled="optionalEnabled"
       :on-toggle-optional="onToggleOptional"
+      :disabled="disabled"
+      :union-context="unionCtx"
     />
 
     <template v-if="optional && !optionalEnabled">

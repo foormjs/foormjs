@@ -1,4 +1,10 @@
-import type { FoormFieldDef, TFoormAltAction, TFoormEntryOptions } from '@foormjs/atscript'
+import type {
+  FoormFieldDef,
+  FoormUnionVariant,
+  TFoormAltAction,
+  TFoormEntryOptions,
+} from '@foormjs/atscript'
+import type { Ref } from 'vue'
 
 /**
  * Shared base props available to all custom foorm components.
@@ -75,4 +81,18 @@ export interface TFoormComponentProps<V = unknown> extends TFoormBaseComponentPr
   removeLabel?: string
   /** Zero-based index when rendered as a direct array item. `undefined` otherwise. */
   arrayIndex?: number
+}
+
+/**
+ * Union context provided by `OoUnion` via `__foorm_union` inject key.
+ * Consumed by header components (OoStructuredHeader, OoFieldShell) to render
+ * the variant picker inline with the item's own header.
+ */
+export interface TFoormUnionContext {
+  /** All available union variant branches. */
+  variants: FoormUnionVariant[]
+  /** Reactive index of the currently selected variant. */
+  currentIndex: Ref<number>
+  /** Switch to a different variant (rewrites model data). */
+  changeVariant: (index: number) => void
 }

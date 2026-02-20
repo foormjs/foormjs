@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { FoormObjectFieldDef } from '@foormjs/atscript'
 import { isObjectField } from '@foormjs/atscript'
-import { computed } from 'vue'
-import type { TFoormComponentProps } from '../types'
+import { computed, inject, provide } from 'vue'
+import type { TFoormComponentProps, TFoormUnionContext } from '../types'
 import OoIterator from '../oo-iterator.vue'
 import OoNoData from './oo-no-data.vue'
 import OoStructuredHeader from './oo-structured-header.vue'
@@ -12,6 +12,10 @@ const props = defineProps<TFoormComponentProps>()
 const objectDef = isObjectField(props.field!)
   ? (props.field as FoormObjectFieldDef).objectDef
   : undefined
+
+// ── Union context: consume and clear for nested children ────
+const unionCtx = inject<TFoormUnionContext | undefined>('__foorm_union', undefined)
+provide('__foorm_union', undefined)
 
 // In array context, show #<index+1> (with or without title)
 const displayTitle = computed(() => {
@@ -40,6 +44,8 @@ const optionalEnabled = computed(() => props.model?.value !== undefined)
       :optional="optional"
       :optional-enabled="optionalEnabled"
       :on-toggle-optional="onToggleOptional"
+      :disabled="disabled"
+      :union-context="unionCtx"
     />
 
     <template v-if="optional && !optionalEnabled">

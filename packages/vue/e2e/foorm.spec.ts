@@ -5,6 +5,11 @@ function getForm(page: Page): Locator {
   return page.locator('form').first()
 }
 
+/** Enable an optional N/A field by clicking its "No Data" placeholder. */
+async function enableField(field: Locator) {
+  await field.locator('.oo-no-data').click()
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Basic', exact: true }).click()
@@ -90,6 +95,7 @@ test.describe('Computed Reactivity', () => {
   test('computed description updates based on other field', async ({ page }) => {
     const form = getForm(page)
     const emailField = form.locator('.oo-default-field').filter({ hasText: /Email/ })
+    await enableField(emailField)
     await expect(emailField.locator('span')).toHaveText('Your email address')
     await form.locator('input[name="firstName"]').fill('Alice')
     await expect(emailField.locator('span')).toHaveText('We will contact Alice here')
@@ -98,6 +104,7 @@ test.describe('Computed Reactivity', () => {
   test('computed hint updates based on value and other fields', async ({ page }) => {
     const form = getForm(page)
     const nicknameField = form.locator('.oo-default-field').filter({ hasText: 'Nickname' })
+    await enableField(nicknameField)
     await expect(nicknameField.locator('.oo-error-slot')).toHaveText('Choose a cool nickname')
     await form.locator('input[name="nickname"]').fill('CoolGuy')
     await expect(nicknameField.locator('.oo-error-slot')).toHaveText('Nice nickname, stranger!')
@@ -119,6 +126,7 @@ test.describe('Computed Reactivity', () => {
   test('computed classes react to field value', async ({ page }) => {
     const form = getForm(page)
     const styledField = form.locator('.oo-default-field').filter({ hasText: 'Styled Field' })
+    await enableField(styledField)
     await expect(styledField).toHaveClass(/empty-value/)
     await form.locator('input[name="styledField"]').fill('something')
     await expect(styledField).toHaveClass(/has-value/)
@@ -288,6 +296,8 @@ test.describe('Primitives and Actions', () => {
 test.describe('Select Fields', () => {
   test('renders select with static options', async ({ page }) => {
     const form = getForm(page)
+    const countryField = form.locator('.oo-default-field').filter({ hasText: 'Country' })
+    await enableField(countryField)
     const select = form.locator('select[name="country"]')
     await expect(select).toBeVisible()
     const options = select.locator('option')
@@ -301,12 +311,16 @@ test.describe('Select Fields', () => {
 
   test('select placeholder option is disabled', async ({ page }) => {
     const form = getForm(page)
+    const countryField = form.locator('.oo-default-field').filter({ hasText: 'Country' })
+    await enableField(countryField)
     const placeholder = form.locator('select[name="country"] option').first()
     await expect(placeholder).toBeDisabled()
   })
 
   test('select option values match keys', async ({ page }) => {
     const form = getForm(page)
+    const countryField = form.locator('.oo-default-field').filter({ hasText: 'Country' })
+    await enableField(countryField)
     const options = form.locator('select[name="country"] option:not([disabled])')
     await expect(options.nth(0)).toHaveAttribute('value', 'us')
     await expect(options.nth(1)).toHaveAttribute('value', 'ca')
@@ -315,6 +329,8 @@ test.describe('Select Fields', () => {
 
   test('selecting an option updates the model', async ({ page }) => {
     const form = getForm(page)
+    const countryField = form.locator('.oo-default-field').filter({ hasText: 'Country' })
+    await enableField(countryField)
     const select = form.locator('select[name="country"]')
     await select.selectOption('ca')
     await expect(select).toHaveValue('ca')
@@ -322,6 +338,8 @@ test.describe('Select Fields', () => {
 
   test('renders select with context-driven options', async ({ page }) => {
     const form = getForm(page)
+    const cityField = form.locator('.oo-default-field').filter({ hasText: 'City' })
+    await enableField(cityField)
     const citySelect = form.locator('select[name="city"]')
     await expect(citySelect).toBeVisible()
     // placeholder + 3 context options
@@ -334,6 +352,8 @@ test.describe('Select Fields', () => {
 
   test('context-driven select option values match keys', async ({ page }) => {
     const form = getForm(page)
+    const cityField = form.locator('.oo-default-field').filter({ hasText: 'City' })
+    await enableField(cityField)
     const options = form.locator('select[name="city"] option:not([disabled])')
     await expect(options.nth(0)).toHaveAttribute('value', 'nyc')
     await expect(options.nth(1)).toHaveAttribute('value', 'la')
@@ -346,12 +366,16 @@ test.describe('Select Fields', () => {
 test.describe('Radio Fields', () => {
   test('renders radio group with options', async ({ page }) => {
     const form = getForm(page)
+    const genderField = form.locator('.oo-default-field').filter({ hasText: 'Gender' })
+    await enableField(genderField)
     const radios = form.locator('input[name="gender"]')
     await expect(radios).toHaveCount(3)
   })
 
   test('radio options have correct values', async ({ page }) => {
     const form = getForm(page)
+    const genderField = form.locator('.oo-default-field').filter({ hasText: 'Gender' })
+    await enableField(genderField)
     const radios = form.locator('input[name="gender"]')
     await expect(radios.nth(0)).toHaveAttribute('value', 'male')
     await expect(radios.nth(1)).toHaveAttribute('value', 'female')
@@ -360,7 +384,8 @@ test.describe('Radio Fields', () => {
 
   test('radio labels display correctly', async ({ page }) => {
     const form = getForm(page)
-    const radioField = form.locator('.oo-radio-field').filter({ hasText: 'Gender' })
+    const radioField = form.locator('.oo-default-field').filter({ hasText: 'Gender' })
+    await enableField(radioField)
     const labels = radioField.locator('.oo-radio-group label')
     await expect(labels.nth(0)).toContainText('Male')
     await expect(labels.nth(1)).toContainText('Female')
@@ -369,6 +394,8 @@ test.describe('Radio Fields', () => {
 
   test('selecting a radio updates the model', async ({ page }) => {
     const form = getForm(page)
+    const genderField = form.locator('.oo-default-field').filter({ hasText: 'Gender' })
+    await enableField(genderField)
     const femaleRadio = form.locator('input[name="gender"][value="female"]')
     await femaleRadio.check()
     await expect(femaleRadio).toBeChecked()
@@ -410,19 +437,17 @@ test.describe('Custom Attributes', () => {
   test('renders static custom attrs on wrapper element', async ({ page }) => {
     const form = getForm(page)
     // @foorm.attr values are passed as component attrs and fall through to the wrapper element
-    const usernameField = form
-      .locator('.oo-default-field')
-      .filter({ has: page.locator('input[name="username"]') })
+    const usernameField = form.locator('.oo-default-field').filter({ hasText: 'Username' })
+    await enableField(usernameField)
     await expect(usernameField).toHaveAttribute('data-testid', 'username-input')
     await expect(usernameField).toHaveAttribute('data-field-type', 'username')
   })
 
   test('computed attrs react to field value', async ({ page }) => {
     const form = getForm(page)
+    const phoneField = form.locator('.oo-default-field').filter({ hasText: 'Phone Number' })
+    await enableField(phoneField)
     const phoneInput = form.locator('input[name="phone"]')
-    const phoneField = form
-      .locator('.oo-default-field')
-      .filter({ has: page.locator('input[name="phone"]') })
 
     // Initially empty
     await expect(phoneField).toHaveAttribute('data-valid', 'false')
@@ -512,6 +537,7 @@ test.describe('Context Access', () => {
   test('renders description from nested context object', async ({ page }) => {
     const form = getForm(page)
     const field = form.locator('.oo-default-field').filter({ hasText: 'Context-Driven Label' })
+    await enableField(field)
     const description = field.locator('span')
     await expect(description).toHaveText(
       'This label and description come from nested context object'
@@ -520,6 +546,8 @@ test.describe('Context Access', () => {
 
   test('uses fallback when context is missing', async ({ page }) => {
     const form = getForm(page)
+    const field = form.locator('.oo-default-field').filter({ hasText: 'Context-Driven Label' })
+    await enableField(field)
     // This test verifies the fallback behavior is defined in the annotation
     // The actual fallback would only show if context.labels was undefined
     // For now, we just verify the field renders with context

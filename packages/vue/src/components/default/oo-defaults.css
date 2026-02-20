@@ -85,16 +85,21 @@
 
 .oo-field-header-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 
 .oo-field-header-content {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
   flex: 1;
+}
+
+.oo-field-header-content > span {
+  width: 100%;
 }
 
 .oo-field-header-actions {
@@ -282,4 +287,31 @@
   background: #eef2ff;
   color: #6366f1;
   font-weight: 500;
+}
+
+/* ── Variant trigger (compact icon button) ─────────────── */
+
+.oo-variant-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  color: #9ca3af;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.oo-variant-trigger:hover:not(:disabled) {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
+.oo-variant-trigger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }

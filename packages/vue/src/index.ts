@@ -30,7 +30,11 @@ export {
 } from './components/default'
 
 // Types
-export type { TFoormBaseComponentProps, TFoormComponentProps } from './components/types'
+export type {
+  TFoormBaseComponentProps,
+  TFoormComponentProps,
+  TFoormUnionContext,
+} from './components/types'
 
 // Composables
 export { useFoorm } from './composables/use-foorm'

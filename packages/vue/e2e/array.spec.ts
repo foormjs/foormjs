@@ -309,6 +309,8 @@ test.describe('Nested Group — Settings', () => {
 
   test('renders number field', async ({ page }) => {
     const form = getForm(page)
+    const pageSizeField = form.locator('.oo-default-field').filter({ hasText: 'Max items per page' })
+    await pageSizeField.locator('.oo-no-data').click()
     const pageSize = form.locator('input[name="pageSize"]')
     await expect(pageSize).toBeVisible()
     await expect(pageSize).toHaveAttribute('type', 'number')
@@ -346,7 +348,7 @@ test.describe('Union Array — Contacts', () => {
     await expect(item).toBeVisible()
 
     // Should have variant dropdown trigger and object sub-fields
-    await expect(item.locator('.oo-dropdown-trigger')).toBeVisible()
+    await expect(item.locator('.oo-variant-trigger')).toBeVisible()
     await expect(item.locator('input[name="fullName"]')).toBeVisible()
     await expect(item.locator('input[name="email"]')).toBeVisible()
     await expect(item.locator('input[name="phone"]')).toBeVisible()
@@ -365,7 +367,7 @@ test.describe('Union Array — Contacts', () => {
     await expect(item.locator(SCALAR_INPUT)).toBeVisible()
     await expect(item.locator(SCALAR_INPUT)).toHaveAttribute('type', 'text')
     // Union variant dropdown trigger is still visible so user can switch back
-    await expect(item.locator('.oo-dropdown-trigger')).toBeVisible()
+    await expect(item.locator('.oo-variant-trigger')).toBeVisible()
   })
 
   test('can fill object variant sub-fields', async ({ page }) => {
@@ -398,13 +400,13 @@ test.describe('Union Array — Contacts', () => {
     await expect(allItems.first().locator('input[name="fullName"]')).toBeVisible()
 
     // Switch to string variant via dropdown
-    await allItems.first().locator('.oo-dropdown-trigger').click()
+    await allItems.first().locator('.oo-variant-trigger').click()
     await allItems.first().locator('.oo-dropdown-item').nth(1).click()
     await expect(contactsSection.locator('input[name="fullName"]')).toHaveCount(0)
     await expect(contactsSection.locator(UNION_SCALAR)).toBeVisible()
 
     // Switch back to object variant via dropdown
-    await contactsSection.locator(UNION_ITEM).first().locator('.oo-dropdown-trigger').click()
+    await contactsSection.locator(UNION_ITEM).first().locator('.oo-variant-trigger').click()
     await contactsSection.locator(UNION_ITEM).first().locator('.oo-dropdown-item').first().click()
     await expect(contactsSection.locator('input[name="fullName"]')).toBeVisible()
     await expect(contactsSection.locator(UNION_SCALAR)).toHaveCount(0)
@@ -459,12 +461,16 @@ test.describe('Union Array — Contacts', () => {
 test.describe('Context-Driven Select — Category', () => {
   test('renders select with label', async ({ page }) => {
     const form = getForm(page)
+    const categoryField = form.locator('.oo-default-field').filter({ hasText: 'Category' })
     await expect(form.locator('label').filter({ hasText: 'Category' })).toBeVisible()
+    await categoryField.locator('.oo-no-data').click()
     await expect(form.locator('select[name="category"]')).toBeAttached()
   })
 
   test('populates options from context', async ({ page }) => {
     const form = getForm(page)
+    const categoryField = form.locator('.oo-default-field').filter({ hasText: 'Category' })
+    await categoryField.locator('.oo-no-data').click()
     const select = form.locator('select[name="category"]')
 
     // Options in the native select (excluding disabled placeholder)

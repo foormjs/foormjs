@@ -13,7 +13,6 @@ Each change (field input (blur), add/remove item, switch variant) should emit an
 
 (to let some room for undo/redo flows in future)
 
-
 ## Bugs
 
 - **`__foorm_form_context` never provided** — `oo-form.vue` provides 5 inject keys but not `__foorm_form_context`. `use-foorm-context.ts` injects it and falls back to `{}`. All `@foorm.fn.*` functions receiving `context` get an empty object instead of the actual form context. Fix: add `provide('__foorm_form_context', computed(() => props.formContext))` to `oo-form.vue`.
