@@ -684,7 +684,9 @@ test.describe('Change Events', () => {
     await select.selectOption('ca')
     await page.waitForTimeout(100)
 
-    expect(logs.some(l => l.includes('change') && l.includes('update') && l.includes('country'))).toBe(true)
+    expect(
+      logs.some(l => l.includes('change') && l.includes('update') && l.includes('country'))
+    ).toBe(true)
   })
 
   test('radio fires change event immediately on selection', async ({ page }) => {
@@ -700,7 +702,9 @@ test.describe('Change Events', () => {
     await form.locator('input[name="gender"][value="female"]').check()
     await page.waitForTimeout(100)
 
-    expect(logs.some(l => l.includes('change') && l.includes('update') && l.includes('gender'))).toBe(true)
+    expect(
+      logs.some(l => l.includes('change') && l.includes('update') && l.includes('gender'))
+    ).toBe(true)
   })
 
   test('checkbox fires change event immediately on toggle', async ({ page }) => {
@@ -714,7 +718,9 @@ test.describe('Change Events', () => {
     await form.locator('input[name="agreeToTerms"]').check()
     await page.waitForTimeout(100)
 
-    expect(logs.some(l => l.includes('change') && l.includes('update') && l.includes('agreeToTerms'))).toBe(true)
+    expect(
+      logs.some(l => l.includes('change') && l.includes('update') && l.includes('agreeToTerms'))
+    ).toBe(true)
   })
 
   test('text input fires change event on blur', async ({ page }) => {
@@ -734,6 +740,8 @@ test.describe('Change Events', () => {
     // Blur triggers the change event
     await form.locator('input[name="firstName"]').blur()
     await page.waitForTimeout(100)
-    expect(logs.some(l => l.includes('change') && l.includes('update') && l.includes('firstName'))).toBe(true)
+    expect(
+      logs.some(l => l.includes('change') && l.includes('update') && l.includes('firstName'))
+    ).toBe(true)
   })
 })

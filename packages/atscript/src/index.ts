@@ -47,11 +47,11 @@ export type { TResolveOptions, TBuildFieldEntryOpts } from './runtime/utils'
 export {
   getByPath,
   setByPath,
+  createFoormValueResolver,
   createFormData,
-  createDefaultValue,
-  createItemData,
   detectUnionVariant,
 } from './runtime/utils'
+export type { TFoormValueResolver } from './runtime/utils'
 
 // Validator plugin
 export { foormValidatorPlugin } from './runtime/validator-plugin'

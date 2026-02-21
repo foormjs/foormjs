@@ -27,21 +27,21 @@ const { submit, reset, clearErrors, setErrors } = useFoormForm({
 // ---------------------------------------------------------------------------
 // Validation rules
 // ---------------------------------------------------------------------------
-const required: TFoormRule<string, unknown, unknown> = (v) =>
+const required: TFoormRule<string, unknown, unknown> = v =>
   (v && v.trim().length > 0) || 'This field is required'
 
-const emailFormat: TFoormRule<string, unknown, unknown> = (v) =>
+const emailFormat: TFoormRule<string, unknown, unknown> = v =>
   !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Enter a valid email'
 
-const minAge: TFoormRule<string, unknown, unknown> = (v) =>
+const minAge: TFoormRule<string, unknown, unknown> = v =>
   !v || Number(v) >= 18 || 'Must be at least 18'
 
-const maxAge: TFoormRule<string, unknown, unknown> = (v) =>
+const maxAge: TFoormRule<string, unknown, unknown> = v =>
   !v || Number(v) <= 120 || 'Must be at most 120'
 
 const maxLength =
   (max: number): TFoormRule<string, unknown, unknown> =>
-  (v) =>
+  v =>
     !v || v.length <= max || `Max ${max} characters`
 
 // ---------------------------------------------------------------------------
@@ -54,7 +54,7 @@ function handleSubmit() {
   if (result === true) {
     submitResult.value = `Submitted: ${JSON.stringify(formData)}`
   } else {
-    submitResult.value = `Errors: ${result.map((e) => `${e.path}: ${e.message}`).join(', ')}`
+    submitResult.value = `Errors: ${result.map(e => `${e.path}: ${e.message}`).join(', ')}`
   }
 }
 
@@ -75,8 +75,8 @@ function handleSetExternalErrors() {
   <main class="page">
     <h1>Composables Playground</h1>
     <p class="subtitle">
-      A hand-built form using only <code>useFoormForm</code> and
-      <code>useFoormField</code> — no OoForm/OoField components.
+      A hand-built form using only <code>useFoormForm</code> and <code>useFoormField</code> — no
+      OoForm/OoField components.
     </p>
 
     <!-- Validation strategy picker -->
@@ -151,7 +151,10 @@ function handleSetExternalErrors() {
 }
 
 .page {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   max-width: 520px;
   margin: 48px auto;
   padding: 0 16px;

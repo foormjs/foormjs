@@ -126,9 +126,9 @@ Supported item types: primitives (`string[]`, `number[]`, `boolean[]`), objects 
 | ------------------------------- | ----------------------------------------------- |
 | `@foorm.array.add.label 'text'` | Label for the add button (default: "Add item")  |
 | `@foorm.array.remove.label`     | Label for the remove button (default: "Remove") |
-| `@foorm.array.sortable`         | Enable drag-to-reorder for array items           |
-| `@expect.minLength N, 'msg'`    | Minimum number of items                          |
-| `@expect.maxLength N, 'msg'`    | Maximum number of items                          |
+| `@foorm.array.sortable`         | Enable drag-to-reorder for array items          |
+| `@expect.minLength N, 'msg'`    | Minimum number of items                         |
+| `@expect.maxLength N, 'msg'`    | Maximum number of items                         |
 
 ### Nested Objects
 
@@ -316,40 +316,40 @@ const attrs = resolveAttrs(field.prop, scope)
 
 ### Core
 
-| Export                           | Description                                                                   |
-| -------------------------------- | ----------------------------------------------------------------------------- |
-| `createFoormDef(type)`           | Converts an ATScript annotated type into a `FoormDef` with ordered fields     |
-| `createFormData(type, fields, opts?)` | Creates a `{ value: T }` data container with defaults from the schema   |
-| `createDefaultValue(type)`       | Returns a default value for any ATScript annotated type                       |
-| `createItemData(variant)`        | Creates a default data value for a union variant                              |
-| `detectUnionVariant(value, variants)` | Detects which union variant an existing value matches                   |
-| `getFormValidator(def, opts?)`   | Returns a reusable `({ data, context? }) => Record<string, string>` validator |
-| `createFieldValidator(prop, opts?)` | Creates a cached validator for a single field prop                         |
-| `supportsAltAction(def, action)` | Checks if any field supports a given alternate action                         |
-| `isArrayField(field)`            | Type guard: returns true if the field is an array field                       |
-| `isObjectField(field)`           | Type guard: returns true if the field is an object field                      |
-| `isUnionField(field)`            | Type guard: returns true if the field is a union field                        |
-| `isTupleField(field)`            | Type guard: returns true if the field is a tuple field                        |
+| Export                                | Description                                                                   |
+| ------------------------------------- | ----------------------------------------------------------------------------- |
+| `createFoormDef(type)`                | Converts an ATScript annotated type into a `FoormDef` with ordered fields     |
+| `createFormData(type, fields, opts?)` | Creates a `{ value: T }` data container with defaults from the schema         |
+| `createDefaultValue(type)`            | Returns a default value for any ATScript annotated type                       |
+| `createItemData(variant)`             | Creates a default data value for a union variant                              |
+| `detectUnionVariant(value, variants)` | Detects which union variant an existing value matches                         |
+| `getFormValidator(def, opts?)`        | Returns a reusable `({ data, context? }) => Record<string, string>` validator |
+| `createFieldValidator(prop, opts?)`   | Creates a cached validator for a single field prop                            |
+| `supportsAltAction(def, action)`      | Checks if any field supports a given alternate action                         |
+| `isArrayField(field)`                 | Type guard: returns true if the field is an array field                       |
+| `isObjectField(field)`                | Type guard: returns true if the field is an object field                      |
+| `isUnionField(field)`                 | Type guard: returns true if the field is a union field                        |
+| `isTupleField(field)`                 | Type guard: returns true if the field is a tuple field                        |
 
 ### Resolve Utilities
 
-| Export                                                   | Description                                                 |
-| -------------------------------------------------------- | ----------------------------------------------------------- |
-| `resolveFieldProp(prop, fnKey, staticKey, scope, opts?)` | Resolves a field-level metadata value (fn or static)        |
-| `resolveFormProp(type, fnKey, staticKey, scope, opts?)`  | Resolves a form-level metadata value (fn or static)         |
-| `resolveOptions(prop, scope)`                            | Resolves `@foorm.options` / `@foorm.fn.options`             |
-| `resolveAttrs(prop, scope)`                              | Resolves `@foorm.attr` / `@foorm.fn.attr`                   |
-| `getFieldMeta(prop, key)`                                | Reads a static metadata value from a field prop             |
+| Export                                                   | Description                                                  |
+| -------------------------------------------------------- | ------------------------------------------------------------ |
+| `resolveFieldProp(prop, fnKey, staticKey, scope, opts?)` | Resolves a field-level metadata value (fn or static)         |
+| `resolveFormProp(type, fnKey, staticKey, scope, opts?)`  | Resolves a form-level metadata value (fn or static)          |
+| `resolveOptions(prop, scope)`                            | Resolves `@foorm.options` / `@foorm.fn.options`              |
+| `resolveAttrs(prop, scope)`                              | Resolves `@foorm.attr` / `@foorm.fn.attr`                    |
+| `getFieldMeta(prop, key)`                                | Reads a static metadata value from a field prop              |
 | `buildFieldEntry(prop, baseScope, path, opts?)`          | Builds a `TFoormFieldEvaluated` entry and returns full scope |
-| `optKey(opt)`                                            | Extracts the key from a `TFoormEntryOptions` entry          |
+| `optKey(opt)`                                            | Extracts the key from a `TFoormEntryOptions` entry           |
 | `optLabel(opt)`                                          | Extracts the display label from a `TFoormEntryOptions` entry |
 
 ### General Utilities
 
-| Export                        | Description                                          |
-| ----------------------------- | ---------------------------------------------------- |
-| `getByPath(obj, path)`        | Gets a nested value by dot-separated path            |
-| `setByPath(obj, path, value)` | Sets a nested value by dot-separated path            |
+| Export                        | Description                               |
+| ----------------------------- | ----------------------------------------- |
+| `getByPath(obj, path)`        | Gets a nested value by dot-separated path |
+| `setByPath(obj, path, value)` | Sets a nested value by dot-separated path |
 
 ### Validator Plugin
 
@@ -359,25 +359,25 @@ const attrs = resolveAttrs(field.prop, scope)
 
 ### Types
 
-| Export                      | Description                                                                            |
-| --------------------------- | -------------------------------------------------------------------------------------- |
-| `FoormDef`                  | Complete form definition (`type`, `rootField`, `fields`, `flatMap`)                     |
-| `FoormFieldDef`             | Single field definition (`path`, `prop`, `type`, `phantom`, `name`, `allStatic`)        |
-| `FoormArrayFieldDef`        | Array field definition (extends `FoormFieldDef` with `itemType`, `itemField`)           |
-| `FoormObjectFieldDef`       | Object field definition (extends `FoormFieldDef` with `objectDef: FoormDef`)            |
-| `FoormUnionFieldDef`        | Union field definition (extends `FoormFieldDef` with `unionVariants`)                   |
-| `FoormTupleFieldDef`        | Tuple field definition (extends `FoormFieldDef` with `itemFields`)                      |
+| Export                      | Description                                                                                  |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| `FoormDef`                  | Complete form definition (`type`, `rootField`, `fields`, `flatMap`)                          |
+| `FoormFieldDef`             | Single field definition (`path`, `prop`, `type`, `phantom`, `name`, `allStatic`)             |
+| `FoormArrayFieldDef`        | Array field definition (extends `FoormFieldDef` with `itemType`, `itemField`)                |
+| `FoormObjectFieldDef`       | Object field definition (extends `FoormFieldDef` with `objectDef: FoormDef`)                 |
+| `FoormUnionFieldDef`        | Union field definition (extends `FoormFieldDef` with `unionVariants`)                        |
+| `FoormTupleFieldDef`        | Tuple field definition (extends `FoormFieldDef` with `itemFields`)                           |
 | `FoormUnionVariant`         | Variant definition for union branches (`label`, `type`, `def?`, `itemField?`, `designType?`) |
-| `TFoormFnScope`             | Scope object passed to computed functions (`v`, `data`, `context`, `entry`)             |
-| `TFoormFieldEvaluated`      | Evaluated field snapshot passed as `entry` in scope (see below)                         |
-| `TFoormEntryOptions`        | Option for select/radio fields (`string` or `{ key, label }`)                           |
-| `TFoormAltAction`           | Alt-action metadata (`id`, `label`)                                                     |
-| `TComputed<T>`              | A value that is either static or a function of scope                                    |
-| `TResolveOptions<T>`        | Options for resolve utilities (`staticAsBoolean`, `transform`)                          |
-| `TBuildFieldEntryOpts`      | Options for `buildFieldEntry` (pre-resolved overrides for field info and constraints)   |
-| `TFormValidatorCallOptions` | Per-call options for `getFormValidator` return fn (`data`, `context?`)                  |
-| `TFieldValidatorOptions`    | Options for `createFieldValidator` (`rootOnly?`)                                        |
-| `TFoormValidatorContext`    | Per-call validator context (`data`, `context`)                                          |
+| `TFoormFnScope`             | Scope object passed to computed functions (`v`, `data`, `context`, `entry`)                  |
+| `TFoormFieldEvaluated`      | Evaluated field snapshot passed as `entry` in scope (see below)                              |
+| `TFoormEntryOptions`        | Option for select/radio fields (`string` or `{ key, label }`)                                |
+| `TFoormAltAction`           | Alt-action metadata (`id`, `label`)                                                          |
+| `TComputed<T>`              | A value that is either static or a function of scope                                         |
+| `TResolveOptions<T>`        | Options for resolve utilities (`staticAsBoolean`, `transform`)                               |
+| `TBuildFieldEntryOpts`      | Options for `buildFieldEntry` (pre-resolved overrides for field info and constraints)        |
+| `TFormValidatorCallOptions` | Per-call options for `getFormValidator` return fn (`data`, `context?`)                       |
+| `TFieldValidatorOptions`    | Options for `createFieldValidator` (`rootOnly?`)                                             |
+| `TFoormValidatorContext`    | Per-call validator context (`data`, `context`)                                               |
 
 #### TFoormFieldEvaluated
 
@@ -405,6 +405,32 @@ interface TFoormFieldEvaluated {
 | `TFoormPluginOptions` | Plugin options (`{ extraTypes?, components? }`)           |
 
 For ATScript documentation, see [atscript.moost.org](https://atscript.moost.org).
+
+## AI Agent Skills
+
+`@foormjs/atscript` ships an AI agent skill for Claude Code, Cursor, Windsurf, Codex, and other compatible agents. The skill teaches your agent the library's APIs, patterns, and best practices so it can help you write correct code without hallucinating.
+
+**Install the skill into your agent:**
+
+```bash
+# Project-local (recommended — version-locked, commits with your repo)
+npx @foormjs/atscript setup-skills
+
+# Global (available across all your projects)
+npx @foormjs/atscript setup-skills --global
+```
+
+Restart your agent after installing.
+
+**Auto-update on install** — to keep the skill in sync whenever you upgrade the package, add this to your project's `package.json`:
+
+```jsonc
+{
+  "scripts": {
+    "postinstall": "npx @foormjs/atscript setup-skills --postinstall",
+  },
+}
+```
 
 ## License
 

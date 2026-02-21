@@ -1,5 +1,5 @@
-import type { TAtscriptAnnotatedType, InferDataType } from '@atscript/typescript/utils'
-import { createFoormDef, createFormData } from '@foormjs/atscript'
+import type { TAtscriptAnnotatedType } from '@atscript/typescript/utils'
+import { createFoormDef, createFormData, createFoormValueResolver } from '@foormjs/atscript'
 import { reactive } from 'vue'
 
 /**
@@ -8,6 +8,7 @@ import { reactive } from 'vue'
  * @param type - An ATScript annotated type (imported from a `.as` file via `@atscript/typescript`).
  *   Accepts any type shape: interface/object, primitive, array, union, etc.
  *   For non-object types, the data is wrapped in `{ value: ... }`.
+ * @param context - Optional context object passed to `foorm.fn.value` functions during data creation
  * @returns `{ def, formData }` — the FoormDef and a Vue reactive data object with defaults applied
  *
  * @example
@@ -24,10 +25,12 @@ import { reactive } from 'vue'
  * </template>
  * ```
  */
-export function useFoorm<T extends TAtscriptAnnotatedType>(type: T) {
+export function useFoorm<T extends TAtscriptAnnotatedType>(
+  type: T,
+  context?: Record<string, unknown>
+) {
   const def = createFoormDef(type)
-  const formData = reactive(
-    createFormData<InferDataType<T['type']>>(type, def.fields, { skipOptional: true })
-  )
+  const resolver = context ? createFoormValueResolver({}, context) : undefined
+  const formData = reactive(createFormData(type, resolver))
   return { def, formData }
 }

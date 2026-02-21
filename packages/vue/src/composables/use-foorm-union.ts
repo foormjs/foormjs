@@ -1,5 +1,10 @@
 import type { FoormFieldDef, FoormUnionFieldDef } from '@foormjs/atscript'
-import { isUnionField, createItemData, detectUnionVariant } from '@foormjs/atscript'
+import {
+  isUnionField,
+  createFormData,
+  createFoormValueResolver,
+  detectUnionVariant,
+} from '@foormjs/atscript'
 import { computed, inject, provide, ref, type ComputedRef } from 'vue'
 import type {
   TFoormChangeType,
@@ -7,6 +12,7 @@ import type {
   TFoormUnionContext,
 } from '../components/types'
 import { useDropdown } from './use-dropdown'
+import { useFoormContext } from './use-foorm-context'
 
 /**
  * Composable for managing union field state.
@@ -21,6 +27,7 @@ export function useFoormUnion(props: TFoormComponentProps) {
     '__foorm_path_prefix',
     computed(() => '')
   )
+  const { rootFormData, formContext } = useFoormContext('useFoormUnion')
   const handleChange = inject<(type: TFoormChangeType, path: string, value: unknown) => void>(
     '__foorm_change_handler',
     () => {}
@@ -78,7 +85,16 @@ export function useFoormUnion(props: TFoormComponentProps) {
     const variant = unionField.value?.unionVariants[newIndex]
     if (variant && props.model) {
       const stashed = variantDataStash.get(newIndex)
-      props.model.value = stashed !== undefined ? stashed : createItemData(variant)
+      props.model.value =
+        stashed !== undefined
+          ? stashed
+          : createFormData(
+              variant.type,
+              createFoormValueResolver(
+                rootFormData().value as Record<string, unknown>,
+                formContext.value
+              )
+            ).value
     }
     handleChange('union-switch', unionPath.value, props.model?.value)
   }

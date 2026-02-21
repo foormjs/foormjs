@@ -101,6 +101,7 @@
     "unicorn/require-number-to-fixed-digits-argument": "error",
     "unicorn/throw-new-error": "error"
   },
+  "ignorePatterns": ["**/setup-skills.js", "**/setup-skills.cjs"],
   "overrides": [
     {
       "files": ["**/*.test.ts", "**/*.spec.ts", "**/__tests__/**/*.ts"],

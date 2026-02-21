@@ -771,16 +771,33 @@ describe('createFormData', () => {
         active: { metadata: {}, designType: 'boolean' },
       },
     })
-    const def = createFoormDef(type)
-    expect(createFormData(type, def.fields)).toEqual({ value: { name: '', active: false } })
+    expect(createFormData(type)).toEqual({ value: { name: '', active: false } })
   })
 
-  it('applies static default values from metadata', () => {
+  it('applies static default values from foorm.value metadata', () => {
     const type = makeType({
       props: { status: { metadata: { 'foorm.value': 'pending' }, designType: 'string' } },
     })
-    const def = createFoormDef(type)
-    expect(createFormData(type, def.fields)).toEqual({ value: { status: 'pending' } })
+    expect(createFormData(type)).toEqual({ value: { status: 'pending' } })
+  })
+
+  it('applies static default values from meta.default metadata', () => {
+    const type = makeType({
+      props: { status: { metadata: { 'meta.default': 'active' }, designType: 'string' } },
+    })
+    expect(createFormData(type)).toEqual({ value: { status: 'active' } })
+  })
+
+  it('foorm.value takes precedence over meta.default', () => {
+    const type = makeType({
+      props: {
+        status: {
+          metadata: { 'foorm.value': 'pending', 'meta.default': 'active' },
+          designType: 'string',
+        },
+      },
+    })
+    expect(createFormData(type)).toEqual({ value: { status: 'pending' } })
   })
 
   it('creates nested data for object types', () => {
@@ -796,8 +813,7 @@ describe('createFormData', () => {
         },
       },
     })
-    const def = createFoormDef(type)
-    expect(createFormData(type, def.fields)).toEqual({
+    expect(createFormData(type)).toEqual({
       value: { address: { city: '', zip: '' } },
     })
   })
@@ -809,8 +825,7 @@ describe('createFormData', () => {
         name: { metadata: {}, designType: 'string' },
       },
     })
-    const def = createFoormDef(type)
-    expect(createFormData(type, def.fields)).toEqual({
+    expect(createFormData(type)).toEqual({
       value: { kind: 'address', name: '' },
     })
   })
@@ -819,26 +834,32 @@ describe('createFormData', () => {
     const type = makeType({
       props: { version: { metadata: {}, designType: 'number', value: 42 } },
     })
-    const def = createFoormDef(type)
-    expect(createFormData(type, def.fields)).toEqual({ value: { version: 42 } })
+    expect(createFormData(type)).toEqual({ value: { version: 42 } })
   })
 
   it('uses literal boolean value as default', () => {
     const type = makeType({
       props: { locked: { metadata: {}, designType: 'boolean', value: true } },
     })
-    const def = createFoormDef(type)
-    expect(createFormData(type, def.fields)).toEqual({ value: { locked: true } })
+    expect(createFormData(type)).toEqual({ value: { locked: true } })
   })
 
-  it('foorm.value overrides literal value', () => {
+  it('foorm.value overrides structural default', () => {
     const type = makeType({
       props: {
-        kind: { metadata: { 'foorm.value': 'custom' }, designType: 'string', value: 'address' },
+        kind: { metadata: { 'foorm.value': 'custom' }, designType: 'string' },
       },
     })
-    const def = createFoormDef(type)
-    expect(createFormData(type, def.fields)).toEqual({ value: { kind: 'custom' } })
+    expect(createFormData(type)).toEqual({ value: { kind: 'custom' } })
+  })
+
+  it('literal value is preserved (type-safe default)', () => {
+    const type = makeType({
+      props: {
+        kind: { metadata: {}, designType: 'string', value: 'address' },
+      },
+    })
+    expect(createFormData(type)).toEqual({ value: { kind: 'address' } })
   })
 
   it('uses literal value in nested object types', () => {
@@ -854,8 +875,7 @@ describe('createFormData', () => {
         },
       },
     })
-    const def = createFoormDef(type)
-    expect(createFormData(type, def.fields)).toEqual({
+    expect(createFormData(type)).toEqual({
       value: { address: { type: 'home', city: '' } },
     })
   })
@@ -867,8 +887,7 @@ describe('createFormData', () => {
         save: { metadata: {}, tags: ['action'], designType: 'phantom' },
       },
     })
-    const def = createFoormDef(type)
-    const data = createFormData(type, def.fields)
+    const data = createFormData(type)
     expect(data).toEqual({ value: { name: '' } })
     expect('save' in data.value).toBe(false)
   })

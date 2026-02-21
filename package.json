@@ -20,7 +20,8 @@
     "version": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
     "docs": "vitepress dev docs",
     "docs-build": "vitepress build docs",
-    "docs-serve": "vitepress serve docs"
+    "docs-serve": "vitepress serve docs",
+    "postinstall": "node ./node_modules/@atscript/typescript/scripts/setup-skills --postinstall"
   },
   "repository": {
     "type": "git",
@@ -41,7 +42,8 @@
   },
   "homepage": "https://github.com/foormjs/foormjs#readme",
   "devDependencies": {
-    "@atscript/core": "^0.1.19",
+    "@atscript/core": "^0.1.22",
+    "@atscript/typescript": "^0.1.22",
     "@prostojs/dye": "^0.3.0",
     "@rollup/plugin-commonjs": "^25.0.8",
     "@rollup/plugin-node-resolve": "^15.3.1",

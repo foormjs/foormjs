@@ -196,8 +196,13 @@ test.describe('Object Array — Addresses', () => {
     const item = addressArray.locator(OBJ_ITEM).first()
     await expect(item).toBeVisible()
 
+    // Required fields render immediately
     await expect(item.locator('input[name="street"]')).toBeVisible()
     await expect(item.locator('input[name="city"]')).toBeVisible()
+    // Optional zip starts as N/A — click to enable
+    const zipField = item.locator('.oo-default-field').filter({ hasText: 'ZIP' })
+    await expect(zipField.locator('.oo-no-data')).toBeVisible()
+    await zipField.locator('.oo-no-data').click()
     await expect(item.locator('input[name="zip"]')).toBeVisible()
   })
 
@@ -210,6 +215,12 @@ test.describe('Object Array — Addresses', () => {
 
     await expect(item.locator('input[name="street"]')).toHaveAttribute('placeholder', '123 Main St')
     await expect(item.locator('input[name="city"]')).toHaveAttribute('placeholder', 'New York')
+    // Enable optional zip first, then check placeholder
+    await item
+      .locator('.oo-default-field')
+      .filter({ hasText: 'ZIP' })
+      .locator('.oo-no-data')
+      .click()
     await expect(item.locator('input[name="zip"]')).toHaveAttribute('placeholder', '10001')
   })
 
@@ -234,6 +245,12 @@ test.describe('Object Array — Addresses', () => {
 
     await item.locator('input[name="street"]').fill('742 Evergreen Terrace')
     await item.locator('input[name="city"]').fill('Springfield')
+    // Enable optional zip first
+    await item
+      .locator('.oo-default-field')
+      .filter({ hasText: 'ZIP' })
+      .locator('.oo-no-data')
+      .click()
     await item.locator('input[name="zip"]').fill('62704')
 
     await expect(item.locator('input[name="street"]')).toHaveValue('742 Evergreen Terrace')
@@ -349,10 +366,21 @@ test.describe('Union Array — Contacts', () => {
     const item = contactsSection.locator(UNION_ITEM).first()
     await expect(item).toBeVisible()
 
-    // Should have variant dropdown trigger and object sub-fields
+    // Should have variant dropdown trigger and required sub-field
     await expect(item.locator('.oo-variant-trigger')).toBeVisible()
     await expect(item.locator('input[name="fullName"]')).toBeVisible()
+    // Optional email and phone start as N/A — enable them
+    await item
+      .locator('.oo-default-field')
+      .filter({ hasText: 'Email' })
+      .locator('.oo-no-data')
+      .click()
     await expect(item.locator('input[name="email"]')).toBeVisible()
+    await item
+      .locator('.oo-default-field')
+      .filter({ hasText: 'Phone' })
+      .locator('.oo-no-data')
+      .click()
     await expect(item.locator('input[name="phone"]')).toBeVisible()
   })
 
@@ -382,7 +410,18 @@ test.describe('Union Array — Contacts', () => {
 
     const item = contactsSection.locator(UNION_ITEM).first()
     await item.locator('input[name="fullName"]').fill('Jane Doe')
+    // Enable optional email and phone, then fill
+    await item
+      .locator('.oo-default-field')
+      .filter({ hasText: 'Email' })
+      .locator('.oo-no-data')
+      .click()
     await item.locator('input[name="email"]').fill('jane@example.com')
+    await item
+      .locator('.oo-default-field')
+      .filter({ hasText: 'Phone' })
+      .locator('.oo-no-data')
+      .click()
     await item.locator('input[name="phone"]').fill('+1 555 0123')
 
     await expect(item.locator('input[name="fullName"]')).toHaveValue('Jane Doe')

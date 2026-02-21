@@ -14,6 +14,32 @@ npm install @foormjs/composables
 
 Requires `vue@^3.5` as a peer dependency.
 
+## AI Agent Skills
+
+`@foormjs/composables` ships an AI agent skill for Claude Code, Cursor, Windsurf, Codex, and other compatible agents. The skill teaches your agent the library's APIs, patterns, and best practices so it can help you write correct code without hallucinating.
+
+**Install the skill into your agent:**
+
+```bash
+# Project-local (recommended — version-locked, commits with your repo)
+npx @foormjs/composables setup-skills
+
+# Global (available across all your projects)
+npx @foormjs/composables setup-skills --global
+```
+
+Restart your agent after installing.
+
+**Auto-update on install** — to keep the skill in sync whenever you upgrade the package, add this to your project's `package.json`:
+
+```jsonc
+{
+  "scripts": {
+    "postinstall": "npx @foormjs/composables setup-skills --postinstall",
+  },
+}
+```
+
 ## Composables
 
 ### `useFoormForm(options)`
@@ -22,12 +48,12 @@ Manages form state: field registry, submit handling, and validation state. Provi
 
 **Options:**
 
-| Option            | Type                                          | Description                      |
-| ----------------- | --------------------------------------------- | -------------------------------- |
-| `formData`        | `MaybeRef<TFormData>`                         | Reactive form data object        |
-| `formContext`     | `MaybeRef<TContext>`                          | External context passed to rules |
-| `firstValidation` | `MaybeRef<TFoormState['firstValidation']>`    | When to start showing errors     |
-| `submitValidator` | `TFoormSubmitValidator`                       | Validator called on submit       |
+| Option            | Type                                       | Description                      |
+| ----------------- | ------------------------------------------ | -------------------------------- |
+| `formData`        | `MaybeRef<TFormData>`                      | Reactive form data object        |
+| `formContext`     | `MaybeRef<TContext>`                       | External context passed to rules |
+| `firstValidation` | `MaybeRef<TFoormState['firstValidation']>` | When to start showing errors     |
+| `submitValidator` | `TFoormSubmitValidator`                    | Validator called on submit       |
 
 **Returns:**
 
@@ -45,13 +71,13 @@ Manages a single field's validation state, touch tracking, and error display. In
 
 **Options:**
 
-| Option       | Type                        | Description                                                     |
-| ------------ | --------------------------- | --------------------------------------------------------------- |
-| `getValue`   | `() => unknown`             | Getter for the current value                                    |
-| `setValue`    | `(v: unknown) => void`      | Setter for the current value                                    |
-| `rules`      | `TFoormRule[]`              | Validation rules array                                          |
-| `path`       | `() => string`              | Field path for error matching                                   |
-| `resetValue` | `TValue`                    | Value to set on reset (default: `''`). Use `[]` for arrays, `{}` for objects |
+| Option       | Type                   | Description                                                                  |
+| ------------ | ---------------------- | ---------------------------------------------------------------------------- |
+| `getValue`   | `() => unknown`        | Getter for the current value                                                 |
+| `setValue`   | `(v: unknown) => void` | Setter for the current value                                                 |
+| `rules`      | `TFoormRule[]`         | Validation rules array                                                       |
+| `path`       | `() => string`         | Field path for error matching                                                |
+| `resetValue` | `TValue`               | Value to set on reset (default: `''`). Use `[]` for arrays, `{}` for objects |
 
 **Returns:**
 

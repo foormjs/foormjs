@@ -18,7 +18,7 @@ const emit = defineEmits<{
 
 const { model, error, onBlur } = useFoormField({
   getValue: () => props.modelValue,
-  setValue: (v) => emit('update:modelValue', v),
+  setValue: v => emit('update:modelValue', v),
   rules: props.rules,
   path: () => props.path,
 })

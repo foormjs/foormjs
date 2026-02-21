@@ -89,6 +89,32 @@ function handleSubmit(data: typeof formData) {
 
 `OoForm` renders default HTML inputs for all standard field types out of the box. For production use, you'll want to supply your own components via the `types` prop.
 
+## AI Agent Skills
+
+`@foormjs/vue` ships an AI agent skill for Claude Code, Cursor, Windsurf, Codex, and other compatible agents. The skill teaches your agent the library's APIs, patterns, and best practices so it can help you write correct code without hallucinating.
+
+**Install the skill into your agent:**
+
+```bash
+# Project-local (recommended — version-locked, commits with your repo)
+npx @foormjs/vue setup-skills
+
+# Global (available across all your projects)
+npx @foormjs/vue setup-skills --global
+```
+
+Restart your agent after installing.
+
+**Auto-update on install** — to keep the skill in sync whenever you upgrade the package, add this to your project's `package.json`:
+
+```jsonc
+{
+  "scripts": {
+    "postinstall": "npx @foormjs/vue setup-skills --postinstall",
+  },
+}
+```
+
 ## Advanced Usage
 
 ### Custom Components by Type
@@ -173,37 +199,37 @@ const props = defineProps<TFoormComponentProps<string>>()
 
 Key props available to your component:
 
-| Prop               | Type                          | Description                                                     |
-| ------------------ | ----------------------------- | --------------------------------------------------------------- |
-| `model`            | `{ value: V }`                | Reactive model — bind with `v-model="model.value"`              |
-| `value`            | `unknown?`                    | Phantom display value (`@foorm.value` / `@foorm.fn.value`)      |
-| `onBlur`           | `(e: FocusEvent) => void`     | Triggers validation on blur                                     |
-| `error`            | `string?`                     | Validation error message                                        |
-| `label`            | `string?`                     | Resolved field label                                            |
-| `description`      | `string?`                     | Resolved field description                                      |
-| `hint`             | `string?`                     | Resolved hint text                                              |
-| `placeholder`      | `string?`                     | Resolved placeholder                                            |
-| `disabled`         | `boolean?`                    | Whether the field is disabled                                   |
-| `hidden`           | `boolean?`                    | Whether the field is hidden                                     |
-| `readonly`         | `boolean?`                    | Whether the field is read-only                                  |
-| `optional`         | `boolean?`                    | Whether the field is optional                                   |
-| `required`         | `boolean?`                    | Whether the field is required                                   |
-| `type`             | `string`                      | The field input type                                            |
-| `altAction`        | `TFoormAltAction?`            | Alternate action `{ id, label }` from `@foorm.altAction`        |
-| `options`          | `TFoormEntryOptions[]?`       | Options for select/radio fields                                 |
-| `name`             | `string?`                     | Field name                                                      |
-| `maxLength`        | `number?`                     | Max length constraint                                           |
-| `autocomplete`     | `string?`                     | HTML autocomplete value                                         |
-| `field`            | `FoormFieldDef?`              | Full field definition for advanced use                          |
-| `title`            | `string?`                     | Resolved title for object/array fields                          |
-| `level`            | `number?`                     | Nesting level (root=0, increments per nested object/array)      |
-| `class`            | `string \| object?`           | CSS class(es) from `@foorm.fn.classes`                          |
-| `style`            | `string \| object?`           | Inline styles from `@foorm.fn.styles`                           |
-| `onRemove`         | `() => void?`                 | Callback to remove this item from its parent array              |
-| `canRemove`        | `boolean?`                    | Whether removal is allowed (respects minLength)                 |
-| `removeLabel`      | `string?`                     | Label for the remove button                                     |
-| `arrayIndex`       | `number?`                     | Zero-based index when rendered as an array item                 |
-| `onToggleOptional` | `(enabled: boolean) => void?` | Toggle an optional field on/off                                 |
+| Prop               | Type                          | Description                                                |
+| ------------------ | ----------------------------- | ---------------------------------------------------------- |
+| `model`            | `{ value: V }`                | Reactive model — bind with `v-model="model.value"`         |
+| `value`            | `unknown?`                    | Phantom display value (`@foorm.value` / `@foorm.fn.value`) |
+| `onBlur`           | `(e: FocusEvent) => void`     | Triggers validation on blur                                |
+| `error`            | `string?`                     | Validation error message                                   |
+| `label`            | `string?`                     | Resolved field label                                       |
+| `description`      | `string?`                     | Resolved field description                                 |
+| `hint`             | `string?`                     | Resolved hint text                                         |
+| `placeholder`      | `string?`                     | Resolved placeholder                                       |
+| `disabled`         | `boolean?`                    | Whether the field is disabled                              |
+| `hidden`           | `boolean?`                    | Whether the field is hidden                                |
+| `readonly`         | `boolean?`                    | Whether the field is read-only                             |
+| `optional`         | `boolean?`                    | Whether the field is optional                              |
+| `required`         | `boolean?`                    | Whether the field is required                              |
+| `type`             | `string`                      | The field input type                                       |
+| `altAction`        | `TFoormAltAction?`            | Alternate action `{ id, label }` from `@foorm.altAction`   |
+| `options`          | `TFoormEntryOptions[]?`       | Options for select/radio fields                            |
+| `name`             | `string?`                     | Field name                                                 |
+| `maxLength`        | `number?`                     | Max length constraint                                      |
+| `autocomplete`     | `string?`                     | HTML autocomplete value                                    |
+| `field`            | `FoormFieldDef?`              | Full field definition for advanced use                     |
+| `title`            | `string?`                     | Resolved title for object/array fields                     |
+| `level`            | `number?`                     | Nesting level (root=0, increments per nested object/array) |
+| `class`            | `string \| object?`           | CSS class(es) from `@foorm.fn.classes`                     |
+| `style`            | `string \| object?`           | Inline styles from `@foorm.fn.styles`                      |
+| `onRemove`         | `() => void?`                 | Callback to remove this item from its parent array         |
+| `canRemove`        | `boolean?`                    | Whether removal is allowed (respects minLength)            |
+| `removeLabel`      | `string?`                     | Label for the remove button                                |
+| `arrayIndex`       | `number?`                     | Zero-based index when rendered as an array item            |
+| `onToggleOptional` | `(enabled: boolean) => void?` | Toggle an optional field on/off                            |
 
 ### Arrays
 
@@ -234,6 +260,7 @@ addresses: {
 Union arrays (`(ObjectType | string)[]`) render a variant selector per item and offer one add button per variant.
 
 The remove button is the responsibility of the wrapping component:
+
 - **Object array items**: The object component receives `onRemove`, `canRemove`, and `removeLabel` via `TFoormComponentProps`.
 - **Primitive array items**: The field component receives `onRemove`, `canRemove`, and `removeLabel` as props (since there is no object wrapper around them).
 
@@ -305,7 +332,13 @@ const formContext = {
 </script>
 
 <template>
-  <OoForm :def="def" :form-data="formData" :form-context="formContext" :types="typeComponents" @submit="onSubmit" />
+  <OoForm
+    :def="def"
+    :form-data="formData"
+    :form-context="formContext"
+    :types="typeComponents"
+    @submit="onSubmit"
+  />
 </template>
 ```
 
@@ -335,7 +368,13 @@ async function handleSubmit(data: any) {
 </script>
 
 <template>
-  <OoForm :def="def" :form-data="formData" :errors="serverErrors" :types="typeComponents" @submit="handleSubmit" />
+  <OoForm
+    :def="def"
+    :form-data="formData"
+    :errors="serverErrors"
+    :types="typeComponents"
+    @submit="handleSubmit"
+  />
 </template>
 ```
 
@@ -353,7 +392,13 @@ Handle the action event:
 
 ```vue
 <template>
-  <OoForm :def="def" :form-data="formData" :types="typeComponents" @submit="onSubmit" @action="onAction" />
+  <OoForm
+    :def="def"
+    :form-data="formData"
+    :types="typeComponents"
+    @submit="onSubmit"
+    @action="onAction"
+  />
 </template>
 
 <script setup lang="ts">
@@ -420,13 +465,13 @@ Renderless form wrapper component.
 
 **Slots:**
 
-| Slot           | Scope                                                            | Description                                  |
-| -------------- | ---------------------------------------------------------------- | -------------------------------------------- |
-| `form.header`  | `{ clearErrors, reset, setErrors, formContext, disabled }`       | Before fields                                |
-| `form.before`  | `{ clearErrors, reset, setErrors }`                              | After header, before fields                  |
-| `form.after`   | `{ clearErrors, reset, setErrors, disabled, formContext }`       | After fields, before submit                  |
-| `form.submit`  | `{ text, disabled, clearErrors, reset, setErrors, formContext }` | Submit button                                |
-| `form.footer`  | `{ disabled, clearErrors, reset, setErrors, formContext }`       | After submit                                 |
+| Slot          | Scope                                                            | Description                 |
+| ------------- | ---------------------------------------------------------------- | --------------------------- |
+| `form.header` | `{ clearErrors, reset, setErrors, formContext, disabled }`       | Before fields               |
+| `form.before` | `{ clearErrors, reset, setErrors }`                              | After header, before fields |
+| `form.after`  | `{ clearErrors, reset, setErrors, disabled, formContext }`       | After fields, before submit |
+| `form.submit` | `{ text, disabled, clearErrors, reset, setErrors, formContext }` | Submit button               |
+| `form.footer` | `{ disabled, clearErrors, reset, setErrors, formContext }`       | After submit                |
 
 ### `OoField`
 
@@ -434,52 +479,52 @@ Universal field renderer. Resolves component, props, validation, and nesting for
 
 **Props:**
 
-| Prop          | Type             | Description                                                    |
-| ------------- | ---------------- | -------------------------------------------------------------- |
-| `field`       | `FoormFieldDef`  | Field definition from `def.fields` or `def.rootField`          |
-| `error`       | `string?`        | External error message                                         |
-| `onRemove`    | `() => void?`    | Callback to remove this item from its parent array             |
-| `canRemove`   | `boolean?`       | Whether removal is allowed (respects minLength)                |
-| `removeLabel` | `string?`        | Label for the remove button (from `@foorm.array.remove.label`) |
-| `arrayIndex`  | `number?`        | Zero-based index when rendered as an array item                |
+| Prop          | Type            | Description                                                    |
+| ------------- | --------------- | -------------------------------------------------------------- |
+| `field`       | `FoormFieldDef` | Field definition from `def.fields` or `def.rootField`          |
+| `error`       | `string?`       | External error message                                         |
+| `onRemove`    | `() => void?`   | Callback to remove this item from its parent array             |
+| `canRemove`   | `boolean?`      | Whether removal is allowed (respects minLength)                |
+| `removeLabel` | `string?`       | Label for the remove button (from `@foorm.array.remove.label`) |
+| `arrayIndex`  | `number?`       | Zero-based index when rendered as an array item                |
 
 ### Default Components
 
 All default type components are exported and can be used as-is or as reference implementations:
 
-| Component            | Field Type  | Description                                       |
-| -------------------- | ----------- | ------------------------------------------------- |
-| `OoInput`            | `text`, etc | Text/password/number input with OoFieldShell       |
-| `OoSelect`           | `select`    | Dropdown select with OoFieldShell                  |
-| `OoRadio`            | `radio`     | Radio button group with OoFieldShell               |
-| `OoCheckbox`         | `checkbox`  | Boolean checkbox with OoFieldShell                 |
-| `OoParagraph`        | `paragraph` | Read-only text display                             |
-| `OoAction`           | `action`    | Action button with altAction support               |
-| `OoObject`           | `object`    | Object container (title + OoIterator)              |
-| `OoArray`            | `array`     | Array container (add/remove + OoIterator per item) |
-| `OoUnion`            | `union`     | Union variant picker + selected variant rendering  |
-| `OoTuple`            | `tuple`     | Fixed-length tuple via OoIterator                  |
+| Component     | Field Type  | Description                                        |
+| ------------- | ----------- | -------------------------------------------------- |
+| `OoInput`     | `text`, etc | Text/password/number input with OoFieldShell       |
+| `OoSelect`    | `select`    | Dropdown select with OoFieldShell                  |
+| `OoRadio`     | `radio`     | Radio button group with OoFieldShell               |
+| `OoCheckbox`  | `checkbox`  | Boolean checkbox with OoFieldShell                 |
+| `OoParagraph` | `paragraph` | Read-only text display                             |
+| `OoAction`    | `action`    | Action button with altAction support               |
+| `OoObject`    | `object`    | Object container (title + OoIterator)              |
+| `OoArray`     | `array`     | Array container (add/remove + OoIterator per item) |
+| `OoUnion`     | `union`     | Union variant picker + selected variant rendering  |
+| `OoTuple`     | `tuple`     | Fixed-length tuple via OoIterator                  |
 
 ### Composables
 
-| Export                     | Description                                                           |
-| -------------------------- | --------------------------------------------------------------------- |
-| `useFoorm(type)`           | Returns `{ def, formData }` from an ATScript annotated type           |
-| `useFoormArray(field, disabled?)` | Array state management (keys, add/remove, constraints)         |
-| `useFoormUnion(props)`     | Union variant state management                                        |
-| `useConsumeUnionContext()` | Consume and clear the `__foorm_union` injection                       |
-| `formatIndexedLabel()`     | Format label with array index prefix (e.g. `"Address #1"`)           |
-| `createDefaultTypes()`     | Returns a `TFoormTypeComponents` map with all default type components |
+| Export                            | Description                                                           |
+| --------------------------------- | --------------------------------------------------------------------- |
+| `useFoorm(type)`                  | Returns `{ def, formData }` from an ATScript annotated type           |
+| `useFoormArray(field, disabled?)` | Array state management (keys, add/remove, constraints)                |
+| `useFoormUnion(props)`            | Union variant state management                                        |
+| `useConsumeUnionContext()`        | Consume and clear the `__foorm_union` injection                       |
+| `formatIndexedLabel()`            | Format label with array index prefix (e.g. `"Address #1"`)            |
+| `createDefaultTypes()`            | Returns a `TFoormTypeComponents` map with all default type components |
 
 ### Types
 
-| Export                     | Description                                                    |
-| -------------------------- | -------------------------------------------------------------- |
-| `TFoormBaseComponentProps` | Shared base props (disabled, hidden)                           |
-| `TFoormComponentProps`     | Unified props interface for ALL custom field components         |
-| `TFoormTypeComponents`     | Required shape for the `types` prop on `OoForm`                |
+| Export                     | Description                                                   |
+| -------------------------- | ------------------------------------------------------------- |
+| `TFoormBaseComponentProps` | Shared base props (disabled, hidden)                          |
+| `TFoormComponentProps`     | Unified props interface for ALL custom field components       |
+| `TFoormTypeComponents`     | Required shape for the `types` prop on `OoForm`               |
 | `TFoormChangeType`         | `'update' \| 'array-add' \| 'array-remove' \| 'union-switch'` |
-| `TFoormUnionContext`       | Union context provided via `__foorm_union` inject              |
+| `TFoormUnionContext`       | Union context provided via `__foorm_union` inject             |
 
 For ATScript documentation, see [atscript.moost.org](https://atscript.moost.org).
 

@@ -22,11 +22,10 @@ import {
   resolveAttrs,
   getFieldMeta,
   buildFieldEntry,
-  createDefaultValue,
   createFormData,
+  createFoormValueResolver,
   createFieldValidator,
   type FoormFieldDef,
-  type FoormObjectFieldDef,
   type TFoormAltAction,
 } from '@foormjs/atscript'
 import { computed, inject, isRef, provide, watch, type Component, type ComputedRef } from 'vue'
@@ -144,16 +143,11 @@ function setModel(value: unknown) {
 // ── Optional toggle ─────────────────────────────────────────
 function toggleOptional(enabled: boolean) {
   if (enabled) {
-    // Check explicit @foorm.value / @foorm.fn.value first
-    const explicit = resolveFieldProp(prop, 'foorm.fn.value', 'foorm.value', buildScope(undefined))
-    if (explicit !== undefined) {
-      setModel(explicit)
-    } else if (isObjectField(props.field)) {
-      const objField = props.field as FoormObjectFieldDef
-      setModel(createFormData(objField.prop, objField.objectDef.fields).value)
-    } else {
-      setModel(createDefaultValue(props.field.prop))
-    }
+    const resolver = createFoormValueResolver(
+      rootFormData().value as Record<string, unknown>,
+      formContext.value
+    )
+    setModel(createFormData(props.field.prop, resolver).value)
   } else {
     setModel(undefined)
   }

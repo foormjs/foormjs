@@ -17,8 +17,13 @@
     }
   },
   "type": "module",
+  "bin": {
+    "setup-skills": "./scripts/setup-skills.js"
+  },
   "files": [
-    "dist"
+    "dist",
+    "skills",
+    "scripts/setup-skills.js"
   ],
   "repository": {
     "type": "git",
@@ -44,20 +49,21 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "pub": "pnpm publish --access public --no-git-checks",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "setup-skills": "node ./scripts/setup-skills.js"
   },
   "dependencies": {
     "@foormjs/atscript": "workspace:^",
     "@foormjs/composables": "workspace:^"
   },
   "peerDependencies": {
-    "@atscript/core": "^0.1.19",
-    "@atscript/typescript": "^0.1.19",
+    "@atscript/core": "^0.1.22",
+    "@atscript/typescript": "^0.1.22",
     "vue": "^3.5.0"
   },
   "devDependencies": {
-    "@atscript/core": "^0.1.19",
-    "@atscript/typescript": "^0.1.19",
+    "@atscript/core": "^0.1.22",
+    "@atscript/typescript": "^0.1.22",
     "@playwright/test": "^1.58.2",
     "vue": "^3.5.28",
     "@tsconfig/node20": "^20.1.9",
@@ -66,7 +72,7 @@
     "@vue/tsconfig": "^0.8.1",
     "npm-run-all2": "^8.0.4",
     "typescript": "~5.9.3",
-    "unplugin-atscript": "^0.1.19",
+    "unplugin-atscript": "^0.1.22",
     "vite": "^7.3.1",
     "vite-plugin-dts": "^4.5.4",
     "vue-tsc": "^3.2.4"

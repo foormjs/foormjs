@@ -2,15 +2,10 @@ import type {
   TFoormFnScope,
   TFoormEntryOptions,
   TFoormFieldEvaluated,
-  FoormFieldDef,
   FoormUnionVariant,
 } from './types'
-import type {
-  TAtscriptAnnotatedType,
-  TAtscriptTypeComplex,
-  TAtscriptTypeObject,
-} from '@atscript/typescript/utils'
-import { isPhantomType } from '@atscript/typescript/utils'
+import type { TAtscriptAnnotatedType, TAtscriptDataType } from '@atscript/typescript/utils'
+import { createDataFromAnnotatedType } from '@atscript/typescript/utils'
 import { compileFieldFn, compileTopFn } from './fn-compiler'
 
 // ── Array coercion ───────────────────────────────────────────
@@ -382,47 +377,10 @@ export function setByPath(obj: Record<string, unknown>, path: string, value: unk
 
 // ── createFormData ──────────────────────────────────────────
 
-const NON_DATA_TYPES = new Set(['action', 'paragraph'])
-
 /**
- * Creates form data from an ATScript type with default values.
- *
- * For object types: builds nested data from properties.
- * For non-object types (primitive, array, etc.): wraps in `{ value: defaultValue }`.
- *
- * Skips phantom types and non-data fields (action, paragraph).
- * Resolves `@foorm.value` / `@foorm.fn.value` defaults from metadata.
- *
- * @param type - ATScript annotated type describing the form
- * @param fields - The FoormFieldDef array produced by createFoormDef
- * @returns A data object matching the form schema with defaults applied
- */
-export function createFormData<T = Record<string, unknown>>(
-  type: TAtscriptAnnotatedType,
-  fields: FoormFieldDef[],
-  opts?: { skipOptional?: boolean }
-): { value: T } {
-  if (type.type.kind !== 'object') {
-    return { value: createDefaultValue(type) as T }
-  }
-  const fieldsByPath = new Map<string, FoormFieldDef>()
-  for (const f of fields) {
-    if (f.path !== undefined) fieldsByPath.set(f.path, f)
-  }
-  return {
-    value: buildNestedData(
-      type as TAtscriptAnnotatedType<TAtscriptTypeObject>,
-      fieldsByPath,
-      '',
-      opts?.skipOptional ?? false
-    ) as T,
-  }
-}
-
-/**
- * Coerces a static `@foorm.value` annotation string to the field's expected type.
- * Strings are returned as-is; other types go through `JSON.parse` with a fallback
- * to the type's default value on parse failure.
+ * Coerces a static annotation string to the field's expected type.
+ * Strings are returned as-is for string fields; everything else goes through `JSON.parse`.
+ * Returns `undefined` on parse failure (falls through to structural default).
  */
 function parseStaticDefault(raw: unknown, prop: TAtscriptAnnotatedType): unknown {
   if (typeof raw !== 'string') return raw
@@ -430,136 +388,76 @@ function parseStaticDefault(raw: unknown, prop: TAtscriptAnnotatedType): unknown
   try {
     return JSON.parse(raw)
   } catch {
-    return getDefaultForDesignType(prop)
+    return undefined
   }
 }
 
-function buildNestedData(
-  typeDef: TAtscriptAnnotatedType<TAtscriptTypeObject>,
-  fieldsByPath: Map<string, FoormFieldDef>,
-  prefix: string,
-  skipOptional: boolean
-): Record<string, unknown> {
-  const data: Record<string, unknown> = {}
+/** Value resolver function type — created once per form, reused across calls. */
+export type TFoormValueResolver = (prop: TAtscriptAnnotatedType, path: string) => unknown
 
-  for (const [key, prop] of typeDef.type.props.entries()) {
-    if (isPhantomType(prop)) continue
-
-    const fullPath = prefix ? `${prefix}.${key}` : key
-
-    if (prop.type.kind === 'object') {
-      data[key] = prop.optional
-        ? undefined
-        : buildNestedData(
-            prop as TAtscriptAnnotatedType<TAtscriptTypeObject>,
-            fieldsByPath,
-            fullPath,
-            skipOptional
-          )
-      continue
-    }
-
-    if (prop.type.kind === 'array') {
-      data[key] = prop.optional ? undefined : []
-      continue
-    }
-
-    const field = fieldsByPath.get(fullPath)
-
-    if (field && NON_DATA_TYPES.has(field.type)) {
-      continue
-    }
-
-    // Resolve default value from metadata on demand
-    const scope: TFoormFnScope = {
-      v: undefined,
-      data: data as Record<string, unknown>,
-      context: {},
-      entry: field
-        ? {
-            field: field.path,
-            type: field.type,
-            component: getFieldMeta(prop, 'foorm.component'),
-            name: field.name,
-          }
-        : undefined,
-    }
-    const defaultValue = resolveFieldProp<unknown>(prop, 'foorm.fn.value', 'foorm.value', scope, {
-      transform: raw => parseStaticDefault(raw, prop),
-    })
-
-    if (defaultValue !== undefined) {
-      data[key] = defaultValue
-    } else if (!skipOptional || !prop.optional) {
-      data[key] = getDefaultForDesignType(prop)
-    }
-  }
-
-  return data
-}
-
-function getDefaultForDesignType(prop: TAtscriptAnnotatedType): unknown {
-  // Union: use the first branch's default
-  if (prop.type.kind === 'union') {
-    const items = (prop.type as TAtscriptTypeComplex).items
-    return items[0] ? createDefaultValue(items[0]) : undefined
-  }
-  // Tuple: array of defaults for each position
-  if (prop.type.kind === 'tuple') {
-    const items = (prop.type as TAtscriptTypeComplex).items
-    return items.map(item => createDefaultValue(item))
-  }
-  if (prop.type.kind !== '') return undefined
-  // Literal types (e.g., type: 'address'): use the literal value directly
-  if (prop.type.value !== undefined) return prop.type.value
-  switch (prop.type.designType) {
-    case 'boolean':
-      return false
-    case 'string':
-      return ''
-    case 'number':
-      return 0
-    default:
-      return undefined
-  }
-}
-
-/** Returns a default value for any type kind. */
-export function createDefaultValue(type: TAtscriptAnnotatedType): unknown {
-  if (type.type.kind === 'array') return []
-  if (type.type.kind === 'object') {
-    const objType = type.type as TAtscriptTypeObject
-    const data: Record<string, unknown> = {}
-    for (const [key, prop] of objType.props.entries()) {
-      if (isPhantomType(prop)) continue
-      data[key] = createDefaultValue(prop)
-    }
-    return data
-  }
-  if (type.type.kind === 'tuple') {
-    const items = (type.type as TAtscriptTypeComplex).items
-    return items.map(item => createDefaultValue(item))
-  }
-  return getDefaultForDesignType(type)
-}
-
-// ── Union helpers ────────────────────────────────────────────
+/** Cached default resolver (no data, no context) — reused when no resolver is provided. */
+const defaultResolver: TFoormValueResolver = createFoormValueResolver()
 
 /**
- * Creates default data for a union branch.
+ * Creates a reusable value resolver for form data creation.
+ * Cascade: `foorm.fn.value` → `foorm.value` → `meta.default` → structural default.
  *
- * @param variant - The union variant to create data for
- * @returns Default value: nested object for object variants, primitive default for scalar variants
+ * Create once per form with the form's data and context, then pass to `createFormData`.
+ *
+ * @param data - Form data object passed to `foorm.fn.value` functions
+ * @param context - Context object passed to `foorm.fn.value` functions
  */
-export function createItemData(variant: FoormUnionVariant): unknown {
-  if (variant.def) {
-    return createFormData(
-      variant.type as TAtscriptAnnotatedType<TAtscriptTypeObject>,
-      variant.def.fields
-    ).value
+export function createFoormValueResolver(
+  data: Record<string, unknown> = {},
+  context: Record<string, unknown> = {}
+): TFoormValueResolver {
+  return (prop, _path) => {
+    // 1. foorm.fn.value — compiled function (may throw if it references unavailable scope)
+    const fnStr = prop.metadata.get('foorm.fn.value' as keyof AtscriptMetadata)
+    if (typeof fnStr === 'string') {
+      try {
+        return compileFieldFn<unknown>(fnStr)({ v: undefined, data, context })
+      } catch {
+        // Fall through — fn depends on runtime scope not available at data creation time
+      }
+    }
+    // 2. foorm.value — static
+    const staticVal = prop.metadata.get('foorm.value' as keyof AtscriptMetadata)
+    if (staticVal !== undefined) {
+      return parseStaticDefault(staticVal, prop)
+    }
+    // 3. meta.default — ATScript standard
+    const metaDefault = prop.metadata.get('meta.default' as keyof AtscriptMetadata)
+    if (metaDefault !== undefined) {
+      return parseStaticDefault(metaDefault, prop)
+    }
+    // 4. Fall through → createDataFromAnnotatedType applies structural default
+    return undefined
   }
-  // Primitives and complex types (tuple, array, etc.)
-  return createDefaultValue(variant.type)
+}
+
+/**
+ * Creates form data from an ATScript type with default values.
+ *
+ * Uses `createDataFromAnnotatedType` with a custom resolver that checks
+ * `foorm.fn.value` → `foorm.value` → `meta.default` before falling through
+ * to structural defaults. Phantom types (action, paragraph) are skipped automatically.
+ *
+ * Optional properties are only included if the resolver provides a value for them.
+ *
+ * @param type - ATScript annotated type describing the form
+ * @param resolver - Value resolver (from `createFoormValueResolver`). If omitted, a cached default resolver is used.
+ * @returns A data object matching the form schema with defaults applied
+ */
+export function createFormData<T extends TAtscriptAnnotatedType>(
+  type: T,
+  resolver?: TFoormValueResolver
+): { value: TAtscriptDataType<T> } {
+  return {
+    value: createDataFromAnnotatedType(type, {
+      mode: resolver ?? defaultResolver,
+    }) as TAtscriptDataType<T>,
+  }
 }
 
 // Lazily-cached validators keyed by variant type identity.

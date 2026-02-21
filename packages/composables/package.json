@@ -8,6 +8,9 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "customBuild": true,
+  "bin": {
+    "setup-skills": "./scripts/setup-skills.js"
+  },
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -17,7 +20,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "skills",
+    "scripts/setup-skills.js"
   ],
   "repository": {
     "type": "git",
@@ -31,7 +36,8 @@
     "build": "run-s type-check build-only",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
-    "pub": "pnpm publish --access public --no-git-checks"
+    "pub": "pnpm publish --access public --no-git-checks",
+    "setup-skills": "node ./scripts/setup-skills.js"
   },
   "peerDependencies": {
     "vue": "^3.5.0"

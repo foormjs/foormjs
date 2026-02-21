@@ -38,17 +38,23 @@
       "dts": true
     }
   ],
+  "bin": {
+    "setup-skills": "./scripts/setup-skills.cjs"
+  },
   "files": [
-    "dist"
+    "dist",
+    "skills",
+    "scripts/setup-skills.cjs"
   ],
   "scripts": {
+    "setup-skills": "node ./scripts/setup-skills.cjs",
     "pub": "pnpm publish --access public --no-git-checks"
   },
   "dependencies": {
-    "@atscript/core": "^0.1.19",
+    "@atscript/core": "^0.1.22",
     "@prostojs/deserialize-fn": "^0.0.5"
   },
   "peerDependencies": {
-    "@atscript/typescript": "^0.1.19"
+    "@atscript/typescript": "^0.1.22"
   }
 }

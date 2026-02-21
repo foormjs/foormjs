@@ -4,7 +4,12 @@ import type {
   FoormUnionFieldDef,
   FoormUnionVariant,
 } from '@foormjs/atscript'
-import { getFieldMeta, createItemData, createDefaultValue, isUnionField } from '@foormjs/atscript'
+import {
+  getFieldMeta,
+  createFormData,
+  createFoormValueResolver,
+  isUnionField,
+} from '@foormjs/atscript'
 import { computed, inject, reactive, watch, type ComputedRef } from 'vue'
 import type { TFoormChangeType } from '../components/types'
 import { useFoormContext } from './use-foorm-context'
@@ -18,7 +23,8 @@ import { useFoormContext } from './use-foorm-context'
  */
 export function useFoormArray(field: FoormArrayFieldDef, disabled?: ComputedRef<boolean>) {
   // ── Context (root data, path, getByPath) ──────────────────────
-  const { pathPrefix, getByPath, setByPath } = useFoormContext('useFoormArray')
+  const { rootFormData, formContext, pathPrefix, getByPath, setByPath } =
+    useFoormContext('useFoormArray')
   const handleChange = inject<(type: TFoormChangeType, path: string, value: unknown) => void>(
     '__foorm_change_handler',
     () => {}
@@ -98,13 +104,17 @@ export function useFoormArray(field: FoormArrayFieldDef, disabled?: ComputedRef<
 
   function addItem(variantIndex = 0) {
     if (!canAdd.value) return
+    const resolver = createFoormValueResolver(
+      rootFormData().value as Record<string, unknown>,
+      formContext.value
+    )
     let newItem: unknown
     if (isUnion) {
       const variant = unionVariants[variantIndex]
       if (!variant) return
-      newItem = createItemData(variant)
+      newItem = createFormData(variant.type, resolver).value
     } else {
-      newItem = createDefaultValue(field.itemType)
+      newItem = createFormData(field.itemType, resolver).value
     }
     ensureArray().push(newItem)
     itemKeys.push(generateKey())

@@ -1,7 +1,7 @@
 import { defineAnnotatedType } from '@atscript/typescript/utils'
 import type { TAtscriptAnnotatedType, TAtscriptTypeObject } from '@atscript/typescript/utils'
 import { createFoormDef, buildUnionVariants } from './runtime/create-foorm'
-import { createItemData, detectUnionVariant, createFormData } from './runtime/utils'
+import { detectUnionVariant, createFormData } from './runtime/utils'
 import { isArrayField, isObjectField, isUnionField } from './runtime/types'
 import type { FoormArrayFieldDef, FoormObjectFieldDef, FoormUnionFieldDef } from './runtime/types'
 
@@ -293,37 +293,22 @@ describe('buildUnionVariants', () => {
   })
 })
 
-// ── createItemData ──────────────────────────────────────────
+// ── createFormData for union variant types ──────────────────
 
-describe('createItemData', () => {
-  it('returns empty string for string variant', () => {
-    expect(
-      createItemData({
-        label: 'String',
-        type: defineAnnotatedType().designType('string').$type,
-        designType: 'string',
-      })
-    ).toBe('')
+describe('createFormData for variant types', () => {
+  it('returns empty string for string type', () => {
+    const type = defineAnnotatedType().designType('string').$type
+    expect(createFormData(type).value).toBe('')
   })
 
-  it('returns 0 for number variant', () => {
-    expect(
-      createItemData({
-        label: 'Number',
-        type: defineAnnotatedType().designType('number').$type,
-        designType: 'number',
-      })
-    ).toBe(0)
+  it('returns 0 for number type', () => {
+    const type = defineAnnotatedType().designType('number').$type
+    expect(createFormData(type).value).toBe(0)
   })
 
-  it('returns false for boolean variant', () => {
-    expect(
-      createItemData({
-        label: 'Boolean',
-        type: defineAnnotatedType().designType('boolean').$type,
-        designType: 'boolean',
-      })
-    ).toBe(false)
+  it('returns false for boolean type', () => {
+    const type = defineAnnotatedType().designType('boolean').$type
+    expect(createFormData(type).value).toBe(false)
   })
 
   it('returns object with defaults for object variant', () => {
@@ -332,7 +317,7 @@ describe('createItemData', () => {
     obj.prop('active', defineAnnotatedType().designType('boolean').$type)
     const variant = buildUnionVariants(obj.$type)[0]
 
-    const data = createItemData(variant) as Record<string, unknown>
+    const data = createFormData(variant.type).value as Record<string, unknown>
     expect(data).toEqual({ name: '', active: false })
   })
 })
@@ -375,8 +360,7 @@ describe('createFormData with arrays', () => {
       tags: { kind: 'array', of: stringItem },
     })
 
-    const def = createFoormDef(type)
-    const data = createFormData(type, def.fields)
+    const data = createFormData(type)
     expect(data).toEqual({ value: { name: '', tags: [] } })
   })
 })
@@ -452,22 +436,19 @@ describe('createFoormDef with single-type forms', () => {
 describe('createFormData with single-type forms', () => {
   it('wraps string type in { value: "" }', () => {
     const type = defineAnnotatedType().designType('string').$type
-    const def = createFoormDef(type)
-    const data = createFormData(type, def.fields)
+    const data = createFormData(type)
     expect(data).toEqual({ value: '' })
   })
 
   it('wraps number type in { value: 0 }', () => {
     const type = defineAnnotatedType().designType('number').$type
-    const def = createFoormDef(type)
-    const data = createFormData(type, def.fields)
+    const data = createFormData(type)
     expect(data).toEqual({ value: 0 })
   })
 
   it('wraps boolean type in { value: false }', () => {
     const type = defineAnnotatedType().designType('boolean').$type
-    const def = createFoormDef(type)
-    const data = createFormData(type, def.fields)
+    const data = createFormData(type)
     expect(data).toEqual({ value: false })
   })
 
@@ -475,8 +456,7 @@ describe('createFormData with single-type forms', () => {
     const itemType = defineAnnotatedType().designType('string')
     const type = defineAnnotatedType('array')
     type.of(itemType.$type)
-    const def = createFoormDef(type.$type)
-    const data = createFormData(type.$type, def.fields)
+    const data = createFormData(type.$type)
     expect(data).toEqual({ value: [] })
   })
 
@@ -485,8 +465,7 @@ describe('createFormData with single-type forms', () => {
     const type = makeObjectType({
       tags: { kind: 'array', of: stringItem, optional: true },
     })
-    const def = createFoormDef(type)
-    const data = createFormData(type, def.fields)
+    const data = createFormData(type)
     expect(data.value.tags).toBeUndefined()
   })
 
@@ -506,8 +485,30 @@ describe('createFormData with single-type forms', () => {
     const type = makeObjectType({
       tags: { kind: 'array', of: stringItem },
     })
-    const def = createFoormDef(type)
-    const data = createFormData(type, def.fields)
+    const data = createFormData(type)
     expect(data.value.tags).toEqual([])
+  })
+})
+
+// ── createFormData skips optional fields ─────────────────────
+
+describe('createFormData skips optional fields', () => {
+  it('skips optional string fields', () => {
+    const type = makeObjectType({
+      street: { designType: 'string' },
+      zip: { designType: 'string', optional: true },
+    })
+    const data = createFormData(type)
+    expect(data.value).toEqual({ street: '' })
+  })
+
+  it('skips optional number and boolean fields', () => {
+    const type = makeObjectType({
+      name: { designType: 'string' },
+      age: { designType: 'number', optional: true },
+      active: { designType: 'boolean', optional: true },
+    })
+    const data = createFormData(type)
+    expect(data.value).toEqual({ name: '' })
   })
 })

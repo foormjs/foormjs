@@ -21,5 +21,13 @@
     ".npmrc",
     "docs/.vitepress/cache",
     "**/*.as.d.ts"
+  ],
+  "overrides": [
+    {
+      "files": ["**/*.vue"],
+      "options": {
+        "embeddedLanguageFormatting": "off"
+      }
+    }
   ]
 }

@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+.next
+.nuxt
+coverage
+.cache
+packages/*/scripts/setup-skills.cjs
+packages/*/scripts/setup-skills.js
