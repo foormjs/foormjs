@@ -1,3 +1,26 @@
+## [0.2.5](https://github.com/foormjs/foormjs/compare/v0.2.4...v0.2.5) (2026-02-21)
+
+
+### Bug Fixes
+
+* type coercing for default values ([351460e](https://github.com/foormjs/foormjs/commit/351460e5ddca886175d9cf502792359c59910669))
+
+
+### Features
+
+* add arrays support ([f7f78c2](https://github.com/foormjs/foormjs/commit/f7f78c21d0fdc85dc545764747f9a2a87a7c0e07))
+* add change events ([3e8783f](https://github.com/foormjs/foormjs/commit/3e8783f8c131a8043aa24b4ee31a755394d2287d))
+* add custom component support and fix docs ([81d2c1f](https://github.com/foormjs/foormjs/commit/81d2c1fcda1d981ee7b68559d75d1f4ba58856e7))
+
+
+### Performance Improvements
+
+* few more optimizations ([88fd21e](https://github.com/foormjs/foormjs/commit/88fd21eead506c054942aad99445a93040a9a0c2))
+* refactor and improve ([b3ac6dc](https://github.com/foormjs/foormjs/commit/b3ac6dcee63a9f7af3964d06b943cc5dabf29910))
+* refactor project ([097e5c2](https://github.com/foormjs/foormjs/commit/097e5c2b31911baf9da64f59ab050e6fcbd2f198))
+
+
+
 ## [0.2.4](https://github.com/foormjs/foormjs/compare/v0.2.3...v0.2.4) (2026-02-16)
 
 ## [0.2.3](https://github.com/foormjs/foormjs/compare/v0.2.2...v0.2.3) (2026-02-16)
